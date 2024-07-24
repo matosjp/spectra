@@ -1,0 +1,11 @@
+install_requires=[
+    'statsmodels',
+    'scipy',
+    'scikit-learn',
+    'matplotlib',
+    'ttkbootstrap',
+    'numpy',
+    'pandas',
+    'madys',
+    'pillow'
+]
