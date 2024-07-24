@@ -336,12 +336,16 @@ class Sidebar(ttk.Frame):
         else:
             messagebox.showinfo("Regression model", f"Failed to build the regression model for these parameters.")
 
-    def mass_uncertainty(self):
-        sigma_m = np.std(self.y)
-        sigma_r = np.std((self.y - self.model.predict(self.X.reshape(-1, 1))))
-        sigma_t = np.sqrt(sigma_m ** 2 + sigma_r ** 2)
+    @staticmethod
+    def mass_uncertainty(y, method):
+        per = 0
+        if method == 'MMR':
+            per = 0.1
+        elif method == 'ISO':
+            per = 0.15
+
         z_value = 1.96  # with 95% of certainty
-        uncertainty = sigma_t**2 / z_value
+        uncertainty = y * per * z_value
         return uncertainty
 
     def predict_mass(self):
@@ -361,7 +365,7 @@ class Sidebar(ttk.Frame):
             mag, k = FilterValues.filter_predict_un(mag, self.X)
 
         mass[k] = self.model.predict(mag.reshape(-1, 1))
-        yerr[k] = self.mass_uncertainty()
+        yerr[k] = self.mass_uncertainty(mass[k], 'MMR')
 
         table_data['Mass_calc'] = mass
         table_data['Mass_e'] = yerr
@@ -403,7 +407,7 @@ class Sidebar(ttk.Frame):
         row = pd.DataFrame({'mass': mass})
         hold = np.zeros(len(mass))
         hold[ff] = row.loc[ff, 'mass'].values
-        yerr[ff] = hold[ff] * 0.15
+        yerr[ff] = self.mass_uncertainty(hold[ff], 'ISO')
 
         mass = hold
 
