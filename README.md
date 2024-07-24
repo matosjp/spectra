@@ -5,8 +5,15 @@
 Tool designed for the comprehensive analysis of stellar data. It provides astronomers and astrophysicists with a suite 
 of powerful algorithms for determining various parameters related to stars, including stellar type, luminosity,
 temperature, radius, mass, age, and distance. This program is intended for research and educational purposes, offering a
-user-friendly interface and accurate analytical capabilities for studying the properties and behaviors of stars across the cosmos.              
-                                                                                 
+user-friendly interface and accurate analytical capabilities for studying the properties and behaviors of stars across the cosmos.    
+
+# Table of Contents:
+
+1. [Install](#install)
+2. [Usage](#usage)
+3. [References](#references)
+
+
 ## Install
 
 ```
@@ -24,6 +31,7 @@ or
 ```
 python setup.py install --user
 ```
+## Usage
 
 ## References
 
