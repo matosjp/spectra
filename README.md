@@ -1,6 +1,6 @@
 
 # S.T.E.L.A.R.
-[Stellar Type Examination and Analysis Resource](article link)
+[Stellar Type Examination and Analysis Resource](www.google.com)
 
 Tool designed for the comprehensive analysis of stellar data. It provides astronomers and astrophysicists with a suite 
 of powerful algorithms for determining various parameters related to stars, including stellar type, luminosity,
