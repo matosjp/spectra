@@ -144,15 +144,9 @@ class App(ttk.Window):
 class Sidebar(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, padding=5)
-        self.y = None
-        self.selected_filter = None
-        self.method = None
-        self.th_model_data = None
-        self.pack(side=LEFT, fill=Y)
-
-        global table_data
-
         # Initialize variables
+        global table_data
+        table_data = None
         self.master = parent
         self.method = tk.StringVar()
         self.selected_model = tk.StringVar()
@@ -161,23 +155,12 @@ class Sidebar(ttk.Frame):
         self.clsuter_dist = tk.DoubleVar()
         self.low_int = tk.DoubleVar()
         self.hig_int = tk.DoubleVar()
+        self.check_var = ttk.IntVar()
         self.scale_int = tk.IntVar()
-
-        self.primarydataset = None
-        self.data = None
         self.final_result_table = None
-        self.final_result_analize = None
-        self.result_table = None
-        self.hold = None
-        self.nm = None
-        self.method_dropdown = None
-        self.report = None
-        self.model = None
-        self.X = None
-
-        table_data = None
 
         self.create_widgets()
+        self.pack(side=LEFT, fill=Y)
 
     def create_widgets(self):
 
@@ -232,7 +215,7 @@ class Sidebar(ttk.Frame):
 
     def setup_spectro_ui(self, frame):
         pass
-    
+
     def setup_statistical_ui(self, frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
@@ -305,9 +288,8 @@ class Sidebar(ttk.Frame):
         filter_combobox['values'] = filters
         filter_combobox.grid(row=8, column=0, pady=(10, 5), padx=485, sticky="w")
 
-        check_var = ttk.IntVar()
-        check_var.set(1)
-        menu_toggle = ttk.Checkbutton(frame, text='Distance Correction', variable=check_var)
+        self.check_var.set(1)
+        menu_toggle = ttk.Checkbutton(frame, text='Distance Correction', variable=self.check_var)
         menu_toggle.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
 
         self.clsuter_dist.set(125)
@@ -354,6 +336,14 @@ class Sidebar(ttk.Frame):
         else:
             messagebox.showinfo("Regression model", f"Failed to build the regression model for these parameters.")
 
+    def mass_uncertainty(self):
+        sigma_m = np.std(self.y)
+        sigma_r = np.std((self.y - self.model.predict(self.X.reshape(-1, 1))))
+        sigma_t = np.sqrt(sigma_m ** 2 + sigma_r ** 2)
+        z_value = 1.96  # with 95% of certainty
+        uncertainty = sigma_t**2 / z_value
+        return uncertainty
+
     def predict_mass(self):
         global table_data
 
@@ -365,27 +355,25 @@ class Sidebar(ttk.Frame):
         yerr = np.zeros(len(mag))
         mass = np.zeros(len(mag))
 
-        if self.sidebar.check_var.get() == 1:
+        if self.check_var.get() == 1:
             mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
         else:
-            mag, k = FilterValues.filter_predict(mag, self.X)
+            mag, k = FilterValues.filter_predict_un(mag, self.X)
 
-        for k in range(len(mag)):
-            mass[k] = self.model.predict(np.array([mag[k]]).reshape(-1, 1))
-            yerr[k] = self.report.y_error if hasattr(self.report, 'y_error') else 0
+        mass[k] = self.model.predict(mag.reshape(-1, 1))
+        yerr[k] = self.mass_uncertainty()
 
-        table_data['Mass'] = mass
-        table_data['Mass Error'] = yerr
-        self.sidebar.add_entry('Mass', 'Mass Error')
+        table_data['Mass_calc'] = mass
+        table_data['Mass_e'] = yerr
+        self.final_result_table = table_data
+        table_data.to_csv('_final_result_table.csv')
+
         ToastNotification("Mass Determination",
                           f"Mass calculated successfully for filter {self.selected_filter.get()}.",
                           duration=6000).show_toast()
 
-    def setup_isochrones_fitting_ui(self, frame):
-
-        pass
-
     def locate_stars(self):
+        global table_data
         # Check if both table_data and primarydataset are available
         if table_data is None:
             open_table()
@@ -393,16 +381,6 @@ class Sidebar(ttk.Frame):
         var, Nlines, alldataiso = intpol()
         teff = table_data['Teff'].values
         Tinput = teff
-        yerr = np.zeros(len(teff))
-        mass = np.zeros(len(teff))
-
-        # X1 = alldataiso[0, 3, :]
-        # X2 = alldataiso[-2, 3, :]
-        X = [2500, 4300]
-        teff, k = FilterValues.filter_predict_iso(teff, X)
-
-        yerr[k] = 0.05
-
         Linput = table_data['logL'].values
         Nobjects = len(Tinput)
 
@@ -420,10 +398,12 @@ class Sidebar(ttk.Frame):
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
 
         mass = interpolmass(primarydataset)
+        yerr = np.zeros(len(teff))
 
         row = pd.DataFrame({'mass': mass})
         hold = np.zeros(len(mass))
         hold[ff] = row.loc[ff, 'mass'].values
+        yerr[ff] = hold[ff] * 0.15
 
         mass = hold
 
@@ -543,4 +523,3 @@ def open_table():
         messagebox.showerror("Open Data Table", "Error parsing CSV file.")
     except Exception as e:
         messagebox.showerror("Open Data Table", f"Error: {str(e)}")
-
