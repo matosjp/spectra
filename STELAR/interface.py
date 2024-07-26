@@ -25,7 +25,6 @@ from ttkbootstrap.toast import ToastNotification
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
-
 import madys
 
 import pandas as pd
@@ -35,16 +34,37 @@ from StarLocalization import intpol, interp
 from tools import RegressionReport, ResultsAnalyzer, ResultDisplay, interpolmass, MagCorrector, FilterValues
 from widgets import SessionManager, AboutWindow
 
-geral_output = '/home/gomes/MEGA/Workspaces/STELAR_project/'
-table_output = '/home/gomes/MEGA/Workspaces/STELAR_project/outputs/tables/'
+generaloutput = '/home/gomes/PycharmProjects/stelar/'
+table_output = '/home/gomes/PycharmProjects/outputs/tables/'
+themes_path = generaloutput+'STELAR/external/themes.json'
 
 
 class App(ttk.Window):
     def __init__(self):
-        super().__init__(themename="stelar_dark")
+        super().__init__()
         self.title("S.T.E.L.A.R")
         self.geometry("900x450")
+        self.current_theme = 'light_theme'  # Default theme
+        self.load_custom_theme(self.current_theme)
         self.create_widgets()
+
+    def load_custom_theme(self, theme_name):
+        style = ttk.Style()
+        style.load_user_themes(themes_path)
+        style.theme_use(theme_name)
+
+    def change_app_style(self):
+        # Toggle between themes or apply a new one
+        new_theme = 'light_theme' if self.current_theme == 'dark_theme' else 'dark_theme'
+        self.current_theme = new_theme
+        self.load_custom_theme(new_theme)
+        self.sidebar.refresh_sidebar()
+
+    def create_widgets(self):
+        self.sidebar = Sidebar(self)
+        self.sidebar.pack(side=LEFT, fill=Y)
+        self.top_menu = TopMenu(self)
+        self.top_menu.pack(side=TOP, fill=X)
 
     def create_widgets(self):
         self.sidebar = Sidebar(self)
@@ -158,23 +178,24 @@ class Sidebar(ttk.Frame):
         self.check_var = ttk.IntVar()
         self.scale_int = tk.IntVar()
         self.final_result_table = None
+        self.current_theme = ttk.Style().theme_use()
 
         self.create_widgets()
         self.pack(side=LEFT, fill=Y)
 
     def create_widgets(self):
-
-        # Create the notebook (tabbed interface)
         self.style = ttk.Style()
+        current_theme = self.style.theme_use()
         self.style.configure('lefttab.TNotebook',
                              tabposition=tk.W + tk.N,
                              tabplacement=tk.N + tk.EW)
-        current_theme = self.style.theme_use()
         self.style.theme_settings(current_theme,
                                   {"TNotebook.Tab": {"configure": {'background': 'lightblue', "padding": [10, 8]}}})
 
         self.notebook = ttk.Notebook(self, style='lefttab.TNotebook')
-        self.notebook.pack(fill=BOTH, expand=True)
+        self.notebook.grid(row=0, column=0, sticky="nsew")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         self.page0 = ttk.Frame(self.notebook, width=700, height=700)
         self.page1 = ttk.Frame(self.notebook, width=700, height=700)
@@ -182,21 +203,39 @@ class Sidebar(ttk.Frame):
         self.page3 = ttk.Frame(self.notebook, width=700, height=700)
         self.page4 = ttk.Frame(self.notebook, width=700, height=700)
 
-        self.style.configure("TFrame")
-
         self.notebook.add(self.page0, text='Home', sticky="nsew")
         self.notebook.add(self.page1, text='Mass Determination', sticky="nsew")
         self.notebook.add(self.page4, text='Statistical Analysis', sticky="nsew")
         self.notebook.add(self.page3, text='Spectroscopic Parameters', sticky="nsew")
+
+        self.apply_styles()
 
         self.setup_home_ui(self.page0)
         self.setup_mass_determination_ui(self.page1)
         self.setup_spectro_ui(self.page3)
         self.setup_statistical_ui(self.page4)
 
+    def apply_styles(self):
+        # Update the notebook style
+        self.style = ttk.Style()
+        current_theme = self.style.theme_use()
+        self.style.configure('lefttab.TNotebook',
+                             tabposition=tk.W + tk.N,
+                             tabplacement=tk.N + tk.EW)
+        self.style.theme_settings(current_theme,
+                                  {"TNotebook.Tab": {"configure": {'background': 'lightblue', "padding": [10, 8]}}})
+
+    def refresh_sidebar(self):
+        # Clear existing widgets and recreate them
+        for widget in self.winfo_children():
+            widget.destroy()
+        self.create_widgets()
+
     def setup_home_ui(self, frame):
-        # logo
-        photo = Image.open(geral_output + 'STELAR/icon.png').resize((300, 300))
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+
+        photo = Image.open(generaloutput + 'STELAR/icon.png').resize((300, 300))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -220,9 +259,11 @@ class Sidebar(ttk.Frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
     def setup_mass_determination_ui(self, frame):
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
 
         isoc_label = tk.Label(frame, text="Isochrones Fitting", font=('Helvetica', 12, 'bold'))
-        isoc_label.grid(row=0, column=0, pady=(10, 5), padx=10, sticky="w")
+        isoc_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
         # Define widgets and layout for Isochrones Fitting
         model_label = tk.Label(frame, text="Select Isochrone Model:")
@@ -233,90 +274,94 @@ class Sidebar(ttk.Frame):
         iso_model_combobox = ttk.Combobox(frame, textvariable=self.iso_selected_model, width=10)
         iso_model_combobox['values'] = models
         iso_model_combobox.current(0)
-        iso_model_combobox.grid(row=1, column=0, pady=(10, 5), padx=175, sticky="w")
+        iso_model_combobox.grid(row=1, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
-        locate_stars_button.grid(row=1, column=0, pady=(10, 5), padx=355, sticky="e")
+        locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="e")
 
         separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=2, column=0, columnspan=2, pady=10, sticky="ew")
+        separator.grid(row=2, column=0, columnspan=3, pady=10, sticky="ew")
 
         isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 12, 'bold'))
-        isoc_label.grid(row=3, column=0, pady=(10, 5), padx=10, sticky="w")
+        isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
         model_label = tk.Label(frame, text="Isochrone Model:")
         model_label.grid(row=4, column=0, pady=(10, 5), padx=10, sticky="w")
 
         models = ('bhac15', 'parsec', 'mist')
 
-        model_combobox = ttk.Combobox(frame, textvariable=self.selected_model)
+        model_combobox = ttk.Combobox(frame, textvariable=self.selected_model, width=10)
         model_combobox['values'] = models
         model_combobox.current(0)
-        model_combobox.grid(row=4, column=0, pady=(10, 5), padx=155, sticky="w")
+        model_combobox.grid(row=4, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         self.low_int.set(0.1)
-        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1, textvariable=self.low_int, width=3)
-        spin_low.grid(row=8, column=0, pady=(10, 5), padx=95, sticky="w")
+        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1, textvariable=self.low_int, width=5)
+        spin_low.grid(row=5, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
         spin_label = ttk.Label(frame, text='Lower Mass:')
-        spin_label.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
+        spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
 
         self.hig_int.set(1.3)
-        spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=3)
-        spin_high.grid(row=8, column=0, pady=(10, 5), padx=260, sticky="w")
+        spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=5)
+        spin_high.grid(row=6, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
         spin_label = ttk.Label(frame, text='Higher Mass:')
-        spin_label.grid(row=8, column=0, pady=(10, 5), padx=165, sticky="w")
+        spin_label.grid(row=6, column=0, pady=(10, 5), padx=10, sticky="w")
 
         label = tk.Label(frame, text='Isochrone Age:')
-        label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
+        label.grid(row=7, column=0, pady=(10, 5), padx=10, sticky="w")
 
         self.scale_int.set(112)
         scale = ttk.Scale(frame, from_=1, to=1000, length=165, orient='horizontal', variable=self.scale_int)
-        scale.grid(row=5, column=0, pady=(10, 5), padx=155, sticky="w")
+        scale.grid(row=7, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         entry = tk.Entry(frame, textvariable=self.scale_int, width=5)
-        entry.grid(row=5, column=0, pady=(10, 5), padx=335, sticky="w")
+        entry.grid(row=7, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
         label = ttk.Label(frame, text='Myr')
-        label.grid(row=5, column=0, pady=(10, 5), padx=380, sticky="w")
+        label.grid(row=7, column=3, pady=(10, 5), padx=10, sticky="w")
 
         filter_label = tk.Label(frame, text="Select Magnitude Filter:")
-        filter_label.grid(row=8, column=0, pady=(10, 5), padx=335, sticky="w")
+        filter_label.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
 
         filters = ('G', 'G_BP', 'G_RP', 'U', 'B', 'V', 'I', 'J', 'H', 'K')
         self.selected_filter.set(filters[0])
 
-        filter_combobox = ttk.Combobox(frame, textvariable=self.selected_filter, width=5)
+        filter_combobox = ttk.Combobox(frame, textvariable=self.selected_filter, width=10)
         filter_combobox['values'] = filters
-        filter_combobox.grid(row=8, column=0, pady=(10, 5), padx=485, sticky="w")
+        filter_combobox.grid(row=8, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         self.check_var.set(1)
-        menu_toggle = ttk.Checkbutton(frame, text='Distance Correction', variable=self.check_var)
-        menu_toggle.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
+        menu_toggle = ttk.Checkbutton(frame,
+                                      text='Distance Correction',
+                                      variable=self.check_var,
+                                      onvalue=1,
+                                      offvalue=0)
+        menu_toggle.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
 
         self.clsuter_dist.set(125)
 
         entry2 = tk.Entry(frame, textvariable=self.clsuter_dist, width=5)
-        entry2.grid(row=10, column=0, pady=(10, 5), padx=155, sticky="w")
+        entry2.grid(row=9, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
         label = ttk.Label(frame, text='pc')
-        label.grid(row=10, column=0, pady=(10, 5), padx=205, sticky="w")
+        label.grid(row=9, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
 
         # Create button to calculate mass
         build_button = tk.Button(frame, text="Build Model", command=self.on_calculate_mass)
-        build_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
+        build_button.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
 
         report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
-        report_button.grid(row=9, column=0, pady=(10, 5), padx=125, sticky="w")
+        report_button.grid(row=10, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
-        calculate_mass_button.grid(row=10, column=0, pady=(10, 5), padx=355, sticky="e")
+        calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=(0, 10), sticky="e")
 
         separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=12, column=0, columnspan=2, pady=10, sticky="ew")
+        separator.grid(row=11, column=0, columnspan=3, pady=10, sticky="ew")
 
         table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=13, column=0, pady=(10, 5), padx=10, sticky="w")
+        table_button.grid(row=12, column=0, pady=(10, 5), padx=10, sticky="w")
 
         results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=13, column=0, pady=(10, 5), padx=125, sticky="w")
+        results_button.grid(row=12, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
     def on_calculate_mass(self):
         self.method = 'MMR'
@@ -435,6 +480,11 @@ class TopMenu(ttk.Frame):
         self.pack(side=TOP, fill=X)
         self.create_widgets()
 
+
+    def change_style(self):
+        # This method will call the style change function in the App class
+        self.master.change_app_style()
+
     def create_widgets(self):
         # Create toolbar
         self.toolbar_menu = tk.Menu(self.master)
@@ -448,6 +498,7 @@ class TopMenu(ttk.Frame):
         self.help_menu = tk.Menu(self.toolbar_menu, tearoff=False)
         self.help_menu.add_command(label='Documentation', command=lambda: print('Test button'))
         self.help_menu.add_command(label='About', command=self.open_about_window)
+        self.help_menu.add_command(label='Dark Mode', command=self.change_style)
         self.toolbar_menu.add_cascade(label='Help', menu=self.help_menu)
 
         self.toolbar_menu.add_command(label='Exit', command=self.master.quit)
