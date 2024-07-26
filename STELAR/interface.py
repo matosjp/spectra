@@ -43,7 +43,7 @@ class App(ttk.Window):
     def __init__(self):
         super().__init__()
         self.title("S.T.E.L.A.R")
-        self.geometry("900x450")
+        self.geometry("700x560")
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.create_widgets()
@@ -235,14 +235,14 @@ class Sidebar(ttk.Frame):
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        photo = Image.open(generaloutput + 'STELAR/icon.png').resize((300, 300))
+        photo = Image.open(generaloutput + 'STELAR/icon.png').resize((400, 400))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
         image_label = ttk.Label(frame, image=image_tk)
         image_label.pack(padx=20, pady=10)
 
-        version_label = tk.Label(frame, text="S.T.E.L.A.R")
+        version_label = tk.Label(frame, text="S.T.E.L.A.R", font=('Helvetica', 46, 'bold'))
         version_label.pack(padx=20, pady=0)
 
         # Label displaying program version
@@ -259,8 +259,8 @@ class Sidebar(ttk.Frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
     def setup_mass_determination_ui(self, frame):
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(3, weight=1)
+        frame.grid_rowconfigure(12, weight=1)
 
         isoc_label = tk.Label(frame, text="Isochrones Fitting", font=('Helvetica', 12, 'bold'))
         isoc_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
@@ -280,7 +280,7 @@ class Sidebar(ttk.Frame):
         locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="e")
 
         separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=2, column=0, columnspan=3, pady=10, sticky="ew")
+        separator.grid(row=2, column=0, columnspan=4, pady=10, sticky="ew")
 
         isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 12, 'bold'))
         isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
@@ -317,7 +317,7 @@ class Sidebar(ttk.Frame):
         entry = tk.Entry(frame, textvariable=self.scale_int, width=5)
         entry.grid(row=7, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
         label = ttk.Label(frame, text='Myr')
-        label.grid(row=7, column=3, pady=(10, 5), padx=10, sticky="w")
+        label.grid(row=7, column=2, pady=(10, 5), padx=65, sticky="w")
 
         filter_label = tk.Label(frame, text="Select Magnitude Filter:")
         filter_label.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
@@ -342,7 +342,7 @@ class Sidebar(ttk.Frame):
         entry2 = tk.Entry(frame, textvariable=self.clsuter_dist, width=5)
         entry2.grid(row=9, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
         label = ttk.Label(frame, text='pc')
-        label.grid(row=9, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
+        label.grid(row=9, column=1, pady=(10, 5), padx=65, sticky="w")
 
         # Create button to calculate mass
         build_button = tk.Button(frame, text="Build Model", command=self.on_calculate_mass)
@@ -355,7 +355,7 @@ class Sidebar(ttk.Frame):
         calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=(0, 10), sticky="e")
 
         separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=11, column=0, columnspan=3, pady=10, sticky="ew")
+        separator.grid(row=11, column=0, columnspan=4, pady=10, sticky="ew")
 
         table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
         table_button.grid(row=12, column=0, pady=(10, 5), padx=10, sticky="w")
