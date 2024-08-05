@@ -19,9 +19,7 @@ import numpy as np
 import pandas as pd
 import madys
 
-
-import StarLocalization as sl
-
+from StarLocalization import readiso
 
 class FilterValues:
     def __init__(self):
@@ -188,12 +186,17 @@ class MagCorrector:
         return mag, k
 
 
-def interpolmass(primarydataset, alldataiso=sl.readiso()):
-    control_mass = None
-    res = None
+def interpolmass(primarydataset, model):
     nm = []
     data = primarydataset['Teff']
-    ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 6e7, 1e8]) / 1e6
+    alldataiso = readiso(model)
+    if model == "Siess 2000":
+        ind = 3
+        ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 6e7, 1e8]) / 1e6
+    elif model == "BHAC15":
+        ind = 1
+        ageiso = np.array( [5.e5, 1.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8, 2e6]) / 1e6
+
     massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2])
     ai = []
     mi = []
@@ -234,17 +237,17 @@ def interpolmass(primarydataset, alldataiso=sl.readiso()):
             j = mi[x]
             if j is not None:
                 if j != 0 and j != 11:
-                    xp = [alldataiso[i, 3, j - 1], alldataiso[i, 3, j], alldataiso[i, 3, j + 1]]
+                    xp = [alldataiso[i, ind, j - 1], alldataiso[i, ind, j], alldataiso[i, ind, j + 1]]
                     yp = [massiso[j - 1], massiso[j], massiso[j + 1]]
                     xpd.append(xp[1])
                     ypd.append(yp[1])
                 elif j == 0:
-                    xp = [alldataiso[i, 3, j], alldataiso[i, 3, j + 1], alldataiso[i, 3, j + 2]]
+                    xp = [alldataiso[i, 3, j], alldataiso[i, ind, j + 1], alldataiso[i, ind, j + 2]]
                     yp = [massiso[j], massiso[j + 1], massiso[j + 2]]
                     xpd.append(xp[0])
                     ypd.append(yp[0])
                 else:
-                    xp = [alldataiso[i, 3, j - 2], alldataiso[i, 3, j - 1], alldataiso[i, 3, j]]
+                    xp = [alldataiso[i, 3, j - 2], alldataiso[i, ind, j - 1], alldataiso[i, ind, j]]
                     yp = [massiso[j - 2], massiso[j - 1], massiso[j]]
                     xpd.append(xp[1])
                     ypd.append(yp[1])
@@ -590,3 +593,4 @@ class ResultDisplay:
             plt.savefig(save_file)
         plt.close(fig)
         plt.close()
+

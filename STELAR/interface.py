@@ -30,8 +30,8 @@ import madys
 import pandas as pd
 import numpy as np
 
-from StarLocalization import intpol, interp
-from tools import RegressionReport, ResultsAnalyzer, ResultDisplay, interpolmass, MagCorrector, FilterValues
+from StarLocalization import intpol, interp, readiso
+from tools import RegressionReport, ResultsAnalyzer, ResultDisplay, MagCorrector, FilterValues, interpolmass
 from widgets import SessionManager, AboutWindow
 
 generaloutput = '/home/gomes/PycharmProjects/stelar/'
@@ -296,7 +296,7 @@ class Sidebar(ttk.Frame):
         model_combobox.grid(row=4, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         self.low_int.set(0.1)
-        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1, textvariable=self.low_int, width=5)
+        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1,  textvariable=self.low_int, width=5)
         spin_low.grid(row=5, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
         spin_label = ttk.Label(frame, text='Lower Mass:')
         spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
@@ -382,15 +382,11 @@ class Sidebar(ttk.Frame):
             messagebox.showinfo("Regression model", f"Failed to build the regression model for these parameters.")
 
     @staticmethod
-    def mass_uncertainty(y, method):
-        per = 0
-        if method == 'MMR':
-            per = 0.1
-        elif method == 'ISO':
-            per = 0.15
-
-        z_value = 1.96  # with 95% of certainty
-        uncertainty = y * per * z_value
+    def mass_uncertainty(y):
+        mu = np.mean(np.nan_to_num(y))
+        sigma = np.var(np.nan_to_num(y))
+        print(mu, sigma)
+        uncertainty = np.sqrt(mu**2 + sigma**2)
         return uncertainty
 
     def predict_mass(self):
@@ -410,7 +406,7 @@ class Sidebar(ttk.Frame):
             mag, k = FilterValues.filter_predict_un(mag, self.X)
 
         mass[k] = self.model.predict(mag.reshape(-1, 1))
-        yerr[k] = self.mass_uncertainty(mass[k], 'MMR')
+        yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
 
         table_data['Mass_calc'] = mass
         table_data['Mass_e'] = yerr
@@ -426,8 +422,8 @@ class Sidebar(ttk.Frame):
         # Check if both table_data and primarydataset are available
         if table_data is None:
             open_table()
-
-        var, Nlines, alldataiso = intpol()
+        model = self.iso_selected_model.get()
+        var, Nlines, alldataiso = intpol(model)
         teff = table_data['Teff'].values
         Tinput = teff
         Linput = table_data['logL'].values
@@ -437,22 +433,22 @@ class Sidebar(ttk.Frame):
         ff = []
 
         for i in range(Nobjects):
-            print(i, Tinput[i], Linput[i])
-            res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso)
-            ff.append(i)
-            primarydataset.append(res)
+            print(f'{i}/{(Nobjects)}', Tinput[i], Linput[i])
+            if np.isfinite(Linput) is not None:
+                res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso)
+                ff.append(i)
+                primarydataset.append(res)
 
         # Convert primarydataset to DataFrame
         primarydataset = pd.DataFrame(primarydataset)
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
-
-        mass = interpolmass(primarydataset)
+        mass = interpolmass(primarydataset, self.iso_selected_model.get())
         yerr = np.zeros(len(teff))
 
         row = pd.DataFrame({'mass': mass})
         hold = np.zeros(len(mass))
         hold[ff] = row.loc[ff, 'mass'].values
-        yerr[ff] = self.mass_uncertainty(hold[ff], 'ISO')
+        yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
 
         mass = hold
 
@@ -479,7 +475,6 @@ class TopMenu(ttk.Frame):
         self.toolbar_menu = None
         self.pack(side=TOP, fill=X)
         self.create_widgets()
-
 
     def change_style(self):
         # This method will call the style change function in the App class
@@ -542,7 +537,7 @@ def open_table():
 
             # Define possible column name variations
             teff_column_variations = ['Teff']
-            logl_column_variations = ['logL', 'lum', 'logl', 'L', 'L/Ls', 'Lsun', 'logL*']
+            logl_column_variations = ['logL', 'lum', 'logl', 'L', 'L/Ls', 'Lsun', 'logL*', 'Lum']
 
             # Find the actual column names in the file
             teff_column = next((col for col in teff_column_variations if col in table_data.columns), None)
