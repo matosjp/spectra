@@ -3,7 +3,7 @@ import scipy.stats as ss
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge
@@ -20,6 +20,7 @@ import pandas as pd
 import madys
 
 from StarLocalization import readiso
+
 
 class FilterValues:
     def __init__(self):
@@ -193,32 +194,28 @@ def interpolmass(primarydataset, model):
     if model == "Siess 2000":
         ind = 3
         ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 6e7, 1e8]) / 1e6
+        massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2, 1.3, 1.4])
+
     elif model == "BHAC15":
         ind = 1
-        ageiso = np.array( [5.e5, 1.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8, 2e6]) / 1e6
+        ageiso = np.array([5.e5, 1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8]) / 1e6
+        massiso = np.array([.01, .015, .02, .03, .04, .05, .06, .07, .072, .075, .08, .09,
+                           .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
+                            1.2, 1.3, 1.4])
 
-    massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2])
     ai = []
     mi = []
+
     for age in primarydataset['Age']:
-        # Check if the age is present in ageiso
-        if age in ageiso:
-            # If found, get the index
-            index = np.where(ageiso == age)[0][0]
-            ai.append(index)
-        else:
-            ai.append(None)  # Append None if age not found in ageiso
+        index = np.where(ageiso == age)[0]
+        ai.append(index[0] if index.size > 0 else None)
 
     for mass in primarydataset['Mass']:
-        # Check if the age is present in ageiso
-        if mass in massiso:
-            # If found, get the index
-            index = np.where(massiso == mass)[0][0]
-            mi.append(index)
-        else:
-            mi.append(None)  # Append None if mass not found in ageiso
+        index = np.where(massiso == mass)[0]
+        mi.append(index[0] if index.size > 0 else None)
 
     if len(ai) == 0 or len(mi) == 0:
+        print('error')
         toast = ToastNotification(
             title='Stellar Mass Interpolation',
             message="Stellar mass(es) can't be derived",
@@ -236,7 +233,7 @@ def interpolmass(primarydataset, model):
             i = ai[x]
             j = mi[x]
             if j is not None:
-                if j != 0 and j != 11:
+                if j != 0 and j != len(massiso)-1:
                     xp = [alldataiso[i, ind, j - 1], alldataiso[i, ind, j], alldataiso[i, ind, j + 1]]
                     yp = [massiso[j - 1], massiso[j], massiso[j + 1]]
                     xpd.append(xp[1])
@@ -251,6 +248,7 @@ def interpolmass(primarydataset, model):
                     yp = [massiso[j - 2], massiso[j - 1], massiso[j]]
                     xpd.append(xp[1])
                     ypd.append(yp[1])
+
                 y = np.interp(t[x], xp, yp)
                 nm.append(y)
             else:
@@ -324,16 +322,19 @@ def normalize_metrics(metrics):
 def weighted_score(normalized_metrics):
     weights = {
         'rmse': 0.35,
-        'mae': 0.25,
-        'r2': 0.30,
-        'aic': 0.10
+        'mae': 0.20,
+        'r2': 0.10,
+        'aic': 0.10,
+        'wf': 0.25
     }
     total_scores = []
     for i in range(len(normalized_metrics['rmse'])):
-        score = (weights['rmse'] * normalized_metrics['rmse'][i] +
+        score = ((weights['rmse'] * normalized_metrics['rmse'][i] +
                  weights['mae'] * normalized_metrics['mae'][i] +
                  weights['r2'] * (1 - normalized_metrics['r2'][i]) +  # Invert R2 because higher is better
                  weights['aic'] * normalized_metrics['aic'][i])
+                 + weights['wf'] * abs(normalized_metrics['wf'][i]))
+
         total_scores.append(score)
     return total_scores
 
@@ -354,11 +355,12 @@ def RegressionReport(X, y):
     }
 
     # Split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     report = []
-    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': []}
+    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'wf': []}
     for model_name in models.keys():
+
         grid_search = fit(X_train, y_train, model_name)
         best_model = grid_search.best_estimator_
         y_pred = best_model.predict(X_test)
@@ -367,8 +369,9 @@ def RegressionReport(X, y):
         rmse = np.sqrt(mse)
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
+        s = mean_squared_error(y_train, best_model.predict(X_train))
+        wf = s-mse
 
-        # Calculate AIC
         n = len(y_test)
         k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
                                                                       'coef_') else len(
@@ -379,6 +382,7 @@ def RegressionReport(X, y):
         metrics['mae'].append(mae)
         metrics['r2'].append(r2)
         metrics['aic'].append(aic)
+        metrics['wf'].append(wf)
 
         report.append({
             'Model': model_name,
@@ -386,6 +390,7 @@ def RegressionReport(X, y):
             'MAE': mae,
             'R2': r2,
             'AIC': aic,
+            'wf': wf,
             'Best Params': grid_search.best_params_
         })
 
@@ -574,7 +579,8 @@ class ResultDisplay:
 
         else:
             plt.xlabel('Effective Temperature (K)')
-            plt.xlim(2500, 4350)
+            plt.xlim(np.min(x) - 50, np.max(x) + 50)
+            plt.gca().invert_xaxis()
             plt.title('Isocrhone Fitting Results')
 
         plt.ylabel('Predicted Values (M/M$_\odot$)')

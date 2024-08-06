@@ -43,3 +43,4 @@ nosetests.xml
 av*.dat
 data-for.tar.gz
 rf_allsky.dat
+.h

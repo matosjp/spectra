@@ -43,7 +43,7 @@ class App(ttk.Window):
     def __init__(self):
         super().__init__()
         self.title("S.T.E.L.A.R")
-        self.geometry("700x560")
+        self.geometry("820x560")
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.create_widgets()
@@ -73,7 +73,7 @@ class App(ttk.Window):
         self.top_menu.pack(side=TOP, fill=X)
 
     def show_result_plot(self):
-        tab1 = self.sidebar.final_result_table
+        tab1 = table_data
         method = self.sidebar.method
         y = tab1['Mass_calc'].values
         if method == 'MMR':
@@ -105,7 +105,7 @@ class App(ttk.Window):
             messagebox.showinfo("Result Plot", "No result data available.")
 
     def show_table(self):
-        tab1 = self.sidebar.final_result_table
+        tab1 = table_data
 
         table_window = tk.Toplevel(self)
         table_window.title("Final Result Table")
@@ -133,7 +133,7 @@ class App(ttk.Window):
     def show_report(self):
 
         if self.sidebar.report is not None:
-            tab1 = self.sidebar.report
+            tab1 = self.sidebar.report.round(6)
             table_window = tk.Toplevel(self)
             table_window.title("Regression Report Table")
             table_window.geometry('1920x400')
@@ -177,7 +177,6 @@ class Sidebar(ttk.Frame):
         self.hig_int = tk.DoubleVar()
         self.check_var = ttk.IntVar()
         self.scale_int = tk.IntVar()
-        self.final_result_table = None
         self.current_theme = ttk.Style().theme_use()
 
         self.create_widgets()
@@ -279,8 +278,11 @@ class Sidebar(ttk.Frame):
         locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
         locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="e")
 
-        separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=2, column=0, columnspan=4, pady=10, sticky="ew")
+        self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
+        self.progress.grid(row=2, column=0, columnspan=3, pady=(10, 5), ipadx=0, sticky='ew')
+
+        # separator = ttk.Separator(frame, orient='horizontal')
+        # separator.grid(row=2, column=0, columnspan=4, pady=10, sticky="ew")
 
         isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 12, 'bold'))
         isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
@@ -296,16 +298,13 @@ class Sidebar(ttk.Frame):
         model_combobox.grid(row=4, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         self.low_int.set(0.1)
-        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1,  textvariable=self.low_int, width=5)
-        spin_low.grid(row=5, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
-        spin_label = ttk.Label(frame, text='Lower Mass:')
-        spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
-
         self.hig_int.set(1.3)
+        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1,  textvariable=self.low_int, width=5)
+        spin_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
         spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=5)
-        spin_high.grid(row=6, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
-        spin_label = ttk.Label(frame, text='Higher Mass:')
-        spin_label.grid(row=6, column=0, pady=(10, 5), padx=10, sticky="w")
+        spin_high.grid(row=5, column=3, pady=(10, 5), padx=0, sticky="w")
+        spin_label = ttk.Label(frame, text='Mass range:')
+        spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
 
         label = tk.Label(frame, text='Isochrone Age:')
         label.grid(row=7, column=0, pady=(10, 5), padx=10, sticky="w")
@@ -329,27 +328,26 @@ class Sidebar(ttk.Frame):
         filter_combobox['values'] = filters
         filter_combobox.grid(row=8, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
+        # Create button to calculate mass
+        build_button = tk.Button(frame, text="Build Model", command=self.on_calculate_mass)
+        build_button.grid(row=8, column=2, pady=(10, 5), padx=10, sticky="w")
         self.check_var.set(1)
         menu_toggle = ttk.Checkbutton(frame,
                                       text='Distance Correction',
                                       variable=self.check_var,
                                       onvalue=1,
                                       offvalue=0)
-        menu_toggle.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
+        menu_toggle.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
 
         self.clsuter_dist.set(125)
 
         entry2 = tk.Entry(frame, textvariable=self.clsuter_dist, width=5)
-        entry2.grid(row=9, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        entry2.grid(row=10, column=1, pady=(10, 5), padx=0, sticky="w")
         label = ttk.Label(frame, text='pc')
-        label.grid(row=9, column=1, pady=(10, 5), padx=65, sticky="w")
-
-        # Create button to calculate mass
-        build_button = tk.Button(frame, text="Build Model", command=self.on_calculate_mass)
-        build_button.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
+        label.grid(row=10, column=1, pady=(10, 5), padx=65, sticky="w")
 
         report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
-        report_button.grid(row=10, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        report_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
 
         calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
         calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=(0, 10), sticky="e")
@@ -385,7 +383,6 @@ class Sidebar(ttk.Frame):
     def mass_uncertainty(y):
         mu = np.mean(np.nan_to_num(y))
         sigma = np.var(np.nan_to_num(y))
-        print(mu, sigma)
         uncertainty = np.sqrt(mu**2 + sigma**2)
         return uncertainty
 
@@ -395,27 +392,31 @@ class Sidebar(ttk.Frame):
         if table_data is None:
             open_table()
 
-        mag = table_data[f'{self.selected_filter.get()}mag'].values
-        self.mag = mag
-        yerr = np.zeros(len(mag))
-        mass = np.zeros(len(mag))
-
-        if self.check_var.get() == 1:
-            mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
+        if f'{self.selected_filter.get()}mag' in table_data.items():
+            ToastNotification("Collecting data:",
+                              f"Magnitude in filter {self.selected_filter.get()} isn't found on your table.",
+                              duration=6000, bootstyle='light').show_toast()
         else:
-            mag, k = FilterValues.filter_predict_un(mag, self.X)
+            mag = table_data[f'{self.selected_filter.get()}mag'].values
+            #self.mag = mag
+            yerr = np.zeros(len(mag))
+            mass = np.zeros(len(mag))
 
-        mass[k] = self.model.predict(mag.reshape(-1, 1))
-        yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
+            if self.check_var.get() == 1:
+                mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
+            else:
+                mag, k = FilterValues.filter_predict_un(mag, self.X)
 
-        table_data['Mass_calc'] = mass
-        table_data['Mass_e'] = yerr
-        self.final_result_table = table_data
-        table_data.to_csv('_final_result_table.csv')
+            mass[k] = self.model.predict(mag.reshape(-1, 1))
+            yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
 
-        ToastNotification("Mass Determination",
-                          f"Mass calculated successfully for filter {self.selected_filter.get()}.",
-                          duration=6000).show_toast()
+            table_data['Mass_calc'] = mass
+            table_data['Mass_e'] = yerr
+            table_data.to_csv('_final_result_table.csv')
+
+            ToastNotification("Mass Determination",
+                              f"Mass calculated successfully for filter {self.selected_filter.get()}.",
+                              duration=6000, bootstyle='dark').show_toast()
 
     def locate_stars(self):
         global table_data
@@ -433,11 +434,13 @@ class Sidebar(ttk.Frame):
         ff = []
 
         for i in range(Nobjects):
-            print(f'{i}/{(Nobjects)}', Tinput[i], Linput[i])
             if np.isfinite(Linput) is not None:
                 res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso)
                 ff.append(i)
                 primarydataset.append(res)
+
+                self.progress['value'] = (i + 1) / Nobjects * 100
+                self.update_idletasks()
 
         # Convert primarydataset to DataFrame
         primarydataset = pd.DataFrame(primarydataset)
@@ -455,7 +458,6 @@ class Sidebar(ttk.Frame):
         table_data['Mass_calc'] = mass
         table_data['Mass_e'] = yerr
 
-        self.final_result_table = table_data
         table_data.to_csv('_final_result_table.csv')
 
         toast = ToastNotification(
