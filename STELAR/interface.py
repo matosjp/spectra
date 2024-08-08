@@ -88,7 +88,7 @@ class App(ttk.Window):
 
             # Create a new Toplevel window
             plot_window = ttk.Toplevel(self)
-            plot_window.title("Mass Rresults PLot")
+            plot_window.title("Mass Results Plot")
 
             # Load the image and scale it to fit the window
             photo = Image.open('_mass_results_display.png').resize((800, 600))
@@ -103,6 +103,27 @@ class App(ttk.Window):
 
         else:
             messagebox.showinfo("Result Plot", "No result data available.")
+
+    def show_report_plot(self):
+        method = self.sidebar.method
+        if method == 'MMR':
+
+            plot_window = ttk.Toplevel(self)
+            plot_window.title("Mass-Magnitude Relationship Regression")
+
+            # Load the image and scale it to fit the window
+            photo = Image.open('_visual_report.png').resize((800, 600))
+            image_tk = ImageTk.PhotoImage(photo)
+
+            # Create a Label to display the image
+            image_label = ttk.Label(plot_window, image=image_tk)
+            image_label.pack(padx=20, pady=20)
+
+            # Keep a reference to the image to prevent garbage collection
+            image_label.image = image_tk
+
+        else:
+            messagebox.showinfo("Regression Model Analysis Plot", "No result data available.")
 
     def show_table(self):
         tab1 = table_data
@@ -302,7 +323,7 @@ class Sidebar(ttk.Frame):
         spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1,  textvariable=self.low_int, width=5)
         spin_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
         spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=5)
-        spin_high.grid(row=5, column=3, pady=(10, 5), padx=0, sticky="w")
+        spin_high.grid(row=5, column=2, pady=(10, 5), padx=0, sticky="w")
         spin_label = ttk.Label(frame, text='Mass range:')
         spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
 
@@ -348,6 +369,8 @@ class Sidebar(ttk.Frame):
 
         report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
         report_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
+        report_plot_button = tk.Button(frame, text="Model Report Plot", command=self.master.show_report_plot)
+        report_plot_button.grid(row=9, column=1, pady=(10, 5), padx=0, sticky="w")
 
         calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
         calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=(0, 10), sticky="e")
@@ -372,7 +395,7 @@ class Sidebar(ttk.Frame):
                                            age_range=clust_age, n_steps=[1000, 1000])
             y = th_model.masses
             X = th_model.data[:, :, 0].ravel().reshape(-1, 1)
-            self.model, self.report = create_regression_model(X, y)
+            self.model, self.report = create_regression_model(X, y, True)
             self.X = th_model.data[:, :, 0].ravel()
             self.y = y
             self.th_model_data = pd.DataFrame({'X': th_model.data[:, :, 0].ravel(), 'y': th_model.masses})
@@ -398,7 +421,6 @@ class Sidebar(ttk.Frame):
                               duration=6000, bootstyle='light').show_toast()
         else:
             mag = table_data[f'{self.selected_filter.get()}mag'].values
-            #self.mag = mag
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
 
@@ -510,8 +532,8 @@ class TopMenu(ttk.Frame):
         about_window.grab_set()
 
 
-def create_regression_model(X, y):
-    model_name, model, report = RegressionReport(X, y)
+def create_regression_model(X, y, save_fig):
+    model_name, model, report = RegressionReport(X, y, save_fig)
     toast_sucess = ToastNotification(
         title='Regression model',
         message=f"{model_name} model built.",

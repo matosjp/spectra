@@ -4,7 +4,7 @@ import scipy.stats as ss
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score
 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge
 from sklearn.svm import SVR
@@ -14,6 +14,8 @@ from sklearn.neighbors import KNeighborsRegressor
 
 import matplotlib.pyplot as plt
 from ttkbootstrap.toast import ToastNotification
+from statsmodels.graphics.tsaplots import plot_acf
+import seaborn as sns
 
 import numpy as np
 import pandas as pd
@@ -200,7 +202,7 @@ def interpolmass(primarydataset, model):
         ind = 1
         ageiso = np.array([5.e5, 1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8]) / 1e6
         massiso = np.array([.01, .015, .02, .03, .04, .05, .06, .07, .072, .075, .08, .09,
-                           .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
+                            .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
                             1.2, 1.3, 1.4])
 
     ai = []
@@ -233,7 +235,7 @@ def interpolmass(primarydataset, model):
             i = ai[x]
             j = mi[x]
             if j is not None:
-                if j != 0 and j != len(massiso)-1:
+                if j != 0 and j != len(massiso) - 1:
                     xp = [alldataiso[i, ind, j - 1], alldataiso[i, ind, j], alldataiso[i, ind, j + 1]]
                     yp = [massiso[j - 1], massiso[j], massiso[j + 1]]
                     xpd.append(xp[1])
@@ -323,23 +325,23 @@ def weighted_score(normalized_metrics):
     weights = {
         'rmse': 0.35,
         'mae': 0.20,
-        'r2': 0.10,
-        'aic': 0.10,
-        'wf': 0.25
+        'r2': 0.20,
+        'aic': 0.5,
+        'cv_diff': 0.20
     }
     total_scores = []
     for i in range(len(normalized_metrics['rmse'])):
         score = ((weights['rmse'] * normalized_metrics['rmse'][i] +
-                 weights['mae'] * normalized_metrics['mae'][i] +
-                 weights['r2'] * (1 - normalized_metrics['r2'][i]) +  # Invert R2 because higher is better
-                 weights['aic'] * normalized_metrics['aic'][i])
-                 + weights['wf'] * abs(normalized_metrics['wf'][i]))
+                  weights['mae'] * normalized_metrics['mae'][i] +
+                  weights['r2'] * (1 - normalized_metrics['r2'][i]) +  # Invert R2 because higher is better
+                  weights['aic'] * normalized_metrics['aic'][i])
+                 + weights['cv_diff'] * abs(normalized_metrics['cv_diff'][i]))
 
         total_scores.append(score)
     return total_scores
 
 
-def RegressionReport(X, y):
+def RegressionReport(X, y, save_fig=None):
     models = {
         'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
@@ -358,19 +360,41 @@ def RegressionReport(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     report = []
-    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'wf': []}
+    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'cv_diff': []}
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
     for model_name in models.keys():
 
         grid_search = fit(X_train, y_train, model_name)
         best_model = grid_search.best_estimator_
+        # Cross-validation
+        cv_train_scores = []
+        cv_test_scores = []
+
+        for train_index, val_index in kf.split(X_train):
+            X_cv_train, X_cv_val = X_train[train_index], X_train[val_index]
+            y_cv_train, y_cv_val = y_train[train_index], y_train[val_index]
+
+            best_model.fit(X_cv_train, y_cv_train)
+            cv_train_pred = best_model.predict(X_cv_train)
+            cv_val_pred = best_model.predict(X_cv_val)
+
+            cv_train_score = mean_squared_error(y_cv_train, cv_train_pred)
+            cv_test_score = mean_squared_error(y_cv_val, cv_val_pred)
+
+            cv_train_scores.append(cv_train_score)
+            cv_test_scores.append(cv_test_score)
+
+        cv_train_mean = np.mean(cv_train_scores)
+        cv_test_mean = np.mean(cv_test_scores)
+        cv_diff = cv_test_mean - cv_train_mean
+
         y_pred = best_model.predict(X_test)
 
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
-        s = mean_squared_error(y_train, best_model.predict(X_train))
-        wf = s-mse
 
         n = len(y_test)
         k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
@@ -382,7 +406,7 @@ def RegressionReport(X, y):
         metrics['mae'].append(mae)
         metrics['r2'].append(r2)
         metrics['aic'].append(aic)
-        metrics['wf'].append(wf)
+        metrics['cv_diff'].append(cv_diff)
 
         report.append({
             'Model': model_name,
@@ -390,7 +414,7 @@ def RegressionReport(X, y):
             'MAE': mae,
             'R2': r2,
             'AIC': aic,
-            'wf': wf,
+            'cv_diff': cv_diff,
             'Best Params': grid_search.best_params_
         })
 
@@ -404,11 +428,89 @@ def RegressionReport(X, y):
         model_report['Score'] = scores[i]
 
     report_df = pd.DataFrame(report)
-    # print(tabulate(report_df, headers='keys', tablefmt='psql'))
     report = report_df
+
     # Return the best model based on the weighted score
     best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
     model = fit(X, y, best_model).best_estimator_
+
+    if save_fig is not None:
+        n = int(max(y_test))
+        ols = sm.OLS(y_test, sm.add_constant(X_test)).fit()
+        res = ols.resid
+        sth = ols.get_influence().summary_frame()
+        st_res = sth['student_resid']
+        lev = sth['hat_diag']
+        std_residuals = sth['standard_resid']
+        cooks_d = sth['cooks_d']
+
+        pred_test = model.predict(X_test)
+        fig = plt.figure(figsize=(12, 8), tight_layout=True)
+
+        # Actual vs Predicted
+        plt.subplot(2, 2, 1)
+        plt.scatter(y_test, pred_test, color='#9370db', label='Test Prediction')
+        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='black', linestyle='dashed'
+                 , lw=2, label='Ideal')
+        plt.xlabel('Actual Target Values')
+        plt.ylabel('Predicted Target Values')
+        plt.title(f'{best_model}')
+        plt.legend(loc='best')
+        plt.grid(True)
+        plt.tick_params(direction='in')
+        plt.xticks([x / 10 for x in range(n)])
+        plt.yticks([x / 10 for x in range(n)])
+
+        # Residuals distribution (normality)
+        plt.subplot(2, 2, 2)
+        residuals = y_test - pred_test
+        norm_p_value = ss.jarque_bera(residuals).pvalue
+        norm = 'Jarque-Bera'
+        sns.histplot(residuals, kde=True, color='#9370db')
+        plt.title(f'Normality of residuals ({norm} P-value={norm_p_value:.4f})')
+        plt.xlabel('Residuals')
+        plt.grid(True)
+        plt.tick_params(direction='in')
+
+        plt.subplot(2, 2, 3)
+        # Homoscedasticity (Residuals vs Predicted)
+        plt.scatter(pred_test, st_res, color='#9370db')
+        plt.axhline(0, color='black', linestyle='dashed')
+        plt.xlabel('Predicted Values of Validation Data')
+        plt.ylabel('Residuals')
+        plt.title('Homoscedasticity of Residuals')
+        plt.grid(True)
+        plt.tick_params(direction='in')
+
+        plt.subplot(2, 2, 4)
+
+        # add cook's distance to plot
+        cutoff = 4 / (len(pred_test) - 2)
+
+        d_curves = ResultsAnalyzer.calculate_theoretical_curves(fixed_cooks_distance_values=[cutoff])
+
+        d1x = d_curves[cutoff]['leverage']
+        d1y = d_curves[cutoff]['studentized_residuals']
+
+        plt.plot(d1x, d1y, marker='none', color='#c3121e',
+                 linestyle='-.', label="D$_{crit}$")
+        plt.plot(d1x, -d1y, marker='none', color='#c3121e',
+                 linestyle='-.')
+
+        plt.scatter(lev, st_res, color='#9370db')
+        plt.axhline(-3, color='#e7298a', linestyle=':')
+        plt.axhline(3, color='#e7298a', linestyle=':')
+        plt.axhline(0, color='grey', linestyle='--')
+        plt.axvline(0, color='grey', linestyle='--')
+        plt.legend(loc='best')
+        plt.xlabel('Leverage ($\hat{h}$)')
+        plt.ylabel('Studentinized Residuals')
+        plt.title('Influence Plot')
+        plt.xlim([min(lev), max(lev)])
+        plt.ylim(-3.5, 3.5)
+
+        plt.tight_layout()
+        plt.savefig('_visual_report.png', dpi=300)
 
     return best_model, model, report
 
@@ -552,9 +654,9 @@ class ResultsAnalyzer:
         plt.tick_params(direction='in')
 
         if save_file:
-            plt.savefig('_statistical_results.png')
+            plt.savefig('_statistical_results.png', dpi=300)
         elif isinstance(save_file, str):
-            plt.savefig(save_file)
+            plt.savefig(save_file, dpi=300)
         plt.close(fig)
         plt.close()
 
@@ -596,7 +698,6 @@ class ResultDisplay:
             plt.savefig(
                 '_mass_results_display.png', dpi=300)
         elif isinstance(save_file, str):
-            plt.savefig(save_file)
+            plt.savefig(save_file, dpi=300)
         plt.close(fig)
         plt.close()
-

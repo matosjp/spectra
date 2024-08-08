@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import numpy as np
 import os
 from ttkbootstrap.toast import ToastNotification
+
 matplotlib.use('Agg')
 
 path = '/home/gomes/MEGA/Workspaces/STELAR_project/STELAR/'
@@ -261,7 +262,7 @@ def interp(t1, l1, var, Nlines, alldataiso):
             axs.set_yscale('log')
             axs.legend()
             plt.gca().invert_xaxis()
-            plt.savefig(f"{output}isocfit_outputs/hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.pdf", dpi=300)
+            plt.savefig(f"{output}isocfit_outputs/hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.svg", dpi=300)
             plt.close(fig)
             plt.close()
 
@@ -359,5 +360,5 @@ def plot_HRD(result, model):
     plt.title('HR Diagram')
     plt.grid(True)
     plt.legend(loc='best', fontsize='small', frameon=True, borderpad=1, borderaxespad=1, ncol=2)
-    plt.savefig(isocfit_outputs + 'hrd_complete.pdf', dpi=300)
+    plt.savefig(isocfit_outputs + 'hrd_complete.svg', dpi=300)
 
