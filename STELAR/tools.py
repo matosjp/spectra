@@ -1,4 +1,5 @@
 import statsmodels.api as sm
+import statsmodels.stats.api as sms
 import scipy.stats as ss
 
 from sklearn.pipeline import Pipeline
@@ -435,51 +436,66 @@ def RegressionReport(X, y, save_fig=None):
     model = fit(X, y, best_model).best_estimator_
 
     if save_fig is not None:
-        n = int(max(y_test))
+        n = int(10*max(y))+1
         ols = sm.OLS(y_test, sm.add_constant(X_test)).fit()
         res = ols.resid
         sth = ols.get_influence().summary_frame()
         st_res = sth['student_resid']
         lev = sth['hat_diag']
-        std_residuals = sth['standard_resid']
-        cooks_d = sth['cooks_d']
+        rsqueared = ols.rsquared
 
         pred_test = model.predict(X_test)
-        fig = plt.figure(figsize=(12, 8), tight_layout=True)
+        plt.figure(figsize=(12, 8), tight_layout=True)
 
         # Actual vs Predicted
         plt.subplot(2, 2, 1)
-        plt.scatter(y_test, pred_test, color='#9370db', label='Test Prediction')
+        plt.scatter(y_test, pred_test, facecolor='#9370db', label='Test Prediction')
         plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='black', linestyle='dashed'
                  , lw=2, label='Ideal')
         plt.xlabel('Actual Target Values')
         plt.ylabel('Predicted Target Values')
-        plt.title(f'{best_model}')
+        if rsqueared <= 0.75:
+            corr = 'Weakly correlated'
+        else:
+            corr = 'Strongly correlated'
+        plt.title(f'{best_model} ({corr} R$^2$={rsqueared:.2f})')
         plt.legend(loc='best')
-        plt.grid(True)
         plt.tick_params(direction='in')
         plt.xticks([x / 10 for x in range(n)])
         plt.yticks([x / 10 for x in range(n)])
+        plt.grid(True)
 
         # Residuals distribution (normality)
         plt.subplot(2, 2, 2)
         residuals = y_test - pred_test
         norm_p_value = ss.jarque_bera(residuals).pvalue
-        norm = 'Jarque-Bera'
+        if norm_p_value <= 0.05:
+            norm = 'Not normal'
+        else:
+            norm = 'Normal'
         sns.histplot(residuals, kde=True, color='#9370db')
-        plt.title(f'Normality of residuals ({norm} P-value={norm_p_value:.4f})')
+        plt.title(f'Normality of residuals ({norm} P-value={norm_p_value:.2f})')
         plt.xlabel('Residuals')
         plt.grid(True)
         plt.tick_params(direction='in')
 
         plt.subplot(2, 2, 3)
-        # Homoscedasticity (Residuals vs Predicted)
-        plt.scatter(pred_test, st_res, color='#9370db')
-        plt.axhline(0, color='black', linestyle='dashed')
+        # Skedasticity (Residuals vs Predicted)
+        line = sm.OLS(abs(res), sm.add_constant(pred_test)).fit()
+        test_pred = line.predict(sm.add_constant(pred_test))
+        ske_p_value = sms.het_breuschpagan(line.resid, line.model.exog)[1]
+        if ske_p_value <= 0.05:
+            ske = 'Heteroskedastic'
+        else:
+            ske = 'Homoskedastic'
+        plt.scatter(pred_test, abs(res), facecolor='#9370db')
+        plt.plot(pred_test, test_pred, marker='none', color='#e7298a')
+        plt.axhline(y=test_pred[0], color='k', linestyle='dashed')
         plt.xlabel('Predicted Values of Validation Data')
         plt.ylabel('Residuals')
-        plt.title('Homoscedasticity of Residuals')
+        plt.title(f'Skedasticity of Residuals ({ske} P-value={ske_p_value:.2f})')
         plt.grid(True)
+        plt.xticks([x / 10 for x in range(n)])
         plt.tick_params(direction='in')
 
         plt.subplot(2, 2, 4)
@@ -497,12 +513,13 @@ def RegressionReport(X, y, save_fig=None):
         plt.plot(d1x, -d1y, marker='none', color='#c3121e',
                  linestyle='-.')
 
-        plt.scatter(lev, st_res, color='#9370db')
+        plt.scatter(lev, st_res, facecolor='#9370db')
         plt.axhline(-3, color='#e7298a', linestyle=':')
         plt.axhline(3, color='#e7298a', linestyle=':')
         plt.axhline(0, color='grey', linestyle='--')
         plt.axvline(0, color='grey', linestyle='--')
         plt.legend(loc='best')
+        plt.grid(True)
         plt.xlabel('Leverage ($\hat{h}$)')
         plt.ylabel('Studentinized Residuals')
         plt.title('Influence Plot')
