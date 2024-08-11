@@ -423,7 +423,7 @@ class Sidebar(ttk.Frame):
             mag = table_data[f'{self.selected_filter.get()}mag'].values
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
-
+            
             if self.check_var.get() == 1:
                 mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
             else:
