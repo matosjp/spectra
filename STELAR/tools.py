@@ -9,7 +9,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, a
 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge
 from sklearn.svm import SVR
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, AdaBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -263,38 +263,85 @@ def interpolmass(primarydataset, model):
 def fit(X, y, model_name):
     if model_name == 'Bayesian Regression':
         model = BayesianRidge()
-        param_grid = {}
+        param_grid = {'model__alpha1': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__alpha2': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__lambda1': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__lambda2': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__compute_score': [True, False],
+                      'model__fit_intercept': [True, False],
+                      'model__normalize': [True, False]}
     elif model_name == 'Linear Regression':
         model = LinearRegression()
-        param_grid = {}
-    elif model_name == 'Ridge Regression':
-        model = Ridge()
-        param_grid = {'model__alpha': [0.1, 1.0, 10.0]}
-    elif model_name == 'Lasso Regression':
-        model = Lasso()
-        param_grid = {'model__alpha': [0.1, 1.0, 10.0]}
+        param_grid = {'model__alpha': [0.1, 1.0, 10.0],
+                      'model__fit_intercept': [True, False],
+                      'model__positive': [True, False]}
     elif model_name == 'ElasticNet Regression':
         model = ElasticNet()
-        param_grid = {'model__alpha': [0.1, 1.0, 10.0], 'model__l1_ratio': [0.1, 0.5, 0.9]}
+        param_grid = {'model__alpha': [0.1, 0.5, 1.0, 10.0],
+                      'model__l1_ratio': [0.1, 0.5, 0.7, 0.9, 1.0],
+                      'model__fit_intercept': [True, False],
+                      'model__normalize': [True, False],
+                      'model__precompute': [True, False],
+                      'model__selection': ['cyclic', 'random']}
+
     elif model_name == 'Support Vector Regressor':
         model = SVR()
-        param_grid = {'model__kernel': ['linear', 'poly', 'rbf'], 'model__C': [0.1, 1.0, 10.0],
-                      'model__epsilon': [0.001, 0.01, 0.1, 1.0, 10.0]}
+        param_grid = {'model__C': [0.1, 1, 10, 100],
+                      'model__epsilon': [0.1, 0.2, 0.5, 1],
+                      'model__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
+                      'model__degree': [2, 3, 4],
+                      'model__gamma': ['scale', 'auto'],
+                      'model__shrinking': [True, False]}
+
     elif model_name == 'Decision Tree Regressor':
         model = DecisionTreeRegressor()
-        param_grid = {'model__max_depth': [None, 10, 20]}
+        param_grid = {'model__criterion': ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+                      'model__splitter': ['best', 'random'],
+                      'model__max_depth': [None, 10, 20, 30, 40],
+                      'model__min_samples_split': [2, 5, 10],
+                      'model__min_samples_leaf': [1, 2, 4],
+                      'model__max_features': [None, 'auto', 'sqrt', 'log2'],
+                      'model__max_leaf_nodes': [None, 10, 20, 50],
+                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
     elif model_name == 'Random Forest Regressor':
         model = RandomForestRegressor()
-        param_grid = {'model__n_estimators': [50, 100, 200]}
+        param_grid = {'model__n_estimators': [100, 200, 500, 1000],
+                      'model__criterion': ['squared_error', 'absolute_error', 'friedman_mse', 'poisson'],
+                      'model__max_depth': [None, 10, 20, 30, 40],
+                      'model__min_samples_split': [2, 5, 10],
+                      'model__min_samples_leaf': [1, 2, 4],
+                      'model__max_features': ['auto', 'sqrt', 'log2', None],
+                      'model__bootstrap': [True, False],
+                      'model__oob_score': [True, False],
+                      'model__random_state': [None, 42],
+                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
+
     elif model_name == 'Gradient Boosting Regressor':
         model = GradientBoostingRegressor()
-        param_grid = {'model__n_estimators': [50, 100, 200], 'model__learning_rate': [0.01, 0.1, 0.5]}
+        param_grid = {'model__loss': ['squared_error', 'absolute_error', 'huber', 'quantile'],
+                      'model__learning_rate': [0.01, 0.1, 0.2, 0.3],
+                      'model__n_estimators': [100, 200, 500, 1000],
+                      'model__subsample': [0.7, 0.8, 0.9, 1.0],
+                      'model__criterion': ['friedman_mse', 'squared_error'],
+                      'model__max_depth': [3, 5, 7, 10],
+                      'model__min_samples_split': [2, 5, 10],
+                      'model__min_samples_leaf': [1, 2, 4],
+                      'model__max_features': ['auto', 'sqrt', 'log2', None],
+                      'model__max_leaf_nodes': [None, 10, 20, 50],
+                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
     elif model_name == 'AdaBoost Regressor':
         model = AdaBoostRegressor()
-        param_grid = {'model__n_estimators': [50, 100, 200], 'model__learning_rate': [0.01, 0.1, 0.5]}
+        param_grid = {'model__n_estimators': [50, 100, 200, 500],
+                      'model__learning_rate': [0.01, 0.1, 0.5, 1.0],
+                      'model__loss': ['linear', 'square', 'exponential']}
     elif model_name == 'KNeighbors Regressor':
         model = KNeighborsRegressor()
-        param_grid = {'model__n_neighbors': [3, 5, 10]}
+        param_grid = {'model__n_neighbors': [3, 5, 7, 9, 11],
+                      'model__weights': ['uniform', 'distance'],
+                      'model__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+                      'model__leaf_size': [20, 30, 40, 50],
+                      'model__p': [1, 2],
+                      'model__metric': ['minkowski', 'euclidean', 'manhattan', 'chebyshev']}
     else:
         raise ValueError(f"Unknown model name: {model_name}")
 
@@ -303,7 +350,7 @@ def fit(X, y, model_name):
         ('model', model)
     ])
 
-    grid_search = GridSearchCV(pipeline, param_grid, cv=3, scoring='neg_mean_squared_error')
+    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_squared_error')
     grid_search.fit(X, y)
     return grid_search
 
@@ -324,11 +371,11 @@ def normalize_metrics(metrics):
 
 def weighted_score(normalized_metrics):
     weights = {
-        'rmse': 0.35,
+        'rmse': 0.25,
         'mae': 0.20,
-        'r2': 0.20,
+        'r2': 0.25,
         'aic': 0.5,
-        'cv_diff': 0.20
+        'cv_diff': 0.25
     }
     total_scores = []
     for i in range(len(normalized_metrics['rmse'])):
@@ -344,24 +391,23 @@ def weighted_score(normalized_metrics):
 
 def RegressionReport(X, y, save_fig=None):
     models = {
-        'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
-        'Ridge Regression': Ridge(),
-        'Lasso Regression': Lasso(),
         'ElasticNet Regression': ElasticNet(),
         'Support Vector Regressor': SVR(),
         'Decision Tree Regressor': DecisionTreeRegressor(),
+        'KNeighbors Regressor': KNeighborsRegressor(),
+        'AdaBoost Regressor': AdaBoostRegressor(),
+        'Bayesian Regression': BayesianRidge(),
         'Random Forest Regressor': RandomForestRegressor(),
         'Gradient Boosting Regressor': GradientBoostingRegressor(),
-        'AdaBoost Regressor': AdaBoostRegressor(),
-        'KNeighbors Regressor': KNeighborsRegressor()
     }
-
     # Split the data
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     report = []
     metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'cv_diff': []}
+
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
     for model_name in models.keys():

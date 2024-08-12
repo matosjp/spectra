@@ -541,6 +541,7 @@ def create_regression_model(X, y, save_fig):
         bootstyle='dark'
     )
     toast_sucess.show_toast()
+    report.to_csv('Regression_model_report.csv')
     return model, report
 
 
