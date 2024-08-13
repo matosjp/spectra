@@ -263,85 +263,62 @@ def interpolmass(primarydataset, model):
 def fit(X, y, model_name):
     if model_name == 'Bayesian Regression':
         model = BayesianRidge()
-        param_grid = {'model__alpha1': [1e-6, 1e-5, 1e-4, 1e-3],
-                      'model__alpha2': [1e-6, 1e-5, 1e-4, 1e-3],
-                      'model__lambda1': [1e-6, 1e-5, 1e-4, 1e-3],
-                      'model__lambda2': [1e-6, 1e-5, 1e-4, 1e-3],
+        param_grid = {'model__alpha_1': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__alpha_2': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__lambda_1': [1e-6, 1e-5, 1e-4, 1e-3],
+                      'model__lambda_2': [1e-6, 1e-5, 1e-4, 1e-3],
                       'model__compute_score': [True, False],
-                      'model__fit_intercept': [True, False],
-                      'model__normalize': [True, False]}
+                      'model__fit_intercept': [True, False]}
     elif model_name == 'Linear Regression':
         model = LinearRegression()
-        param_grid = {'model__alpha': [0.1, 1.0, 10.0],
-                      'model__fit_intercept': [True, False],
+        param_grid = {'model__fit_intercept': [True, False],
                       'model__positive': [True, False]}
     elif model_name == 'ElasticNet Regression':
         model = ElasticNet()
-        param_grid = {'model__alpha': [0.1, 0.5, 1.0, 10.0],
-                      'model__l1_ratio': [0.1, 0.5, 0.7, 0.9, 1.0],
+        param_grid = {'model__alpha': [0.01, 0.1, 0.5, 1.0],
+                      'model__l1_ratio': [0.01, 0.1, 0.5, 1.0],
                       'model__fit_intercept': [True, False],
-                      'model__normalize': [True, False],
+                      'model__positive': [True, False],
                       'model__precompute': [True, False],
                       'model__selection': ['cyclic', 'random']}
 
     elif model_name == 'Support Vector Regressor':
         model = SVR()
-        param_grid = {'model__C': [0.1, 1, 10, 100],
-                      'model__epsilon': [0.1, 0.2, 0.5, 1],
-                      'model__kernel': ['linear', 'poly', 'rbf', 'sigmoid'],
-                      'model__degree': [2, 3, 4],
-                      'model__gamma': ['scale', 'auto'],
-                      'model__shrinking': [True, False]}
+        param_grid = {'model__C': [0.01, 0.1, 1, 10],
+                      'model__epsilon': [0.01, 0.1, 0.5, 1],
+                      'model__kernel': ['linear', 'rbf', 'sigmoid']}
 
     elif model_name == 'Decision Tree Regressor':
         model = DecisionTreeRegressor()
-        param_grid = {'model__criterion': ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
-                      'model__splitter': ['best', 'random'],
-                      'model__max_depth': [None, 10, 20, 30, 40],
-                      'model__min_samples_split': [2, 5, 10],
-                      'model__min_samples_leaf': [1, 2, 4],
-                      'model__max_features': [None, 'auto', 'sqrt', 'log2'],
-                      'model__max_leaf_nodes': [None, 10, 20, 50],
-                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
+        param_grid = {'model__max_depth': [1, 2, 7, 12, 15, 20],
+                      'model__min_samples_split': [2, 7, 10],
+                      'model__min_samples_leaf': [2, 7, 10]}
+
     elif model_name == 'Random Forest Regressor':
         model = RandomForestRegressor()
-        param_grid = {'model__n_estimators': [100, 200, 500, 1000],
-                      'model__criterion': ['squared_error', 'absolute_error', 'friedman_mse', 'poisson'],
-                      'model__max_depth': [None, 10, 20, 30, 40],
-                      'model__min_samples_split': [2, 5, 10],
-                      'model__min_samples_leaf': [1, 2, 4],
-                      'model__max_features': ['auto', 'sqrt', 'log2', None],
-                      'model__bootstrap': [True, False],
-                      'model__oob_score': [True, False],
-                      'model__random_state': [None, 42],
-                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
+        param_grid = {'model__n_estimators': [100],
+                      'model__max_depth': [1, 2, 7, 12, 15, 20],
+                      'model__min_samples_split': [2, 7, 10],
+                      'model__min_samples_leaf': [2, 7, 10]}
 
     elif model_name == 'Gradient Boosting Regressor':
         model = GradientBoostingRegressor()
-        param_grid = {'model__loss': ['squared_error', 'absolute_error', 'huber', 'quantile'],
-                      'model__learning_rate': [0.01, 0.1, 0.2, 0.3],
-                      'model__n_estimators': [100, 200, 500, 1000],
+        param_grid = {'model__loss': ['squared_error'],
+                      'model__learning_rate': [0.01, 0.1, 0.5, 1.],
+                      'model__n_estimators': [100],
                       'model__subsample': [0.7, 0.8, 0.9, 1.0],
-                      'model__criterion': ['friedman_mse', 'squared_error'],
-                      'model__max_depth': [3, 5, 7, 10],
-                      'model__min_samples_split': [2, 5, 10],
-                      'model__min_samples_leaf': [1, 2, 4],
-                      'model__max_features': ['auto', 'sqrt', 'log2', None],
-                      'model__max_leaf_nodes': [None, 10, 20, 50],
-                      'model__min_impurity_decrease': [0.0, 0.01, 0.1]}
+                      'model__max_depth': [1, 2, 7, 12, 15, 20]}
+
     elif model_name == 'AdaBoost Regressor':
         model = AdaBoostRegressor()
-        param_grid = {'model__n_estimators': [50, 100, 200, 500],
+        param_grid = {'model__n_estimators': [100],
                       'model__learning_rate': [0.01, 0.1, 0.5, 1.0],
-                      'model__loss': ['linear', 'square', 'exponential']}
+                      'model__loss': ['square']}
+
     elif model_name == 'KNeighbors Regressor':
         model = KNeighborsRegressor()
-        param_grid = {'model__n_neighbors': [3, 5, 7, 9, 11],
-                      'model__weights': ['uniform', 'distance'],
-                      'model__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
-                      'model__leaf_size': [20, 30, 40, 50],
-                      'model__p': [1, 2],
-                      'model__metric': ['minkowski', 'euclidean', 'manhattan', 'chebyshev']}
+        param_grid = {'model__n_neighbors': [3, 5, 7, 9, 12],
+                      'model__weights': ['uniform', 'distance']}
     else:
         raise ValueError(f"Unknown model name: {model_name}")
 
@@ -350,7 +327,7 @@ def fit(X, y, model_name):
         ('model', model)
     ])
 
-    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_squared_error')
+    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
     grid_search.fit(X, y)
     return grid_search
 
@@ -391,62 +368,41 @@ def weighted_score(normalized_metrics):
 
 def RegressionReport(X, y, save_fig=None):
     models = {
+        'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
         'ElasticNet Regression': ElasticNet(),
         'Support Vector Regressor': SVR(),
         'Decision Tree Regressor': DecisionTreeRegressor(),
-        'KNeighbors Regressor': KNeighborsRegressor(),
-        'AdaBoost Regressor': AdaBoostRegressor(),
-        'Bayesian Regression': BayesianRidge(),
         'Random Forest Regressor': RandomForestRegressor(),
         'Gradient Boosting Regressor': GradientBoostingRegressor(),
+        'AdaBoost Regressor': AdaBoostRegressor(),
+        'KNeighbors Regressor': KNeighborsRegressor()
     }
     # Split the data
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
     report = []
     metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'cv_diff': []}
-
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
 
     for model_name in models.keys():
-
         grid_search = fit(X_train, y_train, model_name)
         best_model = grid_search.best_estimator_
-        # Cross-validation
-        cv_train_scores = []
-        cv_test_scores = []
-
-        for train_index, val_index in kf.split(X_train):
-            X_cv_train, X_cv_val = X_train[train_index], X_train[val_index]
-            y_cv_train, y_cv_val = y_train[train_index], y_train[val_index]
-
-            best_model.fit(X_cv_train, y_cv_train)
-            cv_train_pred = best_model.predict(X_cv_train)
-            cv_val_pred = best_model.predict(X_cv_val)
-
-            cv_train_score = mean_squared_error(y_cv_train, cv_train_pred)
-            cv_test_score = mean_squared_error(y_cv_val, cv_val_pred)
-
-            cv_train_scores.append(cv_train_score)
-            cv_test_scores.append(cv_test_score)
-
-        cv_train_mean = np.mean(cv_train_scores)
-        cv_test_mean = np.mean(cv_test_scores)
-        cv_diff = cv_test_mean - cv_train_mean
 
         y_pred = best_model.predict(X_test)
+        cv_train_mean = np.mean(cross_val_score(best_model, X_train, y_train, cv=10))
+        cv_test_mean = np.mean(cross_val_score(best_model, X_test, y_test, cv=10))
+        cv_diff = cv_test_mean - cv_train_mean
 
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
+        print(f"  {model_name} - MSE: {mse}")
+
         n = len(y_test)
         k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
-                                                                      'coef_') else len(
-            best_model.named_steps['model'].get_params())
+                                                                      'coef_') else len(best_model.named_steps['model'].get_params())
         aic = calculate_aic(n, mse, k)
 
         metrics['rmse'].append(rmse)
@@ -476,7 +432,7 @@ def RegressionReport(X, y, save_fig=None):
 
     report_df = pd.DataFrame(report)
     report = report_df
-
+    report.to_csv('Regression_model_report.csv')
     # Return the best model based on the weighted score
     best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
     model = fit(X, y, best_model).best_estimator_
@@ -504,7 +460,7 @@ def RegressionReport(X, y, save_fig=None):
             corr = 'Weakly correlated'
         else:
             corr = 'Strongly correlated'
-        plt.title(f'{best_model} ({corr} R$^2$={rsqueared:.2f})')
+        plt.title(f'{best_model} ({corr}, R$^2$={rsqueared:.2f})')
         plt.legend(loc='best')
         plt.tick_params(direction='in')
         plt.xticks([x / 10 for x in range(n)])
@@ -513,14 +469,13 @@ def RegressionReport(X, y, save_fig=None):
 
         # Residuals distribution (normality)
         plt.subplot(2, 2, 2)
-        residuals = y_test - pred_test
-        norm_p_value = ss.jarque_bera(residuals).pvalue
+        norm_p_value = ss.jarque_bera(res).pvalue
         if norm_p_value <= 0.05:
             norm = 'Not normal'
         else:
             norm = 'Normal'
-        sns.histplot(residuals, kde=True, color='#9370db')
-        plt.title(f'Normality of residuals ({norm} P-value={norm_p_value:.2f})')
+        sns.histplot(res, kde=True, color='#9370db')
+        plt.title(f'Normality of residuals ({norm}, P-value={norm_p_value:.2f})')
         plt.xlabel('Residuals')
         plt.grid(True)
         plt.tick_params(direction='in')
@@ -529,19 +484,19 @@ def RegressionReport(X, y, save_fig=None):
         # Skedasticity (Residuals vs Predicted)
         line = sm.OLS(abs(res), sm.add_constant(pred_test)).fit()
         test_pred = line.predict(sm.add_constant(pred_test))
-        ske_p_value = sms.het_breuschpagan(line.resid, line.model.exog)[1]
+        ske_p_value = sms.het_breuschpagan(res, ols.model.exog)[1]
         if ske_p_value <= 0.05:
             ske = 'Heteroskedastic'
         else:
             ske = 'Homoskedastic'
         plt.scatter(pred_test, abs(res), facecolor='#9370db')
-        plt.plot(pred_test, test_pred, marker='none', color='#e7298a')
-        plt.axhline(y=test_pred[0], color='k', linestyle='dashed')
+        plt.axhline(y=test_pred[0], color='k', linestyle='dashed', label='Symmetry line')
         plt.xlabel('Predicted Values of Validation Data')
         plt.ylabel('Residuals')
-        plt.title(f'Skedasticity of Residuals ({ske} P-value={ske_p_value:.2f})')
+        plt.title(f'Skedasticity of Residuals ({ske}, P-value={ske_p_value:.2f})')
         plt.grid(True)
         plt.xticks([x / 10 for x in range(n)])
+        plt.legend(loc='best')
         plt.tick_params(direction='in')
 
         plt.subplot(2, 2, 4)
@@ -560,14 +515,13 @@ def RegressionReport(X, y, save_fig=None):
                  linestyle='-.')
 
         plt.scatter(lev, st_res, facecolor='#9370db')
-        plt.axhline(-3, color='#e7298a', linestyle=':')
-        plt.axhline(3, color='#e7298a', linestyle=':')
+        plt.axhline(-3, color='k', linestyle=':')
+        plt.axhline(3, color='k', linestyle=':', label='$\hat{\sigma}_{crit}$')
         plt.axhline(0, color='grey', linestyle='--')
-        plt.axvline(0, color='grey', linestyle='--')
         plt.legend(loc='best')
         plt.grid(True)
         plt.xlabel('Leverage ($\hat{h}$)')
-        plt.ylabel('Studentinized Residuals')
+        plt.ylabel('Studentinized Residuals ($\hat{\sigma}$)')
         plt.title('Influence Plot')
         plt.xlim([min(lev), max(lev)])
         plt.ylim(-3.5, 3.5)

@@ -343,22 +343,61 @@ def plot_HRD(result, model):
 
     colors = [cm.Purples(i) for i in np.linspace(0.5, 1, len(imass))]
     colors_ = [cm.Greens(i) for i in np.linspace(0.5, 1, len(imass))]
-    fig = plt.figure(figsize=(10, 8), tight_layout=True)
-    for j in range(len(var[:, im, 0])):
-        plt.plot(var[it, :], np.log10(var[il, :]), label=f'Mass: {mass[j]}',
-                 color=colors[j])
-
+    plt.figure(figsize=(10, 8), tight_layout=True)
     orderedage = np.sort(ageiso)
+    cumulative_sum = 0
+    if model == 'Siess 2000':
 
-    for i in range(len(alldataiso[:, am, 0])):
-        plt.plot(alldataiso[i, at, :], np.log10(alldataiso[i, al, :]), label=f'{orderedage[i] / 1e6} Myr',
-                 color=colors_[i], linestyle='dashed')
-    plt. scatter(result['Teff'], result['logL'], marker='^', color='brown')
+        for j in range(13):
+            start = cumulative_sum
+            end = start + Nlines[j]
+            plt.plot(var[it, start:end-1],
+                     np.log10(var[il, start:end-1]),
+                     label=f'Mass: {mass[j]}',
+                     color=colors[j])
+            cumulative_sum = end
+
+        for i in range(len(alldataiso[:, am, 0])):
+            plt.plot(alldataiso[i, at, :],
+                     np.log10(alldataiso[i, al, :]),
+                     label=f'{orderedage[i] / 1e6} Myr',
+                     color=colors_[i],
+                     linestyle='dashed')
+
+    elif model == 'BHAC15':
+        for j in range(13):
+            start = cumulative_sum
+            end = start + Nlines[j]
+            plt.plot(var[it, start:end-1],
+                     (var[il, start:end-1]),
+                     label=f'Mass: {mass[j]}',
+                     color=colors[j])
+            cumulative_sum = end
+
+        for i in range(len(alldataiso[:, am, 0])):
+            plt.plot(alldataiso[i, at, :],
+                     (alldataiso[i, al, :]),
+                     label=f'{orderedage[i] / 1e6} Myr',
+                     color=colors_[i],
+                     linestyle='dashed')
+
+    flag = np.where(result['Mass_calc'].values < 1.3)[0]
+
+    plt. scatter(result['Teff'][flag],
+                 result['logL'][flag],
+                 marker='*',
+                 facecolor='brown',
+                 s=60,
+                 alpha=0.8)
     plt.xlabel('T$_{eff}$ (K)')
     plt.ylabel('log L/L$_\odot$')
     plt.xlim(6000, 2500)
     plt.title('HR Diagram')
     plt.grid(True)
-    plt.legend(loc='best', fontsize='small', frameon=True, borderpad=1, borderaxespad=1, ncol=2)
-    plt.savefig(isocfit_outputs + 'hrd_complete.svg', dpi=300)
+    plt.legend(loc='best',
+               frameon=True,
+               borderpad=1,
+               borderaxespad=1,
+               ncol=2)
+    plt.savefig('_hrd_complete.png', dpi=300)
 

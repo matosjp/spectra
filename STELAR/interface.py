@@ -30,13 +30,13 @@ import madys
 import pandas as pd
 import numpy as np
 
-from StarLocalization import intpol, interp, readiso
+from StarLocalization import intpol, interp, readiso, plot_HRD
 from tools import RegressionReport, ResultsAnalyzer, ResultDisplay, MagCorrector, FilterValues, interpolmass
 from widgets import SessionManager, AboutWindow
 
 generaloutput = '/home/gomes/PycharmProjects/stelar/'
 table_output = '/home/gomes/PycharmProjects/outputs/tables/'
-themes_path = generaloutput+'STELAR/external/themes.json'
+themes_path = generaloutput + 'STELAR/external/themes.json'
 
 
 class App(ttk.Window):
@@ -103,6 +103,31 @@ class App(ttk.Window):
 
         else:
             messagebox.showinfo("Result Plot", "No result data available.")
+
+    def show_hrd_plot(self):
+        tab1 = table_data
+        model = self.sidebar.iso_selected_model.get()
+
+        if 'Mass_calc' in tab1.columns:
+            plot_HRD(tab1, model)
+
+            # Create a new Toplevel window
+            plot_window = ttk.Toplevel(self)
+            plot_window.title("Hertzpruntg-Russel Diagram Plot")
+
+            # Load the image and scale it to fit the window
+            photo = Image.open('_hrd_complete.png').resize((800, 600))
+            image_tk = ImageTk.PhotoImage(photo)
+
+            # Create a Label to display the image
+            image_label = ttk.Label(plot_window, image=image_tk)
+            image_label.pack(padx=20, pady=20)
+
+            # Keep a reference to the image to prevent garbage collection
+            image_label.image = image_tk
+
+        else:
+            messagebox.showinfo("Hertzpruntg-Russel Diagram Plot", "No result data available.")
 
     def show_report_plot(self):
         method = self.sidebar.method
@@ -232,8 +257,9 @@ class Sidebar(ttk.Frame):
 
         self.setup_home_ui(self.page0)
         self.setup_mass_determination_ui(self.page1)
-        self.setup_spectro_ui(self.page3)
-        self.setup_statistical_ui(self.page4)
+
+    #  self.setup_spectro_ui(self.page3)
+    #  self.setup_statistical_ui(self.page4)
 
     def apply_styles(self):
         # Update the notebook style
@@ -320,7 +346,7 @@ class Sidebar(ttk.Frame):
 
         self.low_int.set(0.1)
         self.hig_int.set(1.3)
-        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1,  textvariable=self.low_int, width=5)
+        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1, textvariable=self.low_int, width=5)
         spin_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
         spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=5)
         spin_high.grid(row=5, column=2, pady=(10, 5), padx=0, sticky="w")
@@ -406,7 +432,7 @@ class Sidebar(ttk.Frame):
     def mass_uncertainty(y):
         mu = np.mean(np.nan_to_num(y))
         sigma = np.var(np.nan_to_num(y))
-        uncertainty = np.sqrt(mu**2 + sigma**2)
+        uncertainty = np.sqrt(mu ** 2 + sigma ** 2)
         return uncertainty
 
     def predict_mass(self):
@@ -423,7 +449,7 @@ class Sidebar(ttk.Frame):
             mag = table_data[f'{self.selected_filter.get()}mag'].values
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
-            
+
             if self.check_var.get() == 1:
                 mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
             else:
@@ -481,7 +507,7 @@ class Sidebar(ttk.Frame):
         table_data['Mass_e'] = yerr
 
         table_data.to_csv('_final_result_table.csv')
-
+        self.master.show_hrd_plot()
         toast = ToastNotification(
             title='Star Localization',
             message="Stars completely localized on HR-Diagram.",
@@ -541,7 +567,6 @@ def create_regression_model(X, y, save_fig):
         bootstyle='dark'
     )
     toast_sucess.show_toast()
-    report.to_csv('Regression_model_report.csv')
     return model, report
 
 
