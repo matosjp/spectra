@@ -63,3 +63,9 @@ class AboutWindow(ttk.Toplevel):
 
 
 
+
+class TrainingDataDeriver:
+    def __init__(self, data):
+        self.data = data
+
+

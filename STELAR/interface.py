@@ -20,6 +20,7 @@
 *********************************************************************************/
 """
 import ttkbootstrap as ttk
+from pyarrow import table
 from ttkbootstrap.constants import *
 from ttkbootstrap.toast import ToastNotification
 import tkinter as tk
@@ -42,6 +43,7 @@ themes_path = generaloutput + 'STELAR/external/themes.json'
 class App(ttk.Window):
     def __init__(self):
         super().__init__()
+        self.target = tk.StringVar
         self.title("S.T.E.L.A.R")
         self.geometry("820x560")
         self.current_theme = 'light_theme'  # Default theme
@@ -206,6 +208,41 @@ class App(ttk.Window):
             )
             toast.show_toast()
 
+    def choosing_target(self):
+        if table_data is None:
+            open_table()
+
+        table_window = tk.Toplevel(self)
+        table_window.title("Regression Report Table")
+        table_window.geometry('600x800')
+
+        table_text = ttk.Treeview(table_window, columns='Columns:', show='headings')
+        # table_text.heading('column', text= 'Column names')
+        columns_names = list(table_data.columns)
+
+        exclusion_list = []
+
+        for row in columns_names:
+            table_text.insert("", "end", values=row)
+
+        table_text.pack(fill=BOTH, expand=True)
+        def select_item():
+            table_text.item(table_text.selection())
+
+        def delete_item():
+            for i in table_text.selection():
+                table_text.delete(i)
+                exclusion_list.append(i)
+
+        def choose_target():
+            table_window.quit()
+
+
+        table_text.bind('<<TreeViewSelect>>', select_item())
+        table_text.bind('<<Delete>>', delete_item())
+        table_text.bind('<<Enter>>', choose_target())
+
+        return exclusion_list
 
 class Sidebar(ttk.Frame):
     def __init__(self, parent):
@@ -242,24 +279,26 @@ class Sidebar(ttk.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.page0 = ttk.Frame(self.notebook, width=700, height=700)
-        self.page1 = ttk.Frame(self.notebook, width=700, height=700)
-        self.page2 = ttk.Frame(self.notebook, width=700, height=700)
-        self.page3 = ttk.Frame(self.notebook, width=700, height=700)
-        self.page4 = ttk.Frame(self.notebook, width=700, height=700)
+        self.page0 = ttk.Frame(self.notebook, width=580, height=700)
+        self.page1 = ttk.Frame(self.notebook, width=580, height=700)
+        self.page2 = ttk.Frame(self.notebook, width=580, height=700)
+        self.page3 = ttk.Frame(self.notebook, width=580, height=700)
+        self.page4 = ttk.Frame(self.notebook, width=580, height=700)
 
         self.notebook.add(self.page0, text='Home', sticky="nsew")
         self.notebook.add(self.page1, text='Mass Determination', sticky="nsew")
-        self.notebook.add(self.page4, text='Statistical Analysis', sticky="nsew")
-        self.notebook.add(self.page3, text='Spectroscopic Parameters', sticky="nsew")
+        # self.notebook.add(self.page2, text='Spectroscopic Parameters', sticky="nsew")
+        self.notebook.add(self.page3, text='Mathematical Modeling', sticky="nsew")
+        self.notebook.add(self.page4, text='Probability & Statistics', sticky="nsew")
 
         self.apply_styles()
 
         self.setup_home_ui(self.page0)
         self.setup_mass_determination_ui(self.page1)
+        self.setup_modeling_ui(self.page3)
 
-    #  self.setup_spectro_ui(self.page3)
-    #  self.setup_statistical_ui(self.page4)
+       #  self.setup_spectro_ui(self.page2)
+       #  self.setup_statistical_ui(self.page4)
 
     def apply_styles(self):
         # Update the notebook style
@@ -298,6 +337,21 @@ class Sidebar(ttk.Frame):
         # Keep a reference to the image to prevent garbage collection
         image_label.image = image_tk
 
+    def setup_modeling_ui(self, frame):
+        frame.grid_columnconfigure(3, weight=1)
+        frame.grid_rowconfigure(12, weight=1)
+
+
+        data_label = tk.Label(frame, text="Train/Test Data Split", font=('Helvetica', 12, 'bold'))
+        data_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+
+        data_split_button = tk.Button(frame, text="Locate Stars", command=self.selection_target)
+        data_split_button.grid(row=1, column=2, pady=(10, 5), padx=0, sticky="w")
+
+    def selection_target(self):
+        target = self.master.choosing_target()
+
+
     def setup_spectro_ui(self, frame):
         pass
 
@@ -323,10 +377,10 @@ class Sidebar(ttk.Frame):
         iso_model_combobox.grid(row=1, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
-        locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="e")
+        locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=0, sticky="w")
 
         self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
-        self.progress.grid(row=2, column=0, columnspan=3, pady=(10, 5), ipadx=0, sticky='ew')
+        self.progress.grid(row=2, column=0, columnspan=4, pady=(10, 5), ipadx=0, sticky='ew')
 
         # separator = ttk.Separator(frame, orient='horizontal')
         # separator.grid(row=2, column=0, columnspan=4, pady=10, sticky="ew")
@@ -376,8 +430,8 @@ class Sidebar(ttk.Frame):
         filter_combobox.grid(row=8, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
 
         # Create button to calculate mass
-        build_button = tk.Button(frame, text="Build Model", command=self.on_calculate_mass)
-        build_button.grid(row=8, column=2, pady=(10, 5), padx=10, sticky="w")
+        build_button = tk.Button(frame, text="Build Model", command=self.build_model)
+        build_button.grid(row=8, column=2, pady=(10, 5), padx=0, sticky="w")
         self.check_var.set(1)
         menu_toggle = ttk.Checkbutton(frame,
                                       text='Distance Correction',
@@ -399,18 +453,18 @@ class Sidebar(ttk.Frame):
         report_plot_button.grid(row=9, column=1, pady=(10, 5), padx=0, sticky="w")
 
         calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
-        calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=(0, 10), sticky="e")
+        calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=0, sticky="w")
 
         separator = ttk.Separator(frame, orient='horizontal')
         separator.grid(row=11, column=0, columnspan=4, pady=10, sticky="ew")
 
         table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=12, column=0, pady=(10, 5), padx=10, sticky="w")
+        table_button.grid(row=12, column=0, pady=10, padx=10, sticky="w")
 
         results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=12, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        results_button.grid(row=12, column=1, pady=10, padx=(0, 10), sticky="w")
 
-    def on_calculate_mass(self):
+    def build_model(self):
         self.method = 'MMR'
         clust_age = self.scale_int.get()
         range_mass = [self.low_int.get(), self.hig_int.get()]
@@ -472,6 +526,7 @@ class Sidebar(ttk.Frame):
         if table_data is None:
             open_table()
         model = self.iso_selected_model.get()
+        self.method = 'ISO'
         var, Nlines, alldataiso = intpol(model)
         teff = table_data['Teff'].values
         Tinput = teff

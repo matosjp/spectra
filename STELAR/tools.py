@@ -218,7 +218,6 @@ def interpolmass(primarydataset, model):
         mi.append(index[0] if index.size > 0 else None)
 
     if len(ai) == 0 or len(mi) == 0:
-        print('error')
         toast = ToastNotification(
             title='Stellar Mass Interpolation',
             message="Stellar mass(es) can't be derived",
@@ -398,7 +397,7 @@ def RegressionReport(X, y, save_fig=None):
         mae = mean_absolute_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        print(f"  {model_name} - MSE: {mse}")
+        # print(f"  {model_name} - MSE: {mse}")
 
         n = len(y_test)
         k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
