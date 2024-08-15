@@ -215,9 +215,9 @@ class App(ttk.Window):
         table_window = tk.Toplevel(self)
         table_window.title("Regression Report Table")
         table_window.geometry('600x800')
-
-        table_text = ttk.Treeview(table_window, columns='Columns:', show='headings')
-        # table_text.heading('column', text= 'Column names')
+        # add scroll bar
+        table_text = ttk.Treeview(table_window, columns='Column1', show='headings')
+        table_text.heading('Column1', text= 'Column names')
         columns_names = list(table_data.columns)
 
         exclusion_list = []
@@ -227,21 +227,17 @@ class App(ttk.Window):
 
         table_text.pack(fill=BOTH, expand=True)
         def select_item():
-            table_text.item(table_text.selection())
+            selected_item = table_text.focus()  # Get the ID of the selected row
+            self.target = table_text.item(selected_item, 'values')
+            print(self.target)
 
         def delete_item():
             for i in table_text.selection():
                 table_text.delete(i)
                 exclusion_list.append(i)
 
-        def choose_target():
-            table_window.quit()
-
-
-        table_text.bind('<<TreeViewSelect>>', select_item())
+        table_text.bind('<<TreeviewSelect>>', select_item())
         table_text.bind('<<Delete>>', delete_item())
-        table_text.bind('<<Enter>>', choose_target())
-
         return exclusion_list
 
 class Sidebar(ttk.Frame):
