@@ -2,11 +2,11 @@ import statsmodels.api as sm
 import statsmodels.stats.api as sms
 import scipy.stats as ss
 
+from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score
-
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, BayesianRidge
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
@@ -14,6 +14,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, A
 from sklearn.neighbors import KNeighborsRegressor
 
 import matplotlib.pyplot as plt
+import missingno as msno
 from ttkbootstrap.toast import ToastNotification
 from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
@@ -22,6 +23,7 @@ import numpy as np
 import pandas as pd
 import madys
 
+from Place_holder_II import color
 from StarLocalization import readiso
 
 
@@ -326,7 +328,7 @@ def fit(X, y, model_name):
         ('model', model)
     ])
 
-    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
+    grid_search = GridSearchCV(pipeline, param_grid, cv=min(len(X), 3), scoring='neg_mean_squared_error', n_jobs=-1)
     grid_search.fit(X, y)
     return grid_search
 
@@ -365,7 +367,7 @@ def weighted_score(normalized_metrics):
     return total_scores
 
 
-def RegressionReport(X, y, save_fig=None):
+def RegressionReport(X, y):
     models = {
         'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
@@ -381,62 +383,65 @@ def RegressionReport(X, y, save_fig=None):
 
     report = []
     metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'cv_diff': []}
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+    if len(X)>3:
+        X_train, X_test, y_train, y_test = train_test_split(X,
+                                                            y,
+                                                            test_size=0.30,
+                                                            random_state=42)
 
-    for model_name in models.keys():
-        grid_search = fit(X_train, y_train, model_name)
-        best_model = grid_search.best_estimator_
+        for model_name in models.keys():
+            grid_search = fit(X_train, y_train, model_name)
+            best_model = grid_search.best_estimator_
 
-        y_pred = best_model.predict(X_test)
-        cv_train_mean = np.mean(cross_val_score(best_model, X_train, y_train, cv=10))
-        cv_test_mean = np.mean(cross_val_score(best_model, X_test, y_test, cv=10))
-        cv_diff = cv_test_mean - cv_train_mean
+            y_pred = best_model.predict(X_test)
+            cv_train_mean = np.mean(cross_val_score(best_model, X_train, y_train, cv=3))
+            cv_test_mean = np.mean(cross_val_score(best_model, X_test, y_test, cv=3))
+            cv_diff = cv_test_mean - cv_train_mean
 
-        mse = mean_squared_error(y_test, y_pred)
-        rmse = np.sqrt(mse)
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+            mse = mean_squared_error(y_test, y_pred)
+            rmse = np.sqrt(mse)
+            mae = mean_absolute_error(y_test, y_pred)
+            r2 = r2_score(y_test, y_pred)
 
-        # print(f"  {model_name} - MSE: {mse}")
+            # print(f"  {model_name} - MSE: {mse}")
 
-        n = len(y_test)
-        k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
-                                                                      'coef_') else len(best_model.named_steps['model'].get_params())
-        aic = calculate_aic(n, mse, k)
+            n = len(y_test)
+            k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
+                                                                          'coef_') else len(best_model.named_steps['model'].get_params())
+            aic = calculate_aic(n, mse, k)
 
-        metrics['rmse'].append(rmse)
-        metrics['mae'].append(mae)
-        metrics['r2'].append(r2)
-        metrics['aic'].append(aic)
-        metrics['cv_diff'].append(cv_diff)
+            metrics['rmse'].append(rmse)
+            metrics['mae'].append(mae)
+            metrics['r2'].append(r2)
+            metrics['aic'].append(aic)
+            metrics['cv_diff'].append(cv_diff)
 
-        report.append({
-            'Model': model_name,
-            'RMSE': rmse,
-            'MAE': mae,
-            'R2': r2,
-            'AIC': aic,
-            'cv_diff': cv_diff,
-            'Best Params': grid_search.best_params_
-        })
+            report.append({
+                'Model': model_name,
+                'RMSE': rmse,
+                'MAE': mae,
+                'R2': r2,
+                'AIC': aic,
+                'cv_diff': cv_diff,
+                'Best Params': grid_search.best_params_
+            })
 
-    # Normalize metrics
-    normalized_metrics = normalize_metrics(metrics)
+        # Normalize metrics
+        normalized_metrics = normalize_metrics(metrics)
 
-    # Calculate weighted scores
-    scores = weighted_score(normalized_metrics)
+        # Calculate weighted scores
+        scores = weighted_score(normalized_metrics)
 
-    for i, model_report in enumerate(report):
-        model_report['Score'] = scores[i]
+        for i, model_report in enumerate(report):
+            model_report['Score'] = scores[i]
 
-    report_df = pd.DataFrame(report)
-    report = report_df
-    report.to_csv('Regression_model_report.csv')
-    # Return the best model based on the weighted score
-    best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
-    model = fit(X, y, best_model).best_estimator_
+        report_df = pd.DataFrame(report)
+        report = report_df
+        report.to_csv('Regression_model_report.csv')
+        # Return the best model based on the weighted score
+        best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
+        model = fit(X, y, best_model).best_estimator_
 
-    if save_fig is not None:
         n = int(10*max(y))+1
         ols = sm.OLS(y_test, sm.add_constant(X_test)).fit()
         res = ols.resid
@@ -528,7 +533,12 @@ def RegressionReport(X, y, save_fig=None):
         plt.tight_layout()
         plt.savefig('_visual_report.png', dpi=300)
 
-    return best_model, model, report
+        return best_model, model, report
+    else:
+        ToastNotification("Modeling",
+                  f"The number of features sample to build \n"
+                            f"the model is less than the necessary.",
+                  duration=6000, bootstyle='dark').show_toast()
 
 
 class ResultsAnalyzer:
@@ -717,3 +727,88 @@ class ResultDisplay:
             plt.savefig(save_file, dpi=300)
         plt.close(fig)
         plt.close()
+
+class MathModels:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def correlation_plot(data):
+        data_filtered = data.select_dtypes(exclude='object')
+        plt.figure(figsize=(15, 30),
+                   tight_layout=True)
+
+        plt.subplot(2,1,1)
+        sns.heatmap(data_filtered.isna().transpose(),
+                    cmap="Greens",
+                    cbar_kws={'label': 'Missing Data'})
+        plt.tick_params(direction='in')
+        plt.title('Missing Data Matrix')
+
+        plt.subplot(2,1,2)
+        data_filtered = data_filtered.dropna(axis=0, how='all')
+        corr_matrix = data_filtered.corr()
+        sns.heatmap(corr_matrix,
+                    annot=False,
+                    cmap='Purples',
+                    cbar_kws={'label': 'Pearson Correlation'},
+                    linewidths=1.)
+        plt.tick_params(direction='in')
+        plt.title('Correlation Matrix')
+
+
+        plt.savefig('_correlation_report.png', dpi=300)
+
+
+    @staticmethod
+    def data_split(table_data, target):
+
+        X = table_data.drop(target, axis=1)
+        y = table_data[target]
+        X_train, X_test, y_train, y_test = train_test_split(X,
+                                                            y,
+                                                            test_size=0.3,
+                                                            random_state=42)
+        ss = StandardScaler()
+        X_train_scaled = ss.fit_transform(X_train)
+        X_test_scaled = ss.transform(X_test)
+        y_train = np.array(y_train)
+
+        rfc_1 = RandomForestRegressor()
+        rfc_1.fit(X_train_scaled, y_train)
+        rfc_1.score(X_train_scaled, y_train)
+
+        feats = {}
+
+        for feature, importance in zip(table_data.columns,
+                                       rfc_1.feature_importances_):
+            feats[feature] = importance
+        importances = pd.DataFrame.from_dict(feats,
+                                             orient='index').rename(columns={0: 'Gini-Importance'})
+        importances = importances.sort_values(by='Gini-Importance',
+                                              ascending=False)
+        importances = importances.reset_index()
+        importances = importances.rename(columns={'index': 'Features'})
+        sns.set(font_scale=5)
+        sns.set(style="whitegrid",
+                color_codes=True,
+                font_scale=1.7)
+
+        plt.figure(figsize=(30, 15),
+                   tight_layout=True)
+
+        sns.barplot(x=importances['Gini-Importance'],
+                    y=importances['Features'],
+                    data=importances,
+                    color='#7570b3')
+        plt.axvline(x=0.1, color='red')
+        plt.xlabel('Importance', fontsize=25, weight='bold')
+        plt.ylabel('Features', fontsize=25, weight='bold')
+        plt.title('Feature Importance', fontsize=25, weight='bold')
+        plt.grid(True)
+
+        plt.savefig('_pca_report.png', dpi=300)
+
+        selected_features = importances[importances['Gini-Importance'] >= 0.1]['Features'].tolist()
+
+        return selected_features

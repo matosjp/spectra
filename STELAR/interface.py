@@ -20,7 +20,6 @@
 *********************************************************************************/
 """
 import ttkbootstrap as ttk
-from pyarrow import table
 from ttkbootstrap.constants import *
 from ttkbootstrap.toast import ToastNotification
 import tkinter as tk
@@ -28,11 +27,17 @@ from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
 import madys
 
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import KNNImputer, IterativeImputer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+import missingno as msno
 import pandas as pd
 import numpy as np
 
 from StarLocalization import intpol, interp, readiso, plot_HRD
-from tools import RegressionReport, ResultsAnalyzer, ResultDisplay, MagCorrector, FilterValues, interpolmass
+from tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
 from widgets import SessionManager, AboutWindow
 
 generaloutput = '/home/gomes/PycharmProjects/stelar/'
@@ -209,36 +214,35 @@ class App(ttk.Window):
             toast.show_toast()
 
     def choosing_target(self):
-        if table_data is None:
-            open_table()
+        plot_window = ttk.Toplevel(self)
+        plot_window.title("Mathematical Modeling: Step 1")
 
-        table_window = tk.Toplevel(self)
-        table_window.title("Regression Report Table")
-        table_window.geometry('600x800')
-        # add scroll bar
-        table_text = ttk.Treeview(table_window, columns='Column1', show='headings')
-        table_text.heading('Column1', text= 'Column names')
-        columns_names = list(table_data.columns)
+        # Load the image and scale it to fit the window
+        photo = Image.open('_correlation_report.png').resize((1200, 800))
+        image_tk = ImageTk.PhotoImage(photo)
 
-        exclusion_list = []
+        # Create a Label to display the image
+        image_label = ttk.Label(plot_window, image=image_tk)
+        image_label.pack(padx=20, pady=20)
 
-        for row in columns_names:
-            table_text.insert("", "end", values=row)
+        # Keep a reference to the image to prevent garbage collection
+        image_label.image = image_tk
 
-        table_text.pack(fill=BOTH, expand=True)
-        def select_item():
-            selected_item = table_text.focus()  # Get the ID of the selected row
-            self.target = table_text.item(selected_item, 'values')
-            print(self.target)
+    def pca_analysis(self):
+        plot_window = ttk.Toplevel(self)
+        plot_window.title("Mathematical Modeling: Step 2")
 
-        def delete_item():
-            for i in table_text.selection():
-                table_text.delete(i)
-                exclusion_list.append(i)
+        # Load the image and scale it to fit the window
+        photo = Image.open('_pca_report.png').resize((600, 800))
+        image_tk = ImageTk.PhotoImage(photo)
 
-        table_text.bind('<<TreeviewSelect>>', select_item())
-        table_text.bind('<<Delete>>', delete_item())
-        return exclusion_list
+        # Create a Label to display the image
+        image_label = ttk.Label(plot_window, image=image_tk)
+        image_label.pack(padx=20, pady=20)
+
+        # Keep a reference to the image to prevent garbage collection
+        image_label.image = image_tk
+
 
 class Sidebar(ttk.Frame):
     def __init__(self, parent):
@@ -246,8 +250,11 @@ class Sidebar(ttk.Frame):
         # Initialize variables
         global table_data
         table_data = None
+        self.filtered_data = None
         self.master = parent
         self.method = tk.StringVar()
+        self.comp_method = tk.StringVar()
+        self.target = tk.StringVar()
         self.selected_model = tk.StringVar()
         self.iso_selected_model = tk.StringVar()
         self.selected_filter = tk.StringVar()
@@ -338,15 +345,102 @@ class Sidebar(ttk.Frame):
         frame.grid_rowconfigure(12, weight=1)
 
 
-        data_label = tk.Label(frame, text="Train/Test Data Split", font=('Helvetica', 12, 'bold'))
-        data_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+        title_label_1 = tk.Label(frame, text="1. Feature Selection",
+                              font=('Helvetica', 14, 'bold'))
+        title_label_1.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
-        data_split_button = tk.Button(frame, text="Locate Stars", command=self.selection_target)
-        data_split_button.grid(row=1, column=2, pady=(10, 5), padx=0, sticky="w")
+        data_split_button = tk.Button(frame,
+                                      text="Analyze",
+                                      command=self.correlation_analysis)
+        data_split_button.grid(row=2, column=0, pady=(10, 5), padx=10, sticky="w")
 
-    def selection_target(self):
-        target = self.master.choosing_target()
+        data_label = tk.Label(frame, text="Missing Imputation:",
+                              font=('Helvetica', 10))
+        data_label.grid(row=1, column=1, pady=(10, 5), padx=10, sticky="w")
 
+        data_completition_combobox = ttk.Combobox(frame,
+                                                  textvariable=self.comp_method,
+                                                  width=12)
+        data_completition_combobox['values']=['None',
+                                              'KNN',
+                                              'Iterative',
+                                              'MICE']
+        data_completition_combobox.current(0)
+        data_completition_combobox.grid(row=2, column=1, pady=(10,5), padx=10, stick='w')
+
+        target_label = tk.Label(frame, text="Select Target:",
+                              font=('Helvetica', 10))
+        target_label.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="w")
+
+        self.target_combobox = ttk.Combobox(frame,
+                                            textvariable=self.target,
+                                            width=12)
+        self.target_combobox.grid(row=2, column=2,  pady=(10, 5), padx=10, sticky="w")
+
+
+        separator = ttk.Separator(frame, orient='horizontal')
+        separator.grid(row=4, column=0, columnspan=4, pady=10, sticky="ew")
+
+
+        title_label_2 = tk.Label(frame,
+                               text="2. Modeling",
+                               font=('Helvetica', 14, 'bold'))
+        title_label_2.grid(row=5, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+
+        data_pca_button = tk.Button(frame,
+                                      text="Analyze",
+                                      command=self.modeling)
+        data_pca_button.grid(row=6, column=0, pady=(10, 5), padx=10, sticky="w")
+
+        report_button = tk.Button(frame,
+                                  text="Model Report",
+                                  command=self.master.show_report)
+        report_button.grid(row=6, column=1, pady=(10, 5), padx=10, sticky="w")
+
+        report_plot_button = tk.Button(frame,
+                                       text="Model Report Plot",
+                                       command=self.master.show_report_plot)
+        report_plot_button.grid(row=6, column=2, pady=(10, 5), padx=10, sticky="w")
+
+    def get_info_columns(self):
+        if table_data is None:
+            open_table()
+        columns_names = list(table_data.columns)
+        self.target_combobox['values'] = columns_names
+        self.target_combobox.current(0)
+
+    def correlation_analysis(self):
+        if table_data is None:
+            open_table()
+        MathModels.correlation_plot(table_data)
+        self.master.choosing_target()
+        self.get_info_columns()
+
+    def data_treat(self):
+        if self.comp_method.get() == 'KNN':
+            data_filtered = table_data.select_dtypes(exclude='object')
+            imputer = KNNImputer(n_neighbors=5)
+            self.filtered_data = pd.DataFrame(imputer.fit_transform(data_filtered),
+                                              columns=data_filtered.columns,
+                                              index=data_filtered.index)
+        elif self.comp_method.get() == 'Iterative':
+            data_filtered = table_data.select_dtypes(exclude='object')
+            imputer = IterativeImputer(max_iter=10, random_state=0)
+            self.filtered_data = pd.DataFrame(imputer.fit_transform(data_filtered),
+                                              columns=data_filtered.columns,
+                                              index=data_filtered.index)
+        elif self.comp_method.get() == 'None':
+            data_filtered = table_data.select_dtypes(exclude='object')
+            self.filtered_data = data_filtered
+
+    def modeling(self):
+        self.data_treat()
+        selected_features = MathModels.data_split(self.filtered_data, self.target.get())
+        X = table_data.drop(self.target.get(), axis=1)
+        X = X[selected_features]
+        y = table_data[self.target.get()]
+        self.model, self.report = create_regression_model(X, y)
+        self.master.pca_analysis()
 
     def setup_spectro_ui(self, frame):
         pass
@@ -377,9 +471,6 @@ class Sidebar(ttk.Frame):
 
         self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
         self.progress.grid(row=2, column=0, columnspan=4, pady=(10, 5), ipadx=0, sticky='ew')
-
-        # separator = ttk.Separator(frame, orient='horizontal')
-        # separator.grid(row=2, column=0, columnspan=4, pady=10, sticky="ew")
 
         isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 12, 'bold'))
         isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
@@ -471,7 +562,7 @@ class Sidebar(ttk.Frame):
                                            age_range=clust_age, n_steps=[1000, 1000])
             y = th_model.masses
             X = th_model.data[:, :, 0].ravel().reshape(-1, 1)
-            self.model, self.report = create_regression_model(X, y, True)
+            self.model, self.report = create_regression_model(X, y, None)
             self.X = th_model.data[:, :, 0].ravel()
             self.y = y
             self.th_model_data = pd.DataFrame({'X': th_model.data[:, :, 0].ravel(), 'y': th_model.masses})
@@ -518,9 +609,9 @@ class Sidebar(ttk.Frame):
 
     def locate_stars(self):
         global table_data
-        # Check if both table_data and primarydataset are available
         if table_data is None:
             open_table()
+        self.method = 'ISO'
         model = self.iso_selected_model.get()
         self.method = 'ISO'
         var, Nlines, alldataiso = intpol(model)
@@ -609,8 +700,8 @@ class TopMenu(ttk.Frame):
         about_window.grab_set()
 
 
-def create_regression_model(X, y, save_fig):
-    model_name, model, report = RegressionReport(X, y, save_fig)
+def create_regression_model(X, y):
+    model_name, model, report = RegressionReport(X, y)
     toast_sucess = ToastNotification(
         title='Regression model',
         message=f"{model_name} model built.",
