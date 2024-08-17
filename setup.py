@@ -17,6 +17,7 @@ long_description = ('It provides astronomers and astrophysicists with a suite of
 
 install_requires = [
     'statsmodels',
+    'mfouesneau/tap',
     'scipy',
     'scikit-learn',
     'matplotlib',
@@ -24,7 +25,8 @@ install_requires = [
     'numpy',
     'pandas',
     'madys',
-    'pillow']
+    'pillow',
+    'tabulate']
 
 setup(name='stelar',
       version='1.0.dev0',
