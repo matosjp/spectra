@@ -44,11 +44,12 @@ def readiso(model):
         Ntabage = 10
         Nlinesa = 30
         Ncoluma = 9
-        ageiso = [5.e5, 1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8]
+        ageiso = [1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8, 3e8]
 
-        tablenames = ['bahc15iso5e5.dat', 'bahc15iso1e6.dat', 'bahc15iso2e6.dat', 'bahc15iso5e6.dat',
+        tablenames = ['bahc15iso1e6.dat', 'bahc15iso2e6.dat', 'bahc15iso5e6.dat',
                       'bahc15iso1e7.dat', 'bahc15iso2e7.dat', 'bahc15iso8e7.dat',
-                      'bahc15iso1e8.dat', 'bahc15iso1.2e8.dat', 'bahc15iso2e8.dat']
+                      'bahc15iso1e8.dat', 'bahc15iso1.2e8.dat', 'bahc15iso2e8.dat',
+                      'bahc15iso3e8.dat']
         # isocrhones table index for temperature, luminosity, age and mass
         it = 2
         il = 3
@@ -354,15 +355,15 @@ def plot_HRD(result, model):
             plt.plot(var[it, start:end-1],
                      np.log10(var[il, start:end-1]),
                      label=f'Mass: {mass[j]}',
-                     color=colors[j])
+                     color=colors[j],
+                     linestyle='dashed')
             cumulative_sum = end
 
         for i in range(len(alldataiso[:, am, 0])):
             plt.plot(alldataiso[i, at, :],
                      np.log10(alldataiso[i, al, :]),
                      label=f'{orderedage[i] / 1e6} Myr',
-                     color=colors_[i],
-                     linestyle='dashed')
+                     color=colors_[i])
 
     elif model == 'BHAC15':
         for j in range(13):
@@ -371,15 +372,15 @@ def plot_HRD(result, model):
             plt.plot(var[it, start:end-1],
                      (var[il, start:end-1]),
                      label=f'Mass: {mass[j]}',
-                     color=colors[j])
+                     color=colors[j],
+                     linestyle='dashed')
             cumulative_sum = end
 
         for i in range(len(alldataiso[:, am, 0])):
             plt.plot(alldataiso[i, at, :],
                      (alldataiso[i, al, :]),
                      label=f'{orderedage[i] / 1e6} Myr',
-                     color=colors_[i],
-                     linestyle='dashed')
+                     color=colors_[i])
 
     flag = np.where(result['Mass_calc'].values < 1.3)[0]
 

@@ -14,6 +14,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, A
 from sklearn.neighbors import KNeighborsRegressor
 
 import matplotlib.pyplot as plt
+import os
 import missingno as msno
 from ttkbootstrap.toast import ToastNotification
 from statsmodels.graphics.tsaplots import plot_acf
@@ -23,7 +24,6 @@ import numpy as np
 import pandas as pd
 import madys
 
-from Place_holder_II import color
 from StarLocalization import readiso
 
 
@@ -74,16 +74,31 @@ class FilterValues:
                 k.append(i)
         teff[k] = ph[k]
 
-        row = {'mag': teff}
+        row = {'Teff': teff}
 
-        ff = ~np.isnan(row['mag']) & (row['mag'] >= min(X)) & (row['mag'] <= max(X))
+        ff = ~np.isnan(row['Teff']) & (row['Teff'] >= min(X)) & (row['Teff'] <= max(X))
         df_row = pd.DataFrame(row)
-        teff = df_row.loc[ff, 'mag'].values
+        teff = df_row.loc[ff, 'Teff'].values
 
         return teff, ff
 
+
     @staticmethod
     def filter_results(y, y_out, other=None):
+        """
+        Filters out invalid or missing values from the input data.
+
+        Parameters:
+            y (array-like): The input values to be filtered
+            y_out (array-like): The output values to be filtered
+            other (array-like, optional): Additional values to be filtered (default is None)
+
+        Returns:
+            tuple: A tuple containing the filtered values of y, y_out, and other (if provided)
+
+        Notes:
+            This function filters out rows with NaN values or values less than or equal to 0 in either y or y_out. If the other parameter is provided, it is also filtered accordingly. The filtered values are returned as a tuple.
+        """
         if other is not None:
             row = {'y': y,
                    'y_out': y_out,
@@ -92,7 +107,7 @@ class FilterValues:
             row = {'y': y,
                    'y_out': y_out}
 
-        ff = ~np.isnan(row['y']) & (row['y'] > 0) & ~np.isnan(row['y_out']) & (row['y_out'] > 0)
+        ff = ~np.isnan(row['y']) & ~np.isnan(row['y_out'])
         df_row = pd.DataFrame(row)
         y = df_row.loc[ff, 'y'].values
         y_out = df_row.loc[ff, 'y_out'].values
@@ -262,6 +277,20 @@ def interpolmass(primarydataset, model):
 
 
 def fit(X, y, model_name):
+    """
+    Fits a machine learning model to the input data and performs hyperparameter tuning using GridSearchCV.
+
+    Parameters:
+        X (array-like): The input features
+        y (array-like): The target variable
+        model_name (str): The name of the machine learning model to use (e.g. 'Bayesian Regression', 'Linear Regression', etc.)
+
+    Returns:
+        GridSearchCV: A GridSearchCV object containing the best-performing model and its hyperparameters
+
+    Notes:
+        This function creates a pipeline with a StandardScaler and the specified machine learning model, and then performs hyperparameter tuning using GridSearchCV. The best-performing model is returned.
+    """
     if model_name == 'Bayesian Regression':
         model = BayesianRidge()
         param_grid = {'model__alpha_1': [1e-6, 1e-5, 1e-4, 1e-3],
@@ -334,11 +363,37 @@ def fit(X, y, model_name):
 
 
 def calculate_aic(n, mse, k):
+    """
+    Calculates the Akaike information criterion (AIC) for a given model.
+
+    Parameters:
+        n (int): The number of samples
+        mse (float): The mean squared error of the model
+        k (int): The number of parameters in the model
+
+    Returns:
+        float: The AIC value
+
+    Notes:
+        The AIC is a measure of the relative quality of a model for a given set of data. It takes into account both the goodness of fit and the complexity of the model.
+    """
     aic = n * np.log(mse) + 2 * k
     return aic
 
 
 def normalize_metrics(metrics):
+    """
+    Normalizes a set of metrics to have values between 0 and 1.
+
+    Parameters:
+        metrics (dict): A dictionary of metrics, where each key is a metric name and each value is a list of metric values
+
+    Returns:
+        dict: A dictionary of normalized metrics, where each key is a metric name and each value is a list of normalized metric values
+
+    Notes:
+        This function normalizes each metric by subtracting the minimum value and dividing by the range of values. This allows for fair comparison of metrics with different scales.
+    """
     normalized_metrics = {}
     for metric, values in metrics.items():
         max_val = np.max(values)
@@ -348,26 +403,58 @@ def normalize_metrics(metrics):
 
 
 def weighted_score(normalized_metrics):
+    """
+    Calculates a weighted score based on a set of normalized metrics.
+
+    Parameters:
+        normalized_metrics (dict): A dictionary of normalized metrics, where each key is a metric name and each value is a list of normalized metric values
+
+    Returns:
+        list: A list of weighted scores, where each score is a weighted sum of the normalized metrics
+
+    Notes:
+        This function uses a set of predefined weights to calculate a weighted score for each set of metrics. The weights are: RMSE (0.25), MAE (0.25), R2 (0.25), and AIC (0.25).
+    """
     weights = {
-        'rmse': 0.25,
-        'mae': 0.20,
-        'r2': 0.25,
-        'aic': 0.5,
-        'cv_diff': 0.25
+        'rmse': 0.35,
+        'mae': 0.25,
+        'r2': 0.30,
+        'aic': 0.10,
     }
     total_scores = []
     for i in range(len(normalized_metrics['rmse'])):
         score = ((weights['rmse'] * normalized_metrics['rmse'][i] +
                   weights['mae'] * normalized_metrics['mae'][i] +
                   weights['r2'] * (1 - normalized_metrics['r2'][i]) +  # Invert R2 because higher is better
-                  weights['aic'] * normalized_metrics['aic'][i])
-                 + weights['cv_diff'] * abs(normalized_metrics['cv_diff'][i]))
+                  weights['aic'] * normalized_metrics['aic'][i]))
 
         total_scores.append(score)
     return total_scores
 
 
 def RegressionReport(X, y):
+    """
+    Generates a comprehensive report for regression models.
+
+    Parameters:
+        X (pd.DataFrame): The feature data
+        y (pd.Series): The target variable
+
+    Returns:
+        tuple: A tuple containing the best model, the trained model object, and a report dataframe
+
+    Notes:
+        This function performs the following steps:
+        1. Splits the data into training and testing sets
+        2. Trains and evaluates multiple regression models using grid search
+        3. Calculates various metrics (RMSE, MAE, R2, AIC) for each model
+        4. Normalizes the metrics and calculates a weighted score for each model
+        5. Selects the best model based on the weighted score
+        6. Generates a visual report with plots for actual vs predicted values, residuals distribution, skedasticity, and influence plot
+        7. Saves the report to a CSV file and returns the best model, trained model object, and report dataframe
+    """
+    from interface import setup_path
+    os.chdir(setup_path)
     models = {
         'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
@@ -382,11 +469,11 @@ def RegressionReport(X, y):
     # Split the data
 
     report = []
-    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': [], 'cv_diff': []}
+    metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': []}
     if len(X)>3:
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
-                                                            test_size=0.30,
+                                                            test_size=0.1,
                                                             random_state=42)
 
         for model_name in models.keys():
@@ -394,10 +481,6 @@ def RegressionReport(X, y):
             best_model = grid_search.best_estimator_
 
             y_pred = best_model.predict(X_test)
-            cv_train_mean = np.mean(cross_val_score(best_model, X_train, y_train, cv=3))
-            cv_test_mean = np.mean(cross_val_score(best_model, X_test, y_test, cv=3))
-            cv_diff = cv_test_mean - cv_train_mean
-
             mse = mean_squared_error(y_test, y_pred)
             rmse = np.sqrt(mse)
             mae = mean_absolute_error(y_test, y_pred)
@@ -414,7 +497,6 @@ def RegressionReport(X, y):
             metrics['mae'].append(mae)
             metrics['r2'].append(r2)
             metrics['aic'].append(aic)
-            metrics['cv_diff'].append(cv_diff)
 
             report.append({
                 'Model': model_name,
@@ -422,10 +504,9 @@ def RegressionReport(X, y):
                 'MAE': mae,
                 'R2': r2,
                 'AIC': aic,
-                'cv_diff': cv_diff,
                 'Best Params': grid_search.best_params_
             })
-
+            print(f'{model_name=}')
         # Normalize metrics
         normalized_metrics = normalize_metrics(metrics)
 
@@ -437,12 +518,11 @@ def RegressionReport(X, y):
 
         report_df = pd.DataFrame(report)
         report = report_df
-        report.to_csv('Regression_model_report.csv')
+        report.to_csv('Regression_model_report.csv', index=None)
         # Return the best model based on the weighted score
         best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
         model = fit(X, y, best_model).best_estimator_
 
-        n = int(10*max(y))+1
         ols = sm.OLS(y_test, sm.add_constant(X_test)).fit()
         res = ols.resid
         sth = ols.get_influence().summary_frame()
@@ -451,13 +531,21 @@ def RegressionReport(X, y):
         rsqueared = ols.rsquared
 
         pred_test = model.predict(X_test)
-        plt.figure(figsize=(12, 8), tight_layout=True)
+
+        xyrange = np.linspace(min(y), max(y), 14)
+        xyrange = [round(x, 1) for x in xyrange]
+
+        plt.figure(figsize=(15, 15),
+                   tight_layout=True)
 
         # Actual vs Predicted
         plt.subplot(2, 2, 1)
         plt.scatter(y_test, pred_test, facecolor='#9370db', label='Test Prediction')
-        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color='black', linestyle='dashed'
-                 , lw=2, label='Ideal')
+        plt.plot([y_test.min(), y_test.max()],
+                 [y_test.min(), y_test.max()],
+                 color='black',
+                 linestyle='dashed',
+                 lw=2, label='Ideal')
         plt.xlabel('Actual Target Values')
         plt.ylabel('Predicted Target Values')
         if rsqueared <= 0.75:
@@ -467,8 +555,8 @@ def RegressionReport(X, y):
         plt.title(f'{best_model} ({corr}, R$^2$={rsqueared:.2f})')
         plt.legend(loc='best')
         plt.tick_params(direction='in')
-        plt.xticks([x / 10 for x in range(n)])
-        plt.yticks([x / 10 for x in range(n)])
+        plt.xticks(xyrange)
+        plt.yticks(xyrange)
         plt.grid(True)
 
         # Residuals distribution (normality)
@@ -478,7 +566,9 @@ def RegressionReport(X, y):
             norm = 'Not normal'
         else:
             norm = 'Normal'
-        sns.histplot(res, kde=True, color='#9370db')
+        sns.histplot(res,
+                     kde=True,
+                     color='#9370db')
         plt.title(f'Normality of residuals ({norm}, P-value={norm_p_value:.2f})')
         plt.xlabel('Residuals')
         plt.grid(True)
@@ -493,13 +583,18 @@ def RegressionReport(X, y):
             ske = 'Heteroskedastic'
         else:
             ske = 'Homoskedastic'
-        plt.scatter(pred_test, abs(res), facecolor='#9370db')
-        plt.axhline(y=test_pred[0], color='k', linestyle='dashed', label='Symmetry line')
+        plt.scatter(pred_test,
+                    abs(res),
+                    facecolor='#9370db')
+        plt.axhline(y=test_pred[0],
+                    color='k',
+                    linestyle='dashed',
+                    label='Symmetry line')
         plt.xlabel('Predicted Values of Validation Data')
         plt.ylabel('Residuals')
         plt.title(f'Skedasticity of Residuals ({ske}, P-value={ske_p_value:.2f})')
         plt.grid(True)
-        plt.xticks([x / 10 for x in range(n)])
+        plt.xticks(xyrange)
         plt.legend(loc='best')
         plt.tick_params(direction='in')
 
@@ -530,7 +625,6 @@ def RegressionReport(X, y):
         plt.xlim([min(lev), max(lev)])
         plt.ylim(-3.5, 3.5)
 
-        plt.tight_layout()
         plt.savefig('_visual_report.png', dpi=300)
 
         return best_model, model, report
@@ -542,6 +636,7 @@ def RegressionReport(X, y):
 
 
 class ResultsAnalyzer:
+
     def __init__(self, calculated_masses, ctrl_masses):
         self.y_out = calculated_masses
         self.y = ctrl_masses
@@ -564,7 +659,7 @@ class ResultsAnalyzer:
 
         for fixed_cook_distance in fixed_cooks_distance_values:
             # Calculate leverage for each observation
-            leverage_values = np.linspace(0.001, 1, 1000)
+            leverage_values = np.linspace(0.001, 0.999, 1000)
 
             # Calculate the corresponding studentized residuals using the formula
 
@@ -688,6 +783,24 @@ class ResultsAnalyzer:
 
 
 class ResultDisplay:
+    """
+    Displays and plots the results of mass prediction models.
+
+    Attributes:
+        x (array-like): The input values (e.g. magnitudes or effective temperatures)
+        y (array-like): The predicted masses
+        yerr (array-like): The errors associated with the predicted masses
+        method (str): The method used for mass prediction (either 'MMR' or 'Isochrone Fitting')
+
+    Methods:
+        res_plot(save_file=False): Plots the results and saves the figure to a file if specified.
+
+    Parameters:
+        save_file (bool or str, optional): If True, saves the figure to a file named 'mass_results_display.png'. If a string, saves the figure to a file with the specified name.
+
+    Notes:
+        This class provides a convenient way to visualize the results of mass prediction models. The `res_plot` method filters the input data, creates a plot with error bars, and customizes the axis labels and title based on the method used.
+    """
     def __init__(self, x, y, yerr, method):
         self.x = x
         self.y = y
@@ -695,6 +808,20 @@ class ResultDisplay:
         self.method = method
 
     def res_plot(self, save_file=False):
+        """
+        Plots the results of mass prediction models.
+
+        Parameters:
+            save_file (bool or str, optional): If True, saves the figure to a file named '_mass_results_display.png'. If a string, saves the figure to a file with the specified name. Defaults to False.
+
+        Returns:
+            None
+
+        Notes:
+            This method filters the input data using the `FilterValues.filter_results` function, creates a plot with error bars, and customizes the axis labels and title based on the method used. The plot is then displayed and saved to a file if specified.
+        """
+        from interface import setup_path
+        os.chdir(setup_path)
         x, y, yerr = FilterValues.filter_results(self.x, self.y, self.yerr)
         fig = plt.figure(figsize=(12, 8))
         plt.plot(x, y, marker="^", color='#7570b3', alpha=0.6,
@@ -729,13 +856,49 @@ class ResultDisplay:
         plt.close()
 
 class MathModels:
+    """
+    A class for mathematical modeling and feature selection.
+
+    This class provides methods for selecting the most important features from a dataset and generating correlation plots.
+
+    Attributes:
+        None
+
+    Methods:
+        select_features(table_data, target): Selects the most important features from a dataset using correlation analysis and random forest feature importance.
+        correlation_plot(data): Generates a correlation plot for a given dataset, including a missing data matrix and a correlation matrix.
+    """
     def __init__(self):
         pass
-
     @staticmethod
     def correlation_plot(data):
+        """
+       Generates a correlation plot for a given dataset, including a missing data matrix and a correlation matrix.
+
+       Parameters:
+           data (pd.DataFrame): The input dataset.
+
+       Returns:
+           None
+
+       Notes:
+           This function performs the following steps:
+           1. Filters the input data to exclude non-numeric columns.
+           2. Creates a heatmap of missing data in the filtered dataset.
+           3. Drops rows with all missing values from the filtered dataset.
+           4. Computes the Pearson correlation matrix of the filtered dataset.
+           5. Creates a heatmap of the correlation matrix.
+           6. Saves the plot to a file named '_correlation_report.png' in the current working directory.
+
+       The resulting plot consists of two subplots:
+           - Top subplot: Missing data matrix, where green cells indicate missing values.
+           - Bottom subplot: Correlation matrix, where purple cells indicate strong positive correlations and white cells indicate weak or negative correlations.
+        """
+        from interface import setup_path
+        os.chdir(setup_path)
+
         data_filtered = data.select_dtypes(exclude='object')
-        plt.figure(figsize=(15, 30),
+        plt.figure(figsize=(8, 12),
                    tight_layout=True)
 
         plt.subplot(2,1,1)
@@ -761,9 +924,39 @@ class MathModels:
 
 
     @staticmethod
-    def data_split(table_data, target):
+    def select_features(table_data, target):
+        """
+        Selects the most important features from a dataset using correlation analysis and random forest feature importance.
 
-        X = table_data.drop(target, axis=1)
+        Parameters:
+            table_data (pd.DataFrame): The input dataset containing features and target variable.
+            target (str): The name of the target variable in the dataset.
+
+        Returns:
+            list: A list of selected feature names with importance greater than or equal to 0.1.
+
+        Notes:
+            This function performs the following steps:
+            1. Computes the correlation matrix of the input dataset.
+            2. Selects features with absolute correlation greater than or equal to 0.75.
+            3. Splits the data into training and testing sets.
+            4. Scales the data using StandardScaler.
+            5. Trains a random forest regressor on the scaled data.
+            6. Computes the feature importance using the random forest regressor.
+            7. Plots the feature importance using a bar chart.
+            8. Selects features with importance greater than or equal to 0.1.
+        """
+        from interface import setup_path
+        os.chdir(setup_path)
+
+        corr_matrix = table_data.corr()
+        upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+        selected_features = [column for column in upper_tri.columns if any(abs(upper_tri[column]) >= 0.75)]
+
+        if target in selected_features:
+            selected_features.remove(target)
+
+        X = table_data[selected_features]
         y = table_data[target]
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
@@ -780,7 +973,7 @@ class MathModels:
 
         feats = {}
 
-        for feature, importance in zip(table_data.columns,
+        for feature, importance in zip(X.columns,
                                        rfc_1.feature_importances_):
             feats[feature] = importance
         importances = pd.DataFrame.from_dict(feats,
@@ -794,7 +987,7 @@ class MathModels:
                 color_codes=True,
                 font_scale=1.7)
 
-        plt.figure(figsize=(30, 15),
+        plt.figure(figsize=(12, 8),
                    tight_layout=True)
 
         sns.barplot(x=importances['Gini-Importance'],
@@ -808,7 +1001,8 @@ class MathModels:
         plt.grid(True)
 
         plt.savefig('_pca_report.png', dpi=300)
-
+        print(f'{selected_features=}')
         selected_features = importances[importances['Gini-Importance'] >= 0.1]['Features'].tolist()
+        print(f'{selected_features=}')
 
         return selected_features

@@ -33,6 +33,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 import missingno as msno
+import os
 import pandas as pd
 import numpy as np
 
@@ -40,10 +41,11 @@ from StarLocalization import intpol, interp, readiso, plot_HRD
 from tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
 from widgets import SessionManager, AboutWindow
 
-generaloutput = '/home/gomes/PycharmProjects/stelar/'
-table_output = '/home/gomes/PycharmProjects/outputs/tables/'
-themes_path = generaloutput + 'STELAR/external/themes.json'
-
+setup_path = os.getcwd()
+default_pth = os.getcwd()
+table_output = default_pth + '/outputs/tables/'
+themes_path = setup_path + '/external/themes.json'
+os.chdir(default_pth)
 
 class App(ttk.Window):
     def __init__(self):
@@ -54,6 +56,8 @@ class App(ttk.Window):
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.create_widgets()
+        os.chdir(os.getcwd())
+        default_pth = os.getcwd()
 
     def load_custom_theme(self, theme_name):
         style = ttk.Style()
@@ -138,7 +142,7 @@ class App(ttk.Window):
 
     def show_report_plot(self):
         method = self.sidebar.method
-        if method == 'MMR':
+        if method == 'MMR' or method == 'MOD':
 
             plot_window = ttk.Toplevel(self)
             plot_window.title("Mass-Magnitude Relationship Regression")
@@ -218,7 +222,7 @@ class App(ttk.Window):
         plot_window.title("Mathematical Modeling: Step 1")
 
         # Load the image and scale it to fit the window
-        photo = Image.open('_correlation_report.png').resize((1200, 800))
+        photo = Image.open('_correlation_report.png').resize((600, 800))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -233,7 +237,7 @@ class App(ttk.Window):
         plot_window.title("Mathematical Modeling: Step 2")
 
         # Load the image and scale it to fit the window
-        photo = Image.open('_pca_report.png').resize((600, 800))
+        photo = Image.open('_pca_report.png').resize((800, 600))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -243,7 +247,6 @@ class App(ttk.Window):
         # Keep a reference to the image to prevent garbage collection
         image_label.image = image_tk
 
-
 class Sidebar(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, padding=5)
@@ -252,6 +255,8 @@ class Sidebar(ttk.Frame):
         table_data = None
         self.filtered_data = None
         self.master = parent
+        self.selected_features = pd.DataFrame
+        self.features = []
         self.method = tk.StringVar()
         self.comp_method = tk.StringVar()
         self.target = tk.StringVar()
@@ -292,7 +297,7 @@ class Sidebar(ttk.Frame):
         self.notebook.add(self.page1, text='Mass Determination', sticky="nsew")
         # self.notebook.add(self.page2, text='Spectroscopic Parameters', sticky="nsew")
         self.notebook.add(self.page3, text='Mathematical Modeling', sticky="nsew")
-        self.notebook.add(self.page4, text='Probability & Statistics', sticky="nsew")
+        #self.notebook.add(self.page4, text='Probability & Statistics', sticky="nsew")
 
         self.apply_styles()
 
@@ -323,7 +328,7 @@ class Sidebar(ttk.Frame):
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        photo = Image.open(generaloutput + 'STELAR/icon.png').resize((400, 400))
+        photo = Image.open(setup_path + '/icon.png').resize((400, 400))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -379,28 +384,46 @@ class Sidebar(ttk.Frame):
 
 
         separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=4, column=0, columnspan=4, pady=10, sticky="ew")
+        separator.grid(row=3, column=0, columnspan=4, pady=10, sticky="ew")
 
 
         title_label_2 = tk.Label(frame,
                                text="2. Modeling",
                                font=('Helvetica', 14, 'bold'))
-        title_label_2.grid(row=5, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+        title_label_2.grid(row=4, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
         data_pca_button = tk.Button(frame,
-                                      text="Analyze",
-                                      command=self.modeling)
-        data_pca_button.grid(row=6, column=0, pady=(10, 5), padx=10, sticky="w")
+                                    text="Build Model",
+                                    command=self.modeling)
+        data_pca_button.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
 
         report_button = tk.Button(frame,
                                   text="Model Report",
                                   command=self.master.show_report)
-        report_button.grid(row=6, column=1, pady=(10, 5), padx=10, sticky="w")
+        report_button.grid(row=5, column=1, pady=(10, 5), padx=10, sticky="w")
 
         report_plot_button = tk.Button(frame,
                                        text="Model Report Plot",
                                        command=self.master.show_report_plot)
-        report_plot_button.grid(row=6, column=2, pady=(10, 5), padx=10, sticky="w")
+        report_plot_button.grid(row=5, column=2, pady=(10, 5), padx=10, sticky="w")
+
+        separator = ttk.Separator(frame, orient='horizontal')
+        separator.grid(row=6, column=0, columnspan=4, pady=10, sticky="ew")
+
+        title_label_1 = tk.Label(frame, text="3. Calculate",
+                                 font=('Helvetica', 14, 'bold'))
+        title_label_1.grid(row=7, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+
+        derive_button = tk.Button(frame,
+                                       text="Calculate",
+                                       command=self.derive)
+        derive_button.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
+
+        results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
+        results_button.grid(row=8, column=1, pady=(10, 5), padx=10, sticky="w")
+
+        table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
+        table_button.grid(row=8, column=2, pady=(10, 5), padx=10, sticky="w")
 
     def get_info_columns(self):
         if table_data is None:
@@ -417,30 +440,75 @@ class Sidebar(ttk.Frame):
         self.get_info_columns()
 
     def data_treat(self):
-        if self.comp_method.get() == 'KNN':
+        """
+        Performs data imputation using the specified method.
+
+        Parameters:
+            comp_method (str or object): The imputation method to use. Can be one of:
+                - 'KNN': K-Nearest Neighbors imputation
+                - 'Iterative': Iterative imputation
+                - 'MICE': Multiple Imputation by Chained Equations (not implemented)
+                - 'None': No imputation (returns the original data with missing values removed)
+
+        Returns:
+            pd.DataFrame: The imputed data
+
+        Notes:
+            This function performs the following steps:
+            1. Filters the input data to exclude non-numeric columns.
+            2. Drops columns with all missing values.
+            3. Applies the specified imputation method to the filtered data.
+            4. Returns the imputed data as a pandas DataFrame.
+
+        Warning:
+            The 'MICE' method is not currently implemented and will raise an error if selected.
+        """
+        if self.comp_method.get() in ['KNN', 'Iterative']:
             data_filtered = table_data.select_dtypes(exclude='object')
-            imputer = KNNImputer(n_neighbors=5)
-            self.filtered_data = pd.DataFrame(imputer.fit_transform(data_filtered),
-                                              columns=data_filtered.columns,
-                                              index=data_filtered.index)
-        elif self.comp_method.get() == 'Iterative':
-            data_filtered = table_data.select_dtypes(exclude='object')
-            imputer = IterativeImputer(max_iter=10, random_state=0)
+            data_filtered = data_filtered.dropna(axis=1, how='all')
+
+            if self.comp_method.get() == 'KNN':
+                imputer = KNNImputer(n_neighbors=5)
+            elif self.comp_method.get() == 'Iterative':
+                imputer = IterativeImputer(max_iter=10, random_state=0)
+
             self.filtered_data = pd.DataFrame(imputer.fit_transform(data_filtered),
                                               columns=data_filtered.columns,
                                               index=data_filtered.index)
         elif self.comp_method.get() == 'None':
             data_filtered = table_data.select_dtypes(exclude='object')
+            data_filtered = data_filtered.dropna(axis=1, how='all')
             self.filtered_data = data_filtered
 
     def modeling(self):
+        self.method = 'MOD'
         self.data_treat()
-        selected_features = MathModels.data_split(self.filtered_data, self.target.get())
-        X = table_data.drop(self.target.get(), axis=1)
-        X = X[selected_features]
-        y = table_data[self.target.get()]
+        selected_features = MathModels.select_features(self.filtered_data, self.target.get())
+        X = self.filtered_data[selected_features].values
+        y = self.filtered_data[self.target.get()].values
         self.model, self.report = create_regression_model(X, y)
         self.master.pca_analysis()
+        self.selected_features = selected_features
+
+    def derive(self):
+        X = table_data[self.selected_features]
+        yerr = np.zeros(len(X))
+        y_out = np.zeros(len(X))
+
+        k = ~np.isnan(X).any(axis=1)
+        x = X.loc[k]
+        y_out[k] = self.model.predict((x.values.reshape(-1, 1)))
+        yerr[k] = self.mass_uncertainty(y_out[k]) * 0.15
+
+        table_data[self.target.get() + '_calc'] = y_out
+        table_data[self.target.get() + '_e'] = yerr
+        table_data.to_csv('_final_result_table.csv', index=None)
+
+        ToastNotification("Derivation by Mathematical Model",
+                          f"{self.target.get()} calculated successfully.",
+                          duration=6000, bootstyle='dark').show_toast()
+
+
 
     def setup_spectro_ui(self, frame):
         pass
@@ -546,10 +614,10 @@ class Sidebar(ttk.Frame):
         separator.grid(row=11, column=0, columnspan=4, pady=10, sticky="ew")
 
         table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=12, column=0, pady=10, padx=10, sticky="w")
+        table_button.grid(row=12, column=0, pady=0, padx=10, sticky="w")
 
         results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=12, column=1, pady=10, padx=(0, 10), sticky="w")
+        results_button.grid(row=12, column=1, pady=0, padx=(0, 10), sticky="w")
 
     def build_model(self):
         self.method = 'MMR'
@@ -560,12 +628,12 @@ class Sidebar(ttk.Frame):
         if self.selected_model:
             th_model = madys.IsochroneGrid(self.selected_model.get(), mag_filter, mass_range=range_mass,
                                            age_range=clust_age, n_steps=[1000, 1000])
-            y = th_model.masses
+            y = np.log10(th_model.masses)
             X = th_model.data[:, :, 0].ravel().reshape(-1, 1)
-            self.model, self.report = create_regression_model(X, y, None)
+            self.model, self.report = create_regression_model(X, y)
             self.X = th_model.data[:, :, 0].ravel()
             self.y = y
-            self.th_model_data = pd.DataFrame({'X': th_model.data[:, :, 0].ravel(), 'y': th_model.masses})
+            self.th_model_data = pd.DataFrame({'X': th_model.data[:, :, 0].ravel(), 'y': y})
         else:
             messagebox.showinfo("Regression model", f"Failed to build the regression model for these parameters.")
 
@@ -598,10 +666,12 @@ class Sidebar(ttk.Frame):
 
             mass[k] = self.model.predict(mag.reshape(-1, 1))
             yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
-
-            table_data['Mass_calc'] = mass
+            key = np.where(np.array(mass) == 0.)[0]
+            hold_mass = np.array(mass)
+            hold_mass[key] = np.nan
+            table_data['Mass_calc'] = 10**hold_mass
             table_data['Mass_e'] = yerr
-            table_data.to_csv('_final_result_table.csv')
+            table_data.to_csv('_final_result_table.csv', index=None)
 
             ToastNotification("Mass Determination",
                               f"Mass calculated successfully for filter {self.selected_filter.get()}.",
@@ -611,7 +681,6 @@ class Sidebar(ttk.Frame):
         global table_data
         if table_data is None:
             open_table()
-        self.method = 'ISO'
         model = self.iso_selected_model.get()
         self.method = 'ISO'
         var, Nlines, alldataiso = intpol(model)
@@ -648,14 +717,14 @@ class Sidebar(ttk.Frame):
         table_data['Mass_calc'] = mass
         table_data['Mass_e'] = yerr
 
-        table_data.to_csv('_final_result_table.csv')
+        table_data.to_csv('_final_result_table.csv', index=None)
         self.master.show_hrd_plot()
         toast = ToastNotification(
             title='Star Localization',
             message="Stars completely localized on HR-Diagram.",
             duration=5000,
             bootstyle='dark'
-        )
+            )
         toast.show_toast()
 
 
