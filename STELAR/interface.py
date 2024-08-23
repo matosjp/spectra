@@ -798,7 +798,15 @@ def open_table():
 
             # Define possible column name variations
             teff_column_variations = ['Teff']
-            logl_column_variations = ['logL', 'lum', 'logl', 'L', 'L/Ls', 'Lsun', 'logL*', 'Lum']
+            logl_column_variations = ['logL',
+                                      'lum',
+                                      'logl',
+                                      'L',
+                                      'L/Ls',
+                                      'Lsun',
+                                      'logL*',
+                                      'Lum',
+                                      'Lbol']
 
             # Find the actual column names in the file
             teff_column = next((col for col in teff_column_variations if col in table_data.columns), None)
