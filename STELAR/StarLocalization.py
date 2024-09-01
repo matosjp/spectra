@@ -7,9 +7,8 @@ import os
 from ttkbootstrap.toast import ToastNotification
 
 matplotlib.use('Agg')
-
-path = '/home/gomes/MEGA/Workspaces/STELAR_project/STELAR/'
-output = '/home/gomes/MEGA/Workspaces/STELAR_project/outputs/'
+path = '/home/gomes/MEGA/STELAR_project/STELAR/'
+output = '/home/gomes/MEGA/STELAR_project/outputs/'
 isocfit_outputs = output + 'isocrone_fit/'
 isocs = path + 'isochrone_models/'
 os.chdir(path)
@@ -21,14 +20,15 @@ def readiso(model):
     if model == "Siess 2000":
         evoltracks = isocs + 'SIESS/Grid/OV02/'
         isoctables = isocs + 'SIESS/Isoc/'
-        Ntabage = 9
-        Nlinesa = 14
+        Ntabage = 10
+        Nlinesa = 15
         Ncoluma = 21
-        ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 6e7, 1e8])
+        ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 3e7, 6e7, 1e8])
 
         tablenames = ['zamsZ002oiso1e4.dat', 'zamsZ002oiso5e4.dat', 'zamsZ002oiso2e5.dat',
                       'zamsZ002oiso5e5.dat', 'zamsZ002oiso2e6.dat', 'zamsZ002oiso5e6.dat',
-                      'zamsZ002oiso1e7.dat', 'zamsZ002oiso6e7.dat', 'zamsZ002oiso1e8.dat']
+                      'zamsZ002oiso1e7.dat', 'zamsZ002oiso3e7.dat', 'zamsZ002oiso6e7.dat',
+                      'zamsZ002oiso1e8.dat']
         # evolutionary tracks table index for temperature, luminosity, age and mass
         it = 6
         il = 2
@@ -44,12 +44,12 @@ def readiso(model):
         Ntabage = 10
         Nlinesa = 30
         Ncoluma = 9
-        ageiso = [1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 8.e7, 1.e8, 1.2e8, 2e8, 3e8]
+        ageiso = [1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 5.e7, 8.e7, 1.e8, 1.2e8, 2e8]
 
         tablenames = ['bahc15iso1e6.dat', 'bahc15iso2e6.dat', 'bahc15iso5e6.dat',
-                      'bahc15iso1e7.dat', 'bahc15iso2e7.dat', 'bahc15iso8e7.dat',
-                      'bahc15iso1e8.dat', 'bahc15iso1.2e8.dat', 'bahc15iso2e8.dat',
-                      'bahc15iso3e8.dat']
+                      'bahc15iso1e7.dat', 'bahc15iso2e7.dat', 'bahc15iso5e7.dat',
+                      'bahc15iso8e7.dat', 'bahc15iso1e8.dat', 'bahc15iso1.2e8.dat',
+                      'bahc15iso2e8.dat']
         # isocrhones table index for temperature, luminosity, age and mass
         it = 2
         il = 3
@@ -77,7 +77,11 @@ def readiso(model):
     return alldataiso
 
 
-def tablestr(Ntables):
+def tablestr(model):
+    if model == "Siess 2000":
+        Ntables = 15
+    else:
+        Ntables = 14
     mass = [(x+1) / 10 for x in range(Ntables)]
     imass = []
 
@@ -90,7 +94,7 @@ def tablestr(Ntables):
     return mass, imass
 
 
-def interp(t1, l1, var, Nlines, alldataiso):
+def interp(t1, l1, var, Nlines, alldataiso, save):
     """
     This code is a Python function called interp that performs interpolation
     and plotting tasks to find the nearest evolutionary track and isochrone
@@ -212,12 +216,12 @@ def interp(t1, l1, var, Nlines, alldataiso):
                 if iaux == ageiso[itab]:
                     ii = i
 
+            axs = fig.add_subplot(gs[:2, :])
             if ii is not None and 1 <= ii < 8:
                 inew = ii
                 inew1 = ii - 1
                 inew2 = ii + 1
 
-                axs = fig.add_subplot(gs[:2, :])
                 axs.plot(alldataiso[inew1, at, :], (alldataiso[inew1, al, :]), label=f'{orderedage[inew1] / 1e6} Myr',
                          color='#3F8D4F')
                 axs.plot(alldataiso[inew, at, :], (alldataiso[inew, al, :]), label=f'{orderedage[inew] / 1e6} Myr',
@@ -242,28 +246,34 @@ def interp(t1, l1, var, Nlines, alldataiso):
                          color='black')
                 axs.plot(alldataiso[inew1, at, :], (alldataiso[inew1, al, :]), label=f'{orderedage[inew1] / 1e6} Myr',
                          color='#3F8D4F')
-
-            if 2 <= nfac <= 10:
-                axs.plot(x2, y2, '--', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
-                axs.plot(x1, y1, '--', label=f'M = 0.{nfac} M$_\odot$', color='black')
-                axs.plot(x3, y3, '--', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
+            if 2 <= nfac <= 12:
+                axs.plot(x2, y2, linestyle='dashed', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
+                axs.plot(x1, y1, linestyle='dashed', label=f'M = 0.{nfac} M$_\odot$', color='black')
+                axs.plot(x3, y3, linestyle='dashed', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
             if nfac == 1:
-                axs.plot(x1, y1, '--', label=f'M = 0.{nfac} M$_\odot$', color='black')
-                axs.plot(x3, y3, '--', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
-            if nfac == 12:
-                axs.plot(x2, y2, '--', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
-                axs.plot(x1, y1, '--', label=f'M = 1.2 M$_\odot$', color='black')
 
-            axs.scatter(t1, l1, color='red', marker='*', label='Star', edgecolors='white', s=300)
+                axs.plot(x1, y1, linestyle='dashed', label=f'M = 0.{nfac} M$_\odot$', color='black')
+                axs.plot(x3, y3, linestyle='dashed', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
+            if nfac == 13:
+
+                axs.plot(x2, y2, linestyle='dashed', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
+                axs.plot(x1, y1, linestyle='dashed', label=f'M = 1.3 M$_\odot$', color='black')
+            if il == 2:
+                axs.set_yscale('log')
+                axs.scatter(t1, 10**l1, color='red', marker='*', label='Star', edgecolors='white', s=300)
+                axs.set_ylabel('log(L/L$_\odot$)')
+            else:
+                axs.scatter(t1, l1, color='red', marker='*', label='Star', edgecolors='white', s=300)
+                axs.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
+                axs.set_ylabel('L/L$_\odot$')
 
             axs.set_title('HR Diagram')
             axs.set_xlabel('T$_{\mathrm{eff}}$ (K)')
-            axs.set_ylabel('L/L$_\odot$')
             axs.grid()
-            axs.set_yscale('log')
             axs.legend()
             plt.gca().invert_xaxis()
-            plt.savefig(f"{output}isocfit_outputs/hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.svg", dpi=300)
+            if save == 1:
+                plt.savefig(f"{output}isocfit_outputs/hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.pdf")
             plt.close(fig)
             plt.close()
 
@@ -280,14 +290,16 @@ def interp(t1, l1, var, Nlines, alldataiso):
                 return None, None, t1, l1
 
 
-def readtables(Ntables, imass, model):
+def readtables(imass, model):
     global colunas, Ncolumn, itot
     Nlines = 0
     if model == "Siess 2000":
         Ncolumn = 11  # Number of columns of each table
-        Nlines = [228, 240, 228, 240, 264, 264, 312, 348, 372, 396, 384, 384, 408, 396]  # Number of lines of each table
+        Ntables = 14
+        Nlines = [228, 240, 228, 240, 264, 264, 312, 348, 372, 396, 384, 384, 408, 396, 408]  # Number of lines of each table
 
     elif model == "BHAC15":
+        Ntables = 13
         Ncolumn = 13
         Nlines = [432, 432, 432, 432, 432, 432, 432, 432, 432, 424, 411, 397, 386, 374]
     itot = sum(Nlines)  # Total number of lines (all tables)
@@ -334,7 +346,7 @@ def intpol(model):
     alldataiso = readiso(model)
 
     # Read tables
-    var, Nlines, initialine, finaline = readtables(Ntables, imass, model)
+    var, Nlines, initialine, finaline = readtables(imass, model)
 
     return var, Nlines, alldataiso
 
@@ -348,8 +360,8 @@ def plot_HRD(result, model):
     orderedage = np.sort(ageiso)
     cumulative_sum = 0
     if model == 'Siess 2000':
-
-        for j in range(13):
+        flag = np.where(result['Mass_calc'].values <= 1.5)[0]
+        for j in range(len(mass)):
             start = cumulative_sum
             end = start + Nlines[j]
             plt.plot(var[it, start:end-1],
@@ -366,7 +378,8 @@ def plot_HRD(result, model):
                      color=colors_[i])
 
     elif model == 'BHAC15':
-        for j in range(13):
+        flag = np.where(result['Mass_calc'].values <= 1.4)[0]
+        for j in range(len(mass)):
             start = cumulative_sum
             end = start + Nlines[j]
             plt.plot(var[it, start:end-1],
@@ -382,7 +395,6 @@ def plot_HRD(result, model):
                      label=f'{orderedage[i] / 1e6} Myr',
                      color=colors_[i])
 
-    flag = np.where(result['Mass_calc'].values < 1.3)[0]
 
     plt. scatter(result['Teff'][flag],
                  result['logL'][flag],

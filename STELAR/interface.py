@@ -19,6 +19,8 @@
 *  properties and behaviors of stars across the cosmos.                           *
 *********************************************************************************/
 """
+from traceback import print_tb
+
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.toast import ToastNotification
@@ -251,9 +253,11 @@ class Sidebar(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, padding=5)
         # Initialize variables
+
         global table_data
         table_data = None
         self.filtered_data = None
+        self.save_var = tk.IntVar()
         self.master = parent
         self.selected_features = pd.DataFrame
         self.features = []
@@ -266,6 +270,8 @@ class Sidebar(ttk.Frame):
         self.clsuter_dist = tk.DoubleVar()
         self.low_int = tk.DoubleVar()
         self.hig_int = tk.DoubleVar()
+        self.teff = tk.DoubleVar()
+        self.logl = tk.DoubleVar()
         self.check_var = ttk.IntVar()
         self.scale_int = tk.IntVar()
         self.current_theme = ttk.Style().theme_use()
@@ -292,18 +298,21 @@ class Sidebar(ttk.Frame):
         self.page2 = ttk.Frame(self.notebook, width=580, height=700)
         self.page3 = ttk.Frame(self.notebook, width=580, height=700)
         self.page4 = ttk.Frame(self.notebook, width=580, height=700)
+        self.page4 = ttk.Frame(self.notebook, width=580, height=700)
 
         self.notebook.add(self.page0, text='Home', sticky="nsew")
-        self.notebook.add(self.page1, text='Mass Determination', sticky="nsew")
-        # self.notebook.add(self.page2, text='Spectroscopic Parameters', sticky="nsew")
-        self.notebook.add(self.page3, text='Mathematical Modeling', sticky="nsew")
-        #self.notebook.add(self.page4, text='Probability & Statistics', sticky="nsew")
+        self.notebook.add(self.page1, text='Isochrone Fitting', sticky="nsew")
+        self.notebook.add(self.page2, text='Mass-Magnitude Modeling', sticky="nsew")
+        # self.notebook.add(self.page3, text='Spectroscopic Parameters', sticky="nsew")
+        self.notebook.add(self.page4, text='Mathematical Modeling', sticky="nsew")
+        #self.notebook.add(self.page5, text='Probability & Statistics', sticky="nsew")
 
         self.apply_styles()
 
         self.setup_home_ui(self.page0)
-        self.setup_mass_determination_ui(self.page1)
-        self.setup_modeling_ui(self.page3)
+        self.setup_isocfit_ui(self.page1)
+        self.setup_rml_ui(self.page2)
+        self.setup_modeling_ui(self.page4)
 
        #  self.setup_spectro_ui(self.page2)
        #  self.setup_statistical_ui(self.page4)
@@ -516,15 +525,14 @@ class Sidebar(ttk.Frame):
     def setup_statistical_ui(self, frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
-    def setup_mass_determination_ui(self, frame):
+    def setup_isocfit_ui(self, frame):
         frame.grid_columnconfigure(3, weight=1)
         frame.grid_rowconfigure(12, weight=1)
-
-        isoc_label = tk.Label(frame, text="Isochrones Fitting", font=('Helvetica', 12, 'bold'))
+        isoc_label = tk.Label(frame, text="Isochrone Fitting", font=('Helvetica', 16, 'bold'))
         isoc_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
         # Define widgets and layout for Isochrones Fitting
-        model_label = tk.Label(frame, text="Select Isochrone Model:")
+        model_label = tk.Label(frame, text="Isochrone Model:")
         model_label.grid(row=1, column=0, pady=(10, 5), padx=10, sticky="w")
 
         models = ('Siess 2000', 'BHAC15', 'PARSEC')
@@ -532,15 +540,51 @@ class Sidebar(ttk.Frame):
         iso_model_combobox = ttk.Combobox(frame, textvariable=self.iso_selected_model, width=10)
         iso_model_combobox['values'] = models
         iso_model_combobox.current(0)
-        iso_model_combobox.grid(row=1, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        iso_model_combobox.grid(row=2, column=0, pady=(10, 5), padx=10, sticky="w")
+
+
+        teff_label = tk.Label(frame, text="Effective Temperature:")
+        teff_label.grid(row=1, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+
+        teff_entry = ttk.Entry(frame,
+                               textvariable= self.teff,
+                               width=17)
+        teff_entry.grid(row=2, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        print(self.teff.get())
+
+        logl_label = tk.Label(frame, text="Luminosity (in log):")
+        logl_label.grid(row=1, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
+
+        logl_entry = ttk.Entry(frame,
+                               textvariable=self.logl,
+                               width=14)
+        logl_entry.grid(row=2, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
+
+        logl_label = tk.Label(frame, text="Verbose")
+        logl_label.grid(row=3, column=1, pady=(10, 5), padx=35, sticky="w")
+
+        input_table_button = tk.Button(frame, text="Input Table", command=open_table)
+        input_table_button.grid(row=3, column=0, pady=(10, 5), padx=10, sticky="w")
+
+
+        self.save_var.set(0)
+        menu_toggle_iso = ttk.Checkbutton(frame,
+                                          variable=self.save_var,
+                                          onvalue=1,
+                                          offvalue=0)
+        menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=10, sticky="w")
 
         locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
-        locate_stars_button.grid(row=1, column=2, pady=(10, 5), padx=0, sticky="w")
+        locate_stars_button.grid(row=8, column=2, pady=(10, 5), padx=0, sticky="w")
 
         self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
-        self.progress.grid(row=2, column=0, columnspan=4, pady=(10, 5), ipadx=0, sticky='ew')
+        self.progress.grid(row=9, column=0, columnspan=4, pady=(10, 5), ipadx=0, sticky='ew')
 
-        isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 12, 'bold'))
+    def setup_rml_ui(self, frame):
+        frame.grid_columnconfigure(3, weight=1)
+        frame.grid_rowconfigure(12, weight=1)
+
+        isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 16, 'bold'))
         isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
 
         model_label = tk.Label(frame, text="Isochrone Model:")
@@ -663,7 +707,6 @@ class Sidebar(ttk.Frame):
                 mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
             else:
                 mag, k = FilterValues.filter_predict_un(mag, self.X)
-
             mass[k] = self.model.predict(mag.reshape(-1, 1))
             yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
             key = np.where(np.array(mass) == 0.)[0]
@@ -679,14 +722,19 @@ class Sidebar(ttk.Frame):
 
     def locate_stars(self):
         global table_data
-        if table_data is None:
+        if self.teff.get() and self.logl.get() != 0.:
+            teff = self.teff.get()
+            Linput = self.logl.get()
+
+        elif table_data is None:
             open_table()
+            teff = table_data['Teff'].values
+            Linput = table_data['logL'].values
         model = self.iso_selected_model.get()
         self.method = 'ISO'
         var, Nlines, alldataiso = intpol(model)
-        teff = table_data['Teff'].values
+
         Tinput = teff
-        Linput = table_data['logL'].values
         Nobjects = len(Tinput)
 
         primarydataset = []
@@ -694,7 +742,7 @@ class Sidebar(ttk.Frame):
 
         for i in range(Nobjects):
             if np.isfinite(Linput) is not None:
-                res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso)
+                res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, self.save_var.get())
                 ff.append(i)
                 primarydataset.append(res)
 
