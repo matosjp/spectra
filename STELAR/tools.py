@@ -209,7 +209,11 @@ class MagCorrector:
 
 def interpolmass(primarydataset, model):
     nm = []
+
     data = primarydataset['Teff']
+    ages = primarydataset['Age']
+    masses = primarydataset['Mass']
+
     alldataiso = readiso(model)
     if model == "Siess 2000":
         ind = 3
@@ -226,11 +230,11 @@ def interpolmass(primarydataset, model):
     ai = []
     mi = []
 
-    for age in primarydataset['Age']:
+    for age in ages:
         index = np.where(ageiso == age)[0]
         ai.append(index[0] if index.size > 0 else None)
 
-    for mass in primarydataset['Mass']:
+    for mass in masses:
         index = np.where(massiso == mass)[0]
         mi.append(index[0] if index.size > 0 else None)
 
@@ -245,8 +249,6 @@ def interpolmass(primarydataset, model):
 
     else:
         nm = []
-        xpd = []
-        ypd = []
         t = data
 
         for x in range(len(t)):

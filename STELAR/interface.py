@@ -28,7 +28,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
 import madys
-
+import locale
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import KNNImputer, IterativeImputer
 from sklearn.model_selection import train_test_split
@@ -550,7 +550,6 @@ class Sidebar(ttk.Frame):
                                textvariable= self.teff,
                                width=17)
         teff_entry.grid(row=2, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
-        print(self.teff.get())
 
         logl_label = tk.Label(frame, text="Luminosity (in log):")
         logl_label.grid(row=1, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
@@ -560,25 +559,41 @@ class Sidebar(ttk.Frame):
                                width=14)
         logl_entry.grid(row=2, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
 
-        logl_label = tk.Label(frame, text="Verbose")
-        logl_label.grid(row=3, column=1, pady=(10, 5), padx=35, sticky="w")
-
         input_table_button = tk.Button(frame, text="Input Table", command=open_table)
         input_table_button.grid(row=3, column=0, pady=(10, 5), padx=10, sticky="w")
 
+        def verbose_on():
+            self.save_var.set(1)
+            menu_toggle_iso = ttk.Button(frame,
+                                         text='Verbose',
+                                         command=verbose_off)
+            menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
 
-        self.save_var.set(0)
-        menu_toggle_iso = ttk.Checkbutton(frame,
-                                          variable=self.save_var,
-                                          onvalue=1,
-                                          offvalue=0)
-        menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=10, sticky="w")
+        def verbose_off():
+            self.save_var.set(0)
+            menu_toggle_iso = ttk.Button(frame,
+                                         text='Verbose',
+                                         command=verbose_on,
+                                         style='dark')
+            menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
+
+        menu_toggle_iso = ttk.Button(frame,
+                                     text='Verbose',
+                                     command=verbose_on,
+                                     style='dark')
+        menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
 
         locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
-        locate_stars_button.grid(row=8, column=2, pady=(10, 5), padx=0, sticky="w")
+        locate_stars_button.grid(row=3, column=2, pady=(10, 5), padx=0, sticky="w")
+
+        table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
+        table_button.grid(row=4, column=0, pady=(10, 5), padx=10, sticky="w")
+
+        results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
+        results_button.grid(row=4, column=1, pady=(10, 5), padx=0, sticky="w")
 
         self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
-        self.progress.grid(row=9, column=0, columnspan=4, pady=(10, 5), ipadx=0, sticky='ew')
+        self.progress.grid(row=9, column=0, columnspan=4, pady=200, ipadx=0, sticky='ew')
 
     def setup_rml_ui(self, frame):
         frame.grid_columnconfigure(3, weight=1)
@@ -599,10 +614,17 @@ class Sidebar(ttk.Frame):
 
         self.low_int.set(0.1)
         self.hig_int.set(1.3)
-        spin_low = ttk.Spinbox(frame, from_=0.01, to=0.6, increment=0.1, textvariable=self.low_int, width=5)
-        spin_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
-        spin_high = ttk.Spinbox(frame, from_=0.6, to=1.39, increment=0.1, textvariable=self.hig_int, width=5)
-        spin_high.grid(row=5, column=2, pady=(10, 5), padx=0, sticky="w")
+
+        entry_low = tk.Entry(frame, textvariable=self.low_int, width=5)
+        entry_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
+        entry_low_label = tk.Label(frame, text='Msun')
+        entry_low_label.grid(row=5, column=1, pady=(10, 5), padx=70, sticky="w")
+
+        entry_high = tk.Entry(frame, textvariable=self.hig_int, width=5)
+        entry_high.grid(row=5, column=2, pady=(10, 5), padx=0, sticky="w")
+        entry_high_label = tk.Label(frame, text='Msun')
+        entry_high_label.grid(row=5, column=2, pady=(10, 5), padx=70, sticky="w")
+
         spin_label = ttk.Label(frame, text='Mass range:')
         spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
 
@@ -631,6 +653,12 @@ class Sidebar(ttk.Frame):
         # Create button to calculate mass
         build_button = tk.Button(frame, text="Build Model", command=self.build_model)
         build_button.grid(row=8, column=2, pady=(10, 5), padx=0, sticky="w")
+
+        report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
+        report_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
+        report_plot_button = tk.Button(frame, text="Model Report Plot", command=self.master.show_report_plot)
+        report_plot_button.grid(row=9, column=1, pady=(10, 5), padx=0, sticky="w")
+
         self.check_var.set(1)
         menu_toggle = ttk.Checkbutton(frame,
                                       text='Distance Correction',
@@ -646,22 +674,18 @@ class Sidebar(ttk.Frame):
         label = ttk.Label(frame, text='pc')
         label.grid(row=10, column=1, pady=(10, 5), padx=65, sticky="w")
 
-        report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
-        report_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
-        report_plot_button = tk.Button(frame, text="Model Report Plot", command=self.master.show_report_plot)
-        report_plot_button.grid(row=9, column=1, pady=(10, 5), padx=0, sticky="w")
+
+        input_table_button = tk.Button(frame, text="Input Table", command=open_table)
+        input_table_button.grid(row=10, column=2, pady=(10, 5), padx=0, sticky="w")
 
         calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
-        calculate_mass_button.grid(row=10, column=2, pady=(10, 5), padx=0, sticky="w")
-
-        separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=11, column=0, columnspan=4, pady=10, sticky="ew")
+        calculate_mass_button.grid(row=11, column=0, pady=(10, 5), padx=10, sticky="w")
 
         table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=12, column=0, pady=0, padx=10, sticky="w")
+        table_button.grid(row=11, column=1, pady=(10, 5), padx=0, sticky="w")
 
         results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=12, column=1, pady=0, padx=(0, 10), sticky="w")
+        results_button.grid(row=11, column=2, pady=(10, 5), padx=0, sticky="w")
 
     def build_model(self):
         self.method = 'MMR'
@@ -683,9 +707,10 @@ class Sidebar(ttk.Frame):
 
     @staticmethod
     def mass_uncertainty(y):
+        y_hat = 0.0424
         mu = np.mean(np.nan_to_num(y))
         sigma = np.var(np.nan_to_num(y))
-        uncertainty = np.sqrt(mu ** 2 + sigma ** 2)
+        uncertainty = np.sqrt(y_hat * sigma)
         return uncertainty
 
     def predict_mass(self):
@@ -723,47 +748,72 @@ class Sidebar(ttk.Frame):
     def locate_stars(self):
         global table_data
         if self.teff.get() and self.logl.get() != 0.:
-            teff = self.teff.get()
+            Tinput = self.teff.get()
             Linput = self.logl.get()
+            Nobjects = 1
 
         elif table_data is None:
             open_table()
+
+        if  isinstance(table_data, pd.DataFrame):
             teff = table_data['Teff'].values
             Linput = table_data['logL'].values
+            Tinput = teff
+            Nobjects = len(Tinput)
+
+
         model = self.iso_selected_model.get()
         self.method = 'ISO'
         var, Nlines, alldataiso = intpol(model)
 
-        Tinput = teff
-        Nobjects = len(Tinput)
+
+
 
         primarydataset = []
         ff = []
+        if Nobjects > 1:
+            for i in range(Nobjects):
+                if np.isfinite(Linput) is not None:
+                    res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, self.save_var.get())
+                    ff.append(i)
+                    primarydataset.append(res)
 
-        for i in range(Nobjects):
-            if np.isfinite(Linput) is not None:
-                res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, self.save_var.get())
-                ff.append(i)
-                primarydataset.append(res)
+                    self.progress['value'] = (i + 1) / Nobjects * 100
+                    self.update_idletasks()
+        elif Nobjects == 1:
+            res = interp(Tinput, Linput, var, Nlines, alldataiso, self.save_var.get())
+            primarydataset.append(res)
 
-                self.progress['value'] = (i + 1) / Nobjects * 100
-                self.update_idletasks()
+            self.progress['value'] = 100
+            self.update_idletasks()
 
         # Convert primarydataset to DataFrame
+
         primarydataset = pd.DataFrame(primarydataset)
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
+
         mass = interpolmass(primarydataset, self.iso_selected_model.get())
-        yerr = np.zeros(len(teff))
+        print(mass)
+        yerr = np.zeros(Nobjects)
 
         row = pd.DataFrame({'mass': mass})
-        hold = np.zeros(len(mass))
-        hold[ff] = row.loc[ff, 'mass'].values
-        yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+        hold = np.zeros(Nobjects)
 
-        mass = hold
+        if Nobjects > 1:
+            hold[ff] = row.loc[ff, 'mass'].values
+            yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+            mass = hold
+        elif Nobjects == 1:
+            yerr = 0.01
 
-        table_data['Mass_calc'] = mass
-        table_data['Mass_e'] = yerr
+        if table_data is None:
+            primarydataset['Mass_calc'] = mass
+            primarydataset['Mass_e'] = yerr
+            table_data = primarydataset
+
+        else:
+            table_data['Mass_calc'] = mass
+            table_data['Mass_e'] = yerr
 
         table_data.to_csv('_final_result_table.csv', index=None)
         self.master.show_hrd_plot()
