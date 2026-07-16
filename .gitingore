@@ -11,7 +11,6 @@ ENV/
 
 # S.P.E.C.T.R.A specific ignored files
 outputs/
-isochrone_models/
 .stelar_models_downloaded
 
 # OS specific files
