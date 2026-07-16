@@ -18,5 +18,5 @@ jobs:
       - name: Upload Compiled PDF Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: joss-paper-pdf
-          path: 'paper.pdf'
+          name: paper
+          path: '${{ steps.paper.outputs.pdf-path }}.pdf'
