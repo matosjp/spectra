@@ -1,0 +1,19 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and local settings
+.venv/
+env/
+venv/
+ENV/
+
+# S.P.E.C.T.R.A specific ignored files
+outputs/
+isochrone_models/
+.stelar_models_downloaded
+
+# OS specific files
+.DS_Store
+Thumbs.db

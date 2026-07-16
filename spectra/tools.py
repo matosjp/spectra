@@ -24,7 +24,8 @@ import numpy as np
 import pandas as pd
 import madys
 
-from StarLocalization import readiso
+from .StarLocalization import readiso
+from .paths import TABLES_DIR, PLOTS_DIR
 
 
 class FilterValues:
@@ -425,10 +426,10 @@ def weighted_score(normalized_metrics):
         This function uses a set of predefined weights to calculate a weighted score for each set of metrics. The weights are: RMSE (0.25), MAE (0.25), R2 (0.25), and AIC (0.25).
     """
     weights = {
-        'rmse': 0.35,
-        'mae': 0.25,
-        'r2': 0.30,
-        'aic': 0.10,
+        'rmse': 1.,
+        'mae': 1.,
+        'r2': 1.,
+        'aic': 1.,
     }
     total_scores = []
     for i in range(len(normalized_metrics['rmse'])):
@@ -462,8 +463,6 @@ def RegressionReport(X, y):
         6. Generates a visual report with plots for actual vs predicted values, residuals distribution, skedasticity, and influence plot
         7. Saves the report to a CSV file and returns the best model, trained model object, and report dataframe
     """
-    from interface import setup_path
-    os.chdir(setup_path)
     models = {
         'Bayesian Regression': BayesianRidge(),
         'Linear Regression': LinearRegression(),
@@ -495,8 +494,6 @@ def RegressionReport(X, y):
             mae = mean_absolute_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
 
-            # print(f"  {model_name} - MSE: {mse}")
-
             n = len(y_test)
             k = best_model.named_steps['model'].coef_.shape[0] if hasattr(best_model.named_steps['model'],
                                                                           'coef_') else len(best_model.named_steps['model'].get_params())
@@ -515,7 +512,7 @@ def RegressionReport(X, y):
                 'AIC': aic,
                 'Best Params': grid_search.best_params_
             })
-            print(f'{model_name=}')
+
         # Normalize metrics
         normalized_metrics = normalize_metrics(metrics)
 
@@ -527,7 +524,7 @@ def RegressionReport(X, y):
 
         report_df = pd.DataFrame(report)
         report = report_df
-        report.to_csv('Regression_model_report.csv', index=None)
+        report.to_csv(os.path.join(TABLES_DIR, 'Regression_model_report.csv'), index=None)
         # Return the best model based on the weighted score
         best_model = report_df.loc[report_df['Score'].idxmin()]['Model']
         model = fit(X, y, best_model).best_estimator_
@@ -561,7 +558,7 @@ def RegressionReport(X, y):
             corr = 'Weakly correlated'
         else:
             corr = 'Strongly correlated'
-        plt.title(f'{best_model} ({corr}, R$^2$={rsqueared:.2f})')
+        plt.title(fr'{best_model} ({corr}, R$^2$={rsqueared:.2f})')
         plt.legend(loc='best')
         plt.tick_params(direction='in')
         plt.xticks(xyrange)
@@ -618,30 +615,30 @@ def RegressionReport(X, y):
         d1y = d_curves[cutoff]['studentized_residuals']
 
         plt.plot(d1x, d1y, marker='none', color='#c3121e',
-                 linestyle='-.', label="D$_{crit}$")
+                 linestyle='-.', label=r"D$_{crit}$")
         plt.plot(d1x, -d1y, marker='none', color='#c3121e',
                  linestyle='-.')
 
         plt.scatter(lev, st_res, facecolor='#9370db')
         plt.axhline(-3, color='k', linestyle=':')
-        plt.axhline(3, color='k', linestyle=':', label='$\hat{\sigma}_{crit}$')
+        plt.axhline(3, color='k', linestyle=':', label=r'$\hat{\sigma}_{crit}$')
         plt.axhline(0, color='grey', linestyle='--')
         plt.legend(loc='best')
         plt.grid(True)
-        plt.xlabel('Leverage ($\hat{h}$)')
-        plt.ylabel('Studentinized Residuals ($\hat{\sigma}$)')
+        plt.xlabel(r'Leverage ($\hat{h}$)')
+        plt.ylabel(r'Studentinized Residuals ($\hat{\sigma}$)')
         plt.title('Influence Plot')
         plt.xlim([min(lev), max(lev)])
         plt.ylim(-3.5, 3.5)
 
-        plt.savefig('_visual_report.png', dpi=300)
+        plt.savefig(os.path.join(PLOTS_DIR, '_visual_report.png'), dpi=300)
 
         return best_model, model, report
     else:
-        ToastNotification("Modeling",
-                  f"The number of features sample to build \n"
-                            f"the model is less than the necessary.",
-                  duration=6000, bootstyle='dark').show_toast()
+        # Not enough samples to fit/validate a model. No Tk widgets are
+        # created here (this function may run on a background thread) —
+        # the caller is responsible for surfacing this to the user.
+        return None, None, None
 
 
 class ResultsAnalyzer:
@@ -722,7 +719,7 @@ class ResultsAnalyzer:
         d1y = d_curves[cutoff]['studentized_residuals']
 
         plt.plot(d1x, d1y, marker='none', color='#c3121e',
-                 linestyle='-.', label="D$_{crit}$")
+                 linestyle='-.', label=r"D$_{crit}$")
         plt.plot(d1x, -d1y, marker='none', color='#c3121e',
                  linestyle='-.')
 
@@ -732,7 +729,7 @@ class ResultsAnalyzer:
         plt.axhline(0, color='grey', linestyle='--')
         plt.axvline(0, color='grey', linestyle='--')
         plt.legend(loc='best')
-        plt.xlabel('Leverage ($\hat{h}$)')
+        plt.xlabel(r'Leverage ($\hat{h}$)')
         plt.ylabel('Studentinized Residuals')
         plt.title('Influence Plot')
         plt.xlim([min(lev), max(lev)])
@@ -778,13 +775,13 @@ class ResultsAnalyzer:
         plt.axvline(0, color='grey', linestyle='--')
         plt.axhline(np.sqrt(3), color='#e7298a', linestyle=':')
         plt.xlabel('Fitted Values')
-        plt.ylabel('$\sqrt{Standardized~ Residuals}$')
+        plt.ylabel(r'$\sqrt{Standardized~ Residuals}$')
         plt.title('Scale-Location Plot')
         plt.grid(True)
         plt.tick_params(direction='in')
 
         if save_file:
-            plt.savefig('_statistical_results.png', dpi=300)
+            plt.savefig(os.path.join(PLOTS_DIR, '_statistical_results.png'), dpi=300)
         elif isinstance(save_file, str):
             plt.savefig(save_file, dpi=300)
         plt.close(fig)
@@ -829,8 +826,6 @@ class ResultDisplay:
         Notes:
             This method filters the input data using the `FilterValues.filter_results` function, creates a plot with error bars, and customizes the axis labels and title based on the method used. The plot is then displayed and saved to a file if specified.
         """
-        from interface import setup_path
-        os.chdir(setup_path)
         x, y, yerr = FilterValues.filter_results(self.x, self.y, self.yerr)
         fig = plt.figure(figsize=(12, 8))
         plt.plot(x, y, marker="^", color='#7570b3', alpha=0.6,
@@ -847,7 +842,7 @@ class ResultDisplay:
             plt.gca().invert_xaxis()
             plt.title('Isocrhone Fitting Results')
 
-        plt.ylabel('Predicted Values (M/M$_\odot$)')
+        plt.ylabel(r'Predicted Values (M/M$_\odot$)')
         plt.legend(loc="best")
 
         plt.grid(True)
@@ -858,7 +853,7 @@ class ResultDisplay:
 
         if save_file:
             plt.savefig(
-                '_mass_results_display.png', dpi=300)
+                os.path.join(PLOTS_DIR, '_mass_results_display.png'), dpi=300)
         elif isinstance(save_file, str):
             plt.savefig(save_file, dpi=300)
         plt.close(fig)
@@ -903,8 +898,6 @@ class MathModels:
            - Top subplot: Missing data matrix, where green cells indicate missing values.
            - Bottom subplot: Correlation matrix, where purple cells indicate strong positive correlations and white cells indicate weak or negative correlations.
         """
-        from interface import setup_path
-        os.chdir(setup_path)
 
         data_filtered = data.select_dtypes(exclude='object')
         plt.figure(figsize=(8, 12),
@@ -929,7 +922,7 @@ class MathModels:
         plt.title('Correlation Matrix')
 
 
-        plt.savefig('_correlation_report.png', dpi=300)
+        plt.savefig(os.path.join(PLOTS_DIR, '_correlation_report.png'), dpi=300)
 
 
     @staticmethod
@@ -955,8 +948,6 @@ class MathModels:
             7. Plots the feature importance using a bar chart.
             8. Selects features with importance greater than or equal to 0.1.
         """
-        from interface import setup_path
-        os.chdir(setup_path)
 
         corr_matrix = table_data.corr()
         upper_tri = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
@@ -1009,7 +1000,7 @@ class MathModels:
         plt.title('Feature Importance', fontsize=25, weight='bold')
         plt.grid(True)
 
-        plt.savefig('_pca_report.png', dpi=300)
+        plt.savefig(os.path.join(PLOTS_DIR, '_pca_report.png'), dpi=300)
         print(f'{selected_features=}')
         selected_features = importances[importances['Gini-Importance'] >= 0.1]['Features'].tolist()
         print(f'{selected_features=}')

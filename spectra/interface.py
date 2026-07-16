@@ -1,18 +1,19 @@
 """
 /*********************************************************************************/
-*                              S.T.E.L.A.R. Program                               *
-*                     Stellar Type Examination and Analysis Resource              *
+*                             S.P.E.C.T.R.A. Program                              *
+*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis   *
 *                                                                                 *
 *  Author: [João Paulo Matos Dias Gomes]                                          *
 *  Version: 1.0                                                                   *
 *  Date: [05/06/2024]                                                             *
 *                                                                                 *
 *  Description:                                                                   *
-*  S.T.E.L.A.R. (Stellar Type Examination and Analysis Resource) is a software    *
-*  tool designed for the comprehensive analysis of stellar data. It provides      *
-*  astronomers and astrophysicists with a suite of powerful algorithms for        *
-*  determining various parameters related to stars, including stellar type,       *
-*  luminosity, temperature, radius, mass, age, and distance.                      *
+*  S.P.E.C.T.R.A. (Stellar Parameter Estimation and Calculation Tools for         *
+*  Research and Analysis) is a software tool designed for the comprehensive       *
+*  analysis of stellar data. It provides astronomers and astrophysicists with a   *
+*  suite of powerful algorithms for determining various parameters related to     *
+*  stars, including stellar type, luminosity, temperature, radius, mass, age,     *
+*  and distance.                                                                  *
 *                                                                                 *
 *  This program is intended for research and educational purposes, offering a     *
 *  user-friendly interface and accurate analytical capabilities for studying the  *
@@ -39,38 +40,105 @@ import os
 import pandas as pd
 import numpy as np
 
-from StarLocalization import intpol, interp, readiso, plot_HRD
-from tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
-from widgets import SessionManager, AboutWindow
+from .StarLocalization import intpol, interp, readiso, plot_HRD
+from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
+from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow
+from .paths import (
+    PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
+    THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
+    REQUIRED_MODELS, ISOCHRONE_MODELS_URL,
+)
 
-setup_path = os.getcwd()
-default_pth = os.getcwd()
-table_output = default_pth + '/outputs/tables/'
-themes_path = setup_path + '/external/themes.json'
-os.chdir(default_pth)
+# Kept for backwards compatibility with any code/notes referring to the old
+# names; all now point at the single source of truth in paths.py.
+setup_path = PROJECT_ROOT
+default_pth = PROJECT_ROOT
+table_output = TABLES_DIR
+themes_path = THEMES_PATH
 
 class App(ttk.Window):
     def __init__(self):
         super().__init__()
         self.target = tk.StringVar
-        self.title("S.T.E.L.A.R")
+        self.title("S.P.E.C.T.R.A")
         self.geometry("820x560")
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
-        self.create_widgets()
-        os.chdir(os.getcwd())
-        default_pth = os.getcwd()
+        self.dark_mode_var = tk.BooleanVar(value=True if self.current_theme == 'dark_theme' else False)
+
+        # Hide the main window until the first-run model download (if any)
+        # has finished, so the user isn't dropped into a half-ready app.
+        self.withdraw()
+        self.check_first_run_models()
+
+    def check_first_run_models(self):
+        """
+        First opening switch: on first launch (or any time the relevant
+        data is missing), download whichever of the following are absent
+        before showing the main interface:
+          - the MADYS stellar models (BHAC15, PARSEC, MIST) needed for
+            isochrone fitting;
+          - the Siess 2000 / BHAC15 evolutionary-track and isochrone data
+            tables under isochrone_models/, fetched from Google Drive.
+        Each piece is checked independently, so re-running after deleting
+        just one of them only re-downloads that one.
+        """
+        models_ready = os.path.exists(MODELS_FLAG_FILE)
+        isochrones_ready = (
+            os.path.isdir(ISOCHRONE_MODELS_DIR) and len(os.listdir(ISOCHRONE_MODELS_DIR)) > 0
+        )
+
+        if models_ready and isochrones_ready:
+            self.create_widgets()
+            self.deiconify()
+            return
+
+        def _on_models_ready(failed):
+            # Only mark the MADYS models as done if none of them failed;
+            # the isochrone-data check is independent (folder presence),
+            # so it doesn't need a separate flag file.
+            failed_names = {name for name, _ in failed}
+            if not models_ready and not (failed_names & set(REQUIRED_MODELS)):
+                with open(MODELS_FLAG_FILE, 'w') as f:
+                    f.write('\n'.join(REQUIRED_MODELS))
+            self.create_widgets()
+            self.deiconify()
+
+        ModelDownloadWindow(
+            self,
+            models=[] if models_ready else REQUIRED_MODELS,
+            on_complete=_on_models_ready,
+            isochrone_url=None if isochrones_ready else ISOCHRONE_MODELS_URL,
+            isochrone_dest=ISOCHRONE_MODELS_DIR,
+        )
 
     def load_custom_theme(self, theme_name):
-        style = ttk.Style()
-        style.load_user_themes(themes_path)
-        style.theme_use(theme_name)
+        # 1. Use the existing global application style instance (self.style)
+        #    instead of instantiating a fresh local 'ttk.Style()'
+        self.style.load_user_themes(themes_path)
+
+        if theme_name in self.style.theme_names():
+            self.style.theme_use(theme_name)
+        else:
+            # Fallback configuration or manual switch if needed
+            self.style.theme_use(theme_name)
 
     def change_app_style(self):
-        # Toggle between themes or apply a new one
-        new_theme = 'light_theme' if self.current_theme == 'dark_theme' else 'dark_theme'
+        # Determine the new theme based on the checkbutton state
+        if self.dark_mode_var.get():
+            new_theme = 'dark_theme'
+        else:
+            new_theme = 'light_theme'
+
+        # Apply the theme safely
+        if new_theme in self.style.theme_names():
+            self.style.theme_use(new_theme)
+        else:
+            self.load_custom_theme(new_theme)
+            
+        # Keep your internal state tracking variable updated too
         self.current_theme = new_theme
-        self.load_custom_theme(new_theme)
+
         self.sidebar.refresh_sidebar()
 
     def create_widgets(self):
@@ -104,7 +172,7 @@ class App(ttk.Window):
             plot_window.title("Mass Results Plot")
 
             # Load the image and scale it to fit the window
-            photo = Image.open('_mass_results_display.png').resize((800, 600))
+            photo = Image.open(os.path.join(PLOTS_DIR, '_mass_results_display.png')).resize((800, 600))
             image_tk = ImageTk.PhotoImage(photo)
 
             # Create a Label to display the image
@@ -129,7 +197,7 @@ class App(ttk.Window):
             plot_window.title("Hertzpruntg-Russel Diagram Plot")
 
             # Load the image and scale it to fit the window
-            photo = Image.open('_hrd_complete.png').resize((800, 600))
+            photo = Image.open(os.path.join(PLOTS_DIR, '_hrd_complete.png')).resize((800, 600))
             image_tk = ImageTk.PhotoImage(photo)
 
             # Create a Label to display the image
@@ -150,7 +218,7 @@ class App(ttk.Window):
             plot_window.title("Mass-Magnitude Relationship Regression")
 
             # Load the image and scale it to fit the window
-            photo = Image.open('_visual_report.png').resize((800, 600))
+            photo = Image.open(os.path.join(PLOTS_DIR, '_visual_report.png')).resize((800, 600))
             image_tk = ImageTk.PhotoImage(photo)
 
             # Create a Label to display the image
@@ -224,7 +292,7 @@ class App(ttk.Window):
         plot_window.title("Mathematical Modeling: Step 1")
 
         # Load the image and scale it to fit the window
-        photo = Image.open('_correlation_report.png').resize((600, 800))
+        photo = Image.open(os.path.join(PLOTS_DIR, '_correlation_report.png')).resize((600, 800))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -239,7 +307,7 @@ class App(ttk.Window):
         plot_window.title("Mathematical Modeling: Step 2")
 
         # Load the image and scale it to fit the window
-        photo = Image.open('_pca_report.png').resize((800, 600))
+        photo = Image.open(os.path.join(PLOTS_DIR, '_pca_report.png')).resize((800, 600))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
@@ -337,18 +405,18 @@ class Sidebar(ttk.Frame):
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
-        photo = Image.open(setup_path + '/icon.png').resize((400, 400))
+        photo = Image.open(ICON_PATH).resize((400, 400))
         image_tk = ImageTk.PhotoImage(photo)
 
         # Create a Label to display the image
         image_label = ttk.Label(frame, image=image_tk)
         image_label.pack(padx=20, pady=10)
 
-        version_label = tk.Label(frame, text="S.T.E.L.A.R", font=('Helvetica', 46, 'bold'))
+        version_label = tk.Label(frame, text="S.P.E.C.T.R.A", font=('Helvetica', 46, 'bold'))
         version_label.pack(padx=20, pady=0)
 
         # Label displaying program version
-        version_label = tk.Label(frame, text="Version: V1.00.000_build_201224")
+        version_label = tk.Label(frame, text="Version: V1.00.000_build_160726")
         version_label.pack(side=BOTTOM, padx=20, pady=0)
 
         # Keep a reference to the image to prevent garbage collection
@@ -511,7 +579,7 @@ class Sidebar(ttk.Frame):
 
         table_data[self.target.get() + '_calc'] = y_out
         table_data[self.target.get() + '_e'] = yerr
-        table_data.to_csv('_final_result_table.csv', index=None)
+        table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
 
         ToastNotification("Derivation by Mathematical Model",
                           f"{self.target.get()} calculated successfully.",
@@ -687,23 +755,82 @@ class Sidebar(ttk.Frame):
         results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
         results_button.grid(row=11, column=2, pady=(10, 5), padx=0, sticky="w")
 
+    # GridSearchCV in RegressionReport fits 9 models (including an SVR with
+    # rbf/sigmoid kernels, which scale roughly O(n^2)-O(n^3)) across
+    # multiple folds and hyperparameter combinations. The isochrone grid
+    # used here defaults to n_steps=[1000, 1000] (up to ~1e6 points) —
+    # feeding that whole grid into GridSearchCV can exhaust memory or run
+    # for a very long time. Training is capped to a random subsample; the
+    # full-resolution grid is still kept (self.X) for later mass
+    # prediction/filtering, which isn't affected by this cap.
+    MAX_TRAINING_SAMPLES = 5000
+
     def build_model(self):
         self.method = 'MMR'
         clust_age = self.scale_int.get()
         range_mass = [self.low_int.get(), self.hig_int.get()]
         mag_filter = self.selected_filter.get()
 
-        if self.selected_model:
-            th_model = madys.IsochroneGrid(self.selected_model.get(), mag_filter, mass_range=range_mass,
+        if not self.selected_model:
+            messagebox.showinfo("Regression model", "Failed to build the regression model for these parameters.")
+            return
+
+        selected_model_name = self.selected_model.get()
+
+        def _task():
+            # Runs on a background thread: numerical work only (madys,
+            # scikit-learn/statsmodels, matplotlib-Agg figure saving) —
+            # no Tk widget creation here, since Tk is not thread-safe.
+            th_model = madys.IsochroneGrid(selected_model_name, mag_filter, mass_range=range_mass,
                                            age_range=clust_age, n_steps=[1000, 1000])
-            y = np.log10(th_model.masses)
-            X = th_model.data[:, :, 0].ravel().reshape(-1, 1)
-            self.model, self.report = create_regression_model(X, y)
-            self.X = th_model.data[:, :, 0].ravel()
-            self.y = y
-            self.th_model_data = pd.DataFrame({'X': th_model.data[:, :, 0].ravel(), 'y': y})
-        else:
-            messagebox.showinfo("Regression model", f"Failed to build the regression model for these parameters.")
+            y_full = np.log10(th_model.masses)
+            X_full = th_model.data[:, :, 0].ravel()
+
+            n = min(len(X_full), len(y_full))
+            if n > self.MAX_TRAINING_SAMPLES:
+                rng = np.random.default_rng(42)
+                idx = rng.choice(n, size=self.MAX_TRAINING_SAMPLES, replace=False)
+                X_train_input = X_full[idx].reshape(-1, 1)
+                y_train_input = y_full[idx]
+            else:
+                X_train_input = X_full[:n].reshape(-1, 1)
+                y_train_input = y_full[:n]
+
+            model_name, model, report = RegressionReport(X_train_input, y_train_input)
+            if model_name is None:
+                raise ValueError(
+                    "Not enough samples in this grid to build a model "
+                    "(try a wider mass/age range)."
+                )
+
+            th_model_data = pd.DataFrame({'X': X_full, 'y': y_full[:len(X_full)]})
+            return model_name, model, report, X_full, y_full, th_model_data
+
+        def _on_done(result, error):
+            if error is not None:
+                # BusyWindow already showed the error dialog; nothing more
+                # to do here — the app stays usable either way.
+                return
+            model_name, model, report, X_full, y_full, th_model_data = result
+            self.model = model
+            self.report = report
+            self.X = X_full
+            self.y = y_full
+            self.th_model_data = th_model_data
+            ToastNotification(
+                title='Regression model',
+                message=f"{model_name} model built.",
+                duration=5000,
+                bootstyle='dark'
+            ).show_toast()
+
+        BusyWindow(
+            self.master,
+            "Building the Mass-Magnitude regression model — this can take "
+            "a while depending on the selected mass/age range...",
+            _task,
+            _on_done,
+        )
 
     @staticmethod
     def mass_uncertainty(y):
@@ -739,7 +866,7 @@ class Sidebar(ttk.Frame):
             hold_mass[key] = np.nan
             table_data['Mass_calc'] = 10**hold_mass
             table_data['Mass_e'] = yerr
-            table_data.to_csv('_final_result_table.csv', index=None)
+            table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
 
             ToastNotification("Mass Determination",
                               f"Mass calculated successfully for filter {self.selected_filter.get()}.",
@@ -793,7 +920,6 @@ class Sidebar(ttk.Frame):
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
 
         mass = interpolmass(primarydataset, self.iso_selected_model.get())
-        print(mass)
         yerr = np.zeros(Nobjects)
 
         row = pd.DataFrame({'mass': mass})
@@ -815,7 +941,7 @@ class Sidebar(ttk.Frame):
             table_data['Mass_calc'] = mass
             table_data['Mass_e'] = yerr
 
-        table_data.to_csv('_final_result_table.csv', index=None)
+        table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
         self.master.show_hrd_plot()
         toast = ToastNotification(
             title='Star Localization',
@@ -852,7 +978,10 @@ class TopMenu(ttk.Frame):
         self.help_menu = tk.Menu(self.toolbar_menu, tearoff=False)
         self.help_menu.add_command(label='Documentation', command=lambda: print('Test button'))
         self.help_menu.add_command(label='About', command=self.open_about_window)
-        self.help_menu.add_command(label='Dark Mode', command=self.change_style)
+        self.help_menu.add_checkbutton(label='Dark Mode', 
+                                variable=self.master.dark_mode_var, 
+                                command=self.change_style
+                                )
         self.toolbar_menu.add_cascade(label='Help', menu=self.help_menu)
 
         self.toolbar_menu.add_command(label='Exit', command=self.master.quit)

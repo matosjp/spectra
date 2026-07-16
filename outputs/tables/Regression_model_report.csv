@@ -1,0 +1,10 @@
+Model,RMSE,MAE,R2,AIC,Best Params,Score
+Bayesian Regression,0.07691013709288862,0.06748049394484534,0.9419150693974121,-511.02351788083683,"{'model__alpha_1': 0.001, 'model__alpha_2': 1e-06, 'model__compute_score': True, 'model__fit_intercept': True, 'model__lambda_1': 1e-06, 'model__lambda_2': 0.001}",3.9894489528067445
+Linear Regression,0.07690907633107749,0.06748044933808861,0.941916671627069,-511.02627634458804,"{'model__fit_intercept': True, 'model__positive': False}",3.989404428128
+ElasticNet Regression,0.07714664648092559,0.06753175837992896,0.9415572816082753,-510.40943372729873,"{'model__alpha': 0.01, 'model__fit_intercept': True, 'model__l1_ratio': 0.01, 'model__positive': False, 'model__precompute': True, 'model__selection': 'cyclic'}",4.0
+Support Vector Regressor,0.006377926217702103,0.005717111309419938,0.9996005565670443,-988.9824557422179,"{'model__C': 1, 'model__epsilon': 0.01, 'model__kernel': 'rbf'}",0.7088459410037862
+Decision Tree Regressor,0.0017624753101290263,0.001632974448931993,0.9999694970117454,-1244.2072063626804,"{'model__max_depth': 12, 'model__min_samples_leaf': 2, 'model__min_samples_split': 2}",0.33854553131853854
+Random Forest Regressor,0.0007436367763826441,0.0006588869576861788,0.9999945697725228,-1404.7915692256443,"{'model__max_depth': 20, 'model__min_samples_leaf': 2, 'model__min_samples_split': 2, 'model__n_estimators': 100}",0.1574132830193691
+Gradient Boosting Regressor,0.0005742564379544313,0.00046231197410578185,0.999996761767335,-1450.4869010784582,"{'model__learning_rate': 0.1, 'model__loss': 'squared_error', 'model__max_depth': 15, 'model__n_estimators': 100, 'model__subsample': 0.7}",0.10872579811902436
+AdaBoost Regressor,0.008347440639412595,0.006375103222896012,0.9993157686281983,-947.1600594706458,"{'model__learning_rate': 1.0, 'model__loss': 'square', 'model__n_estimators': 100}",0.7889994442909911
+KNeighbors Regressor,0.0003773415858495773,0.0003690990498574509,0.9999986018117617,-1560.4719434964652,"{'model__n_neighbors': 5, 'model__weights': 'distance'}",0.0

@@ -6,12 +6,18 @@ import numpy as np
 import os
 from ttkbootstrap.toast import ToastNotification
 
+from .paths import PROJECT_ROOT, OUTPUTS_DIR, ISOCFIT_DIR, PLOTS_DIR, ISOCHRONE_MODELS_DIR
+
 matplotlib.use('Agg')
-path = '/home/gomes/MEGA/STELAR_project/STELAR/'
-output = '/home/gomes/MEGA/STELAR_project/outputs/'
-isocfit_outputs = output + 'isocrone_fit/'
-isocs = path + 'isochrone_models/'
-os.chdir(path)
+
+# Kept for backwards compatibility with the names used elsewhere in this
+# file; all now point at the single source of truth in paths.py, so every
+# save/read here always resolves to the same folder regardless of the
+# process's current working directory at call time.
+path = PROJECT_ROOT
+output = OUTPUTS_DIR + os.sep
+isocfit_outputs = ISOCFIT_DIR + os.sep
+isocs = ISOCHRONE_MODELS_DIR + os.sep
 
 
 def readiso(model):
@@ -196,15 +202,15 @@ def interp(t1, l1, var, Nlines, alldataiso, save):
             fig = plt.figure(figsize=(10, 12), tight_layout=True)
             gs = gridspec.GridSpec(3, 2)
             axs = fig.add_subplot(gs[2, 0])
-            axs.plot(x, y, label='$\delta$', marker='o', color='#3F8D4F', mfc='w')
-            axs.set_title('$\delta = \sqrt{[(T_{\mathrm{eff}} - T_i)^2 - (L - L_i)^2]}$')
-            axs.set_xlabel('$x_i$')
-            axs.set_ylabel('$\delta$')
+            axs.plot(x, y, label=r'$\delta$', marker='o', color='#3F8D4F', mfc='w')
+            axs.set_title(r'$\delta = \sqrt{[(T_{\mathrm{eff}} - T_i)^2 - (L - L_i)^2]}$')
+            axs.set_xlabel(r'$x_i$')
+            axs.set_ylabel(r'$\delta$')
             axs.grid()
 
             axs = fig.add_subplot(gs[2, 1])
-            axs.plot(x, z, label='Derivative z = d$\delta$/dx', color='#7A306C', mfc='w')
-            axs.set_title('Derivative z = d$\delta$/dx')
+            axs.plot(x, z, label=r'Derivative z = d$\delta$/dx', color='#7A306C', mfc='w')
+            axs.set_title(r'Derivative z = d$\delta$/dx')
             axs.set_xlabel('i')
             axs.set_ylabel('z')
             axs.set_ylim(-10, 10)
@@ -247,33 +253,33 @@ def interp(t1, l1, var, Nlines, alldataiso, save):
                 axs.plot(alldataiso[inew1, at, :], (alldataiso[inew1, al, :]), label=f'{orderedage[inew1] / 1e6} Myr',
                          color='#3F8D4F')
             if 2 <= nfac <= 12:
-                axs.plot(x2, y2, linestyle='dashed', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
-                axs.plot(x1, y1, linestyle='dashed', label=f'M = 0.{nfac} M$_\odot$', color='black')
-                axs.plot(x3, y3, linestyle='dashed', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
+                axs.plot(x2, y2, linestyle='dashed', label=fr'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
+                axs.plot(x1, y1, linestyle='dashed', label=fr'M = 0.{nfac} M$_\odot$', color='black')
+                axs.plot(x3, y3, linestyle='dashed', label=fr'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
             if nfac == 1:
 
-                axs.plot(x1, y1, linestyle='dashed', label=f'M = 0.{nfac} M$_\odot$', color='black')
-                axs.plot(x3, y3, linestyle='dashed', label=f'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
+                axs.plot(x1, y1, linestyle='dashed', label=fr'M = 0.{nfac} M$_\odot$', color='black')
+                axs.plot(x3, y3, linestyle='dashed', label=fr'M = 0.{nfac + 1} M$_\odot$', color='#7A306C')
             if nfac == 13:
 
-                axs.plot(x2, y2, linestyle='dashed', label=f'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
-                axs.plot(x1, y1, linestyle='dashed', label=f'M = 1.3 M$_\odot$', color='black')
+                axs.plot(x2, y2, linestyle='dashed', label=fr'M = 0.{nfac - 1} M$_\odot$', color='#3F8D4F')
+                axs.plot(x1, y1, linestyle='dashed', label=fr'M = 1.3 M$_\odot$', color='black')
             if il == 2:
                 axs.set_yscale('log')
                 axs.scatter(t1, 10**l1, color='red', marker='*', label='Star', edgecolors='white', s=300)
-                axs.set_ylabel('log(L/L$_\odot$)')
+                axs.set_ylabel(r'log(L/L$_\odot$)')
             else:
                 axs.scatter(t1, l1, color='red', marker='*', label='Star', edgecolors='white', s=300)
                 axs.ticklabel_format(axis='y', style='scientific', scilimits=(0, 0))
-                axs.set_ylabel('L/L$_\odot$')
+                axs.set_ylabel(r'L/L$_\odot$')
 
             axs.set_title('HR Diagram')
-            axs.set_xlabel('T$_{\mathrm{eff}}$ (K)')
+            axs.set_xlabel(r'T$_{\mathrm{eff}}$ (K)')
             axs.grid()
             axs.legend()
             plt.gca().invert_xaxis()
             if save == 1:
-                plt.savefig(f"{output}isocfit_outputs/hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.pdf")
+                plt.savefig(f"{isocfit_outputs}hrd_star_{l1}_{t1}_{nearage / 1e6}_{nearmasst}.pdf")
             plt.close(fig)
             plt.close()
 
@@ -402,8 +408,8 @@ def plot_HRD(result, model):
                  facecolor='brown',
                  s=60,
                  alpha=0.8)
-    plt.xlabel('T$_{eff}$ (K)')
-    plt.ylabel('log L/L$_\odot$')
+    plt.xlabel(r'T$_{eff}$ (K)')
+    plt.ylabel(r'log L/L$_\odot$')
     plt.xlim(6000, 2500)
     plt.title('HR Diagram')
     plt.grid(True)
@@ -412,5 +418,4 @@ def plot_HRD(result, model):
                borderpad=1,
                borderaxespad=1,
                ncol=2)
-    plt.savefig('_hrd_complete.png', dpi=300)
-
+    plt.savefig(os.path.join(PLOTS_DIR, '_hrd_complete.png'), dpi=300)
