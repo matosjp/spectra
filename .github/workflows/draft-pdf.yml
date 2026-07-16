@@ -19,4 +19,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: paper
-          path: '${{ steps.paper.outputs.pdf-path }}.pdf'
+          path: paper.pdf
