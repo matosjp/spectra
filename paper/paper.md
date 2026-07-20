@@ -35,7 +35,7 @@ The software integrates data preprocessing, missing data imputation via $k$-Near
 
 # Statement of need
 
-In observational astrophysics, estimating the mass of single stars outside binary systems relies heavily on theoretical evolution models and mass-luminosity/magnitude relations (RML/RMM) [@benedict_solar_2016; @serenelli_weighing_2021]. However, pre-main-sequence (PMS) stars exhibit high observational uncertainties due to differential interstellar extinction, age dispersion, and incomplete data vectors [@herczeg__empirical_2015].
+In Astrophysics, estimating the mass of single stars outside binary systems relies heavily on theoretical stellar evolution models and mass-luminosity or mass-magnitude relations (MLR/MMR) [@benedict_solar_2016; @serenelli_weighing_2021]. Taking advantage of age and metallicity homogeneity of stars belonging to clusters, isochrone or stellar track fitting on color magnitude diagrams prove to be an useful tool to obtain simultaneously stellar ages and mass. However, it depends on a well defined main sequence which in turn depends on high quality data and on the age of the cluster. Younger clusters have a great number of pre main sequence (PMS) stars that lie above the main sequence making the fitting more difficult. Moreover, PMS stars exhibit high observational uncertainties due to differential interstellar extinction, age dispersion, and incomplete data vectors [@herczeg__empirical_2015].
 
 `SPECTRA` addresses these challenges by offering a unified, user-friendly desktop application built with `ttkbootstrap`. It enables researchers and educators to:
 1. Automatically preprocess, filter, and impute incomplete photometric datasets.
