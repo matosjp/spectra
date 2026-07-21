@@ -8,7 +8,7 @@ tags:
   - isochrones
   - machine learning
 authors:
-  - name: João Paulo Matos Dias Gomes
+  - name: João Paulo Almeida da Silva Matos
     orcid: 0009-0000-2586-2801
     corresponding: true
     affiliation: 1, 2
