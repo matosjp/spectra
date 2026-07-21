@@ -101,6 +101,8 @@ Using a control sample of isolated eclipsing binary stars from @benedict_solar_2
 
 As shown in \autoref{fig:pleiades_comp}, the `IsocFit - BHAC15` method exhibits greater dispersion around the 1:1 identity line, particularly for stars with $M > 0.7 M_\odot$. This behavior is attributed to the convergence of evolutionary tracks near the Zero-Age Main Sequence (ZAMS) at the age of the Pleiades (~112 Myr), which creates localized degeneracies during grid minimization[cite: 1]. Conversely, the semi-empirical `KNN - BHAC15` model demonstrates exceptional predictive stability, showing near-perfect alignment ($R^2 \approx 1.0$) when cross-validated against the photometrically derived masses of @lodieu_5d_2019. When benchmarked against empirical binary masses from @benedict_solar_2016, the $k$-NN model reproduces stellar masses with minimal bias up to the applicability threshold of the empirical $K$-band relation ($M \lesssim 0.75 M_\odot$)[cite: 1].
 
+A more detailed astrophysical discussion and complete parameter catalogues derived for each cluster will be presented in a forthcoming paper (Gomes et al., in prep.).
+
 By reducing manual preprocessing time and providing rigorous statistical diagnostic reports, `SPECTRA` supports both observational research in stellar rotation/dynamics and undergraduate/graduate instruction in stellar astrophysics [@gomes_determinacao_2024].
 
 # AI usage disclosure
