@@ -62,7 +62,7 @@ Several computational tools exist within the astronomical ecosystem for stellar 
 
 \autoref{fig:workflow} illustrates the high-level execution flow and operational logic of `SPECTRA`:
 
-![Execution workflow and modular architecture of `SPECTRA`.](spectra_app_workflow.jpg){#fig:workflow}
+![Execution workflow and modular architecture of `SPECTRA`.](spectra_app_workflow.png){#fig:workflow}
 
 ### Execution Pipeline & Module Description
 
@@ -97,7 +97,7 @@ Using a control sample of isolated eclipsing binary stars from @benedict_solar_2
 
 \autoref{fig:pleiades_comp} illustrates a comparative evaluation of mass estimates derived by `SPECTRA` for member stars of the Pleiades cluster using both the traditional grid-interpolation method (`IsocFit - BHAC15`, left panels) and the machine-learning Mass-Magnitude relation (`KNN - BHAC15`, right panels), benchmarked against literature values from TESS V8.2 [@stassun_revised_2019], Lodieu et al. (2019) [@lodieu_5d_2019], and Delfosse et al. (2000) [@benedict_solar_2016].
 
-![Comparison of stellar mass estimates for the Pleiades cluster obtained via `IsocFit` (left column) and `KNN - BHAC15` (right column) against reference datasets from TESS V8.2, Lodieu et al. (2019), and Delfosse et al. (2000). The dashed line represents the ideal 1:1 identity relation.](ple_results_report.jpg){#fig:pleiades_comp}
+![Comparison of stellar mass estimates for the Pleiades cluster obtained via `IsocFit` (left column) and `KNN - BHAC15` (right column) against reference datasets from TESS V8.2, Lodieu et al. (2019), and Delfosse et al. (2000). The dashed line represents the ideal 1:1 identity relation.](ple_results_report.png){#fig:pleiades_comp}
 
 As shown in \autoref{fig:pleiades_comp}, the `IsocFit - BHAC15` method exhibits greater dispersion around the 1:1 identity line, particularly for stars with $M > 0.7 M_\odot$. This behavior is attributed to the convergence of evolutionary tracks near the Zero-Age Main Sequence (ZAMS) at the age of the Pleiades (~112 Myr), which creates localized degeneracies during grid minimization[cite: 1]. Conversely, the semi-empirical `KNN - BHAC15` model demonstrates exceptional predictive stability, showing near-perfect alignment ($R^2 \approx 1.0$) when cross-validated against the photometrically derived masses of @lodieu_5d_2019. When benchmarked against empirical binary masses from @benedict_solar_2016, the $k$-NN model reproduces stellar masses with minimal bias up to the applicability threshold of the empirical $K$-band relation ($M \lesssim 0.75 M_\odot$)[cite: 1].
 
