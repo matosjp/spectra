@@ -1,16 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = ""
+name = "spectra"
+version = "1.0.0"
+description = "Stellar Parameter Estimation and Calculation Tools for Research and Analysis"
 readme = "README.md"
-requires-python = ">=3.8"
-authors = [{ "name" = "", "email" = "" }]
-maintainers = [{ "name" = "", "email" = "" }]
-description = ''
-dependencies = [""]
-version = "0.0.1"
-[project.optional-dependencies]
-docs = ["sphinx"]
-release = ["build", "twine"]
-test = ["pytest"]
-[tool.pytest.ini_options]
-addopts = ["--verbose"]
-testpaths = ["tests"]
+requires-python = ">=3.9"
+authors = [
+    { name = "João Paulo Matos Dias Gomes", email = "jpmdgomes.bf@gmail.com" },
+    { name = "Maria Jaqueline Vasconcelos", email = "mjvasc@uesc.br" },
+    { name = "Adriano Hoth Cerqueira", email = "hoth@uesc.br" }
+]
+dependencies = [
+    "ttkbootstrap",
+    "Pillow",
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "statsmodels",
+    "matplotlib",
+    "seaborn",
+    "missingno",
+    "madys",
+    "gdown"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]

@@ -4,8 +4,8 @@ import matplotlib.gridspec as gridspec
 import matplotlib.cm as cm
 import numpy as np
 import os
-from ttkbootstrap.toast import ToastNotification
-
+from ttkbootstrap.widgets import ToastNotification  
+ 
 from .paths import PROJECT_ROOT, OUTPUTS_DIR, ISOCFIT_DIR, PLOTS_DIR, ISOCHRONE_MODELS_DIR
 
 matplotlib.use('Agg')

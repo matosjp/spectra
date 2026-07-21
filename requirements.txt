@@ -24,7 +24,7 @@ madys
 # madys itself depends on: astropy, h5py, and the "tap" (TAP Gaia Query) package.
 # The MADYS docs recommend installing tap manually first, since a plain
 # `pip install tap` grabs an unrelated package of the same name:
-#   pip install git+https://github.com/vsquicciarini/tap.git
+#   pip install git+https://github.com/mfouesneau/tap
 #   pip install madys
 
 # --- First-run data download ---
@@ -37,3 +37,4 @@ gdown
 # on Windows/macOS, but on Linux you usually need the system package, e.g.:
 #   sudo apt install python3-tk       (Debian/Ubuntu)
 #   sudo dnf install python3-tkinter  (Fedora)
+#        brew install python-tk       (MacOS)
