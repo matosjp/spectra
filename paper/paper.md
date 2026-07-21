@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-Determining fundamental stellar parameters — such as mass, age, luminosity, effective temperature ($T_{\text{eff}}$), radius, and distance — is central to observational and theoretical astrophysics [@serenelli_weighing_2021]. Interior stellar structure [@baraffe_new_2015], rotation [@vasconcelos2022], magnetic field generation [@2014ARA&A..52..251C], for example, are mass dependent process. **SPECTRA**[^1] (*Stellar Parameter Estimation and Calculation Tools for Research and Analysis*, v1.0.0_build_160726) is an open-source Python tool designed to optimize and automate stellar mass determination and diagnostic modeling for stars in clusters, with a particular focus on young, low-mass stars.
+Determining fundamental stellar parameters — such as mass, age, luminosity, effective temperature ($T_{\text{eff}}$), radius, and distance — is central to observational and theoretical astrophysics [@serenelli_weighing_2021]. Interior stellar structure [@baraffe_new_2015], rotation [@vasconcelos2022], magnetic field generation [@charbonneau2014], for example, are mass dependent process. **SPECTRA**[^1] (*Stellar Parameter Estimation and Calculation Tools for Research and Analysis*, v1.0.0_build_160726) is an open-source Python tool designed to optimize and automate stellar mass determination and diagnostic modeling for stars in clusters, with a particular focus on young, low-mass stars.
 
 
 The software integrates data preprocessing, missing data imputation via $k$-Nearest Neighbors ($k$-NN) and iterative techniques, theoretical isochrone fitting (`IsocFit`), machine-learning regression modeling (`Mass-Magnitude Modeling`), and interactive visualization tools [@baraffe_new_2015; @serenelli_weighing_2021].
@@ -100,7 +100,7 @@ Using a control sample of isolated eclipsing binary stars from @benedict_solar_2
 
 * **Well-Defined Main-Sequence Clusters (Pleiades & NGC 2516):** On clusters with established main sequences [@lodieu_5d_2019], $k$-NN RMM modeling using *Gaia* $G$-band and $V$-band absolute magnitudes yielded near-perfect alignment with literature values ($R^2 > 0.99$, $RMSE < 0.01 M_\odot$), demonstrating superior performance over traditional isochrone grid edge-effects.
 
-\autoref{fig:pleiades_comp} illustrates a comparative evaluation of mass estimates derived by `SPECTRA` for member stars of the Pleiades cluster using both the traditional grid-interpolation method (`IsocFit - BHAC15`, left panels) and the machine-learning Mass-Magnitude relation (`KNN - BHAC15`, right panels), benchmarked against literature values from TESS V8.2 [@stassun_revised_2019], [@lodieu_5d_2019], and [delfosse_accurate_2000], [@benedict_solar_2016].
+\autoref{fig:pleiades_comp} illustrates a comparative evaluation of mass estimates derived by `SPECTRA` for member stars of the Pleiades cluster using both the traditional grid-interpolation method (`IsocFit - BHAC15`, left panels) and the machine-learning Mass-Magnitude relation (`KNN - BHAC15`, right panels), benchmarked against literature values from TESS V8.2 [@stassun_revised_2019], [@lodieu_5d_2019], and [@delfosse_accurate_2000], [@benedict_solar_2016].
 
 ![Comparison of stellar mass estimates for the Pleiades cluster obtained via `IsocFit` (left column) and `KNN - BHAC15` (right column) against reference datasets from TESS V8.2, Lodieu et al. (2019), and Delfosse et al. (2000). The dashed line represents the ideal 1:1 identity relation.](ple_results_report.png){#fig:pleiades_comp}
 
