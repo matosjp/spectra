@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-Determining fundamental stellar parameters — such as mass, age, luminosity, effective temperature ($T_{\text{eff}}$), radius, and distance — is central to observational and theoretical astrophysics [@serenelli_weighing_2021]. **SPECTRA**[^1] (*Stellar Parameter Estimation and Calculation Tools for Research and Analysis*, v1.0.0_build_160726) is an open-source Python tool designed to optimize and automate stellar mass determination and diagnostic modeling for stars in clusters, with a particular focus on young, low-mass stars.
+Determining fundamental stellar parameters — such as mass, age, luminosity, effective temperature ($T_{\text{eff}}$), radius, and distance — is central to observational and theoretical astrophysics [@serenelli_weighing_2021]. Interior stellar structure [@baraffe_new_2015], rotation [@vasconcelos2022], magnetic field generation [@2014ARA&A..52..251C], for example, are mass dependent process. **SPECTRA**[^1] (*Stellar Parameter Estimation and Calculation Tools for Research and Analysis*, v1.0.0_build_160726) is an open-source Python tool designed to optimize and automate stellar mass determination and diagnostic modeling for stars in clusters, with a particular focus on young, low-mass stars.
 
 
 The software integrates data preprocessing, missing data imputation via $k$-Nearest Neighbors ($k$-NN) and iterative techniques, theoretical isochrone fitting (`IsocFit`), machine-learning regression modeling (`Mass-Magnitude Modeling`), and interactive visualization tools [@baraffe_new_2015; @serenelli_weighing_2021].
@@ -38,14 +38,17 @@ The software integrates data preprocessing, missing data imputation via $k$-Near
 
 # Statement of need
 
-In Astrophysics, estimating the mass of single stars outside binary systems depends heavily on theoretical stellar evolution models and mass-luminosity or mass-magnitude relations (MLR/MMR) [@benedict_solar_2016; @serenelli_weighing_2021]. Taking advantage of age and metallicity homogeneity of stars belonging to clusters, isochrone or stellar track fitting on color magnitude diagrams proves to be a useful tool to obtain simultaneously stellar ages and mass. However, it depends on a well defined main sequence which in turn depends on high quality data and on the age of the cluster. Younger clusters have a great number of pre main sequence (PMS) stars that lie above the main sequence making the fitting more difficult. Moreover, PMS stars exhibit high observational uncertainties due to differential interstellar extinction, age dispersion, and incomplete data vectors [@herczeg__empirical_2015]. Data quality and differences between stellar models affect the final results. Stellar structure and evolutionary models differ in the adopted input physics and this impact the isochrone fitting results [@lebreton_2014]. On the other hand, MLR or MMR uses photometric and spectroscopic data for systems that can provide direct mass values as, for example, double-lined eclipsing binary systems. These relations are model independent. Using MLR/MMR requires goodness-of-fit methods that can be statistical in nature or that can rely on the use of machine learning techniques. `SPECTRA` uses both isochrone fitting and MMR relations to calculate mass values of stars belonging to stellar clusters.
+In Astrophysics, estimating the mass of single stars outside binary systems depends heavily on theoretical stellar evolution models and mass-luminosity or mass-magnitude relations (MLR/MMR) [@benedict_solar_2016; @serenelli_weighing_2021]. Taking advantage of age and metallicity homogeneity of stars belonging to clusters, isochrone or stellar track fitting on color magnitude diagrams proves to be a useful tool to obtain simultaneously stellar ages and mass. However, it depends on a well defined main sequence which in turn depends on high quality data and on the age of the cluster. Younger clusters ($le 100$ Myr - [@piskunov2018]) have a great number of pre main sequence (PMS) stars that lie above the main sequence making the fitting more difficult. Moreover, PMS stars exhibit high observational uncertainties due to differential interstellar extinction, age dispersion, and incomplete data vectors [@herczeg__empirical_2015]. Data quality and differences between stellar models affect the final results. Stellar structure and evolutionary models differ in the adopted input physics and this impact the isochrone fitting results [@lebreton_2014]. On the other hand, MLR or MMR uses photometric and spectroscopic data for systems that can provide direct mass values as, for example, double-lined eclipsing binary systems. These relations are model independent. Using MLR/MMR requires goodness-of-fit methods that can be statistical in nature or that can rely on the use of machine learning techniques. `SPECTRA` uses both isochrone fitting and MMR relations to calculate mass values of stars belonging to stellar clusters.
 
 
 `SPECTRA` addresses these challenges by offering a unified, user-friendly desktop application built with `ttkbootstrap`. It enables researchers and educators to:
-1. Automatically preprocess, filter, and impute incomplete photometric datasets.
-2. Execute automated local interpolation over theoretical evolutionary grids (e.g., Siess et al. 2000; BHAC15) via `IsocFit` [@baraffe_new_2015].
-3. Train, optimize (via Grid Search and $K$-fold cross-validation), and statistically evaluate machine learning regression algorithms (e.g., Random Forests, Support Vector Regressors, $k$-NN) to construct semi-empirical mass-magnitude relations.
-4. Obtain stellar parameters including mass, age, effective temperature and luminosity.
+
+1.  Automatically preprocess, filter, and impute incomplete photometric datasets.
+2.  Execute automated local interpolation over theoretical evolutionary grids (e.g., Siess et al. 2000; BHAC15) via `IsocFit` [@baraffe_new_2015].
+3.  Train, optimize (via Grid Search and $K$-fold cross-validation), and statistically evaluate machine learning regression algorithms (e.g., Random Forests, Support Vector Regressors, $k$-NN) to construct semi-empirical mass-magnitude relations.
+4.  Obtain stellar parameters including mass, age, effective temperature and luminosity.
+
+
 
 # State of the field
 
