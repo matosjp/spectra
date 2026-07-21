@@ -70,7 +70,7 @@ Several computational tools exist within the astronomical ecosystem for stellar 
 
 ### Execution Pipeline & Module Description
 
-The structure of the code, the environment and the setup for running it, the models used and all the mathematical considerations are described in details in [@gomes_determinacao_2024]. However, for the sake of clarity, we will outline the main features here:
+The structure of the code, the environment and the setup for running it, the models used and all the mathematical considerations are described in details in @gomes_determinacao_2024. However, for the sake of clarity, we will outline the main features here:
 
 1. **Initialization & Environment Setup:** Upon launching `main.py`, `SPECTRA` performs an automated first-run verification check. If local theoretical evolutionary grids (e.g., Siess et al. 2000; BHAC15) or model weights are missing, the system automatically fetches and caches them to ensure reproducible offline execution [@baraffe_new_2015].
 
