@@ -16,7 +16,7 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 import os
 import missingno as msno
-from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.widgets import ToastNotification   
 from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 

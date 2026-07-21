@@ -30,48 +30,6 @@ a single graphical interface.
   downloads the MADYS stellar evolutionary models and the Siess 2000/BHAC15
   isochrone data tables it depends on (see below).
 
-## Requirements
-
-- Python 3.9+
-- A Python distribution with **Tk** support (`tkinter`). This ships with
-  Python on Windows/macOS; on Linux you typically need the system package:
-  ```bash
-  sudo apt install python3-tk        # Debian/Ubuntu
-  sudo dnf install python3-tkinter   # Fedora
-  ```
-  If you're using a **conda** environment, install it via conda instead so
-  it's linked correctly inside the env: `conda install tk`.
-
-### Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-`requirements.txt`:
-```
-ttkbootstrap
-Pillow
-numpy
-pandas
-scipy
-scikit-learn
-statsmodels
-matplotlib
-seaborn
-missingno
-madys
-gdown
-```
-
-`madys` additionally depends on the TAP Gaia Query package (`tap`), which
-should be installed *before* `madys` to avoid pulling in an unrelated PyPI
-package of the same name:
-
-```bash
-pip install git+https://github.com/vsquicciarini/tap.git
-pip install madys
-```
 
 ## Installation
 
@@ -108,6 +66,43 @@ conda create -n spectra python=3.11
 conda activate spectra
 
 pip install -r requirements.txt
+```
+### Requirements
+
+- Python 3.9+
+- A Python distribution with **Tk** support (`tkinter`). This ships with
+  Python on Windows/macOS; on Linux you typically need the system package:
+  ```bash
+  sudo apt install python3-tk        # Debian/Ubuntu
+  sudo dnf install python3-tkinter   # Fedora
+  ```
+  If you're using a **conda** environment, install it via conda instead so
+  it's linked correctly inside the env: `conda install tk`.
+
+
+`requirements.txt`:
+```
+ttkbootstrap
+Pillow
+numpy
+pandas
+scipy
+scikit-learn
+statsmodels
+matplotlib
+seaborn
+missingno
+madys
+gdown
+```
+
+`madys` additionally depends on the TAP Gaia Query package (`tap`), which
+should be installed *before* `madys` to avoid pulling in an unrelated PyPI
+package of the same name:
+
+```bash
+pip install git+https://github.com/mfouesneau/tap.git
+pip install madys
 ```
 
 (`ttkbootstrap`, `madys`, and `gdown` aren't on the default conda channels,

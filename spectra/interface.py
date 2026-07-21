@@ -24,7 +24,7 @@ from traceback import print_tb
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.widgets import ToastNotification   
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
@@ -416,7 +416,7 @@ class Sidebar(ttk.Frame):
         version_label.pack(padx=20, pady=0)
 
         # Label displaying program version
-        version_label = tk.Label(frame, text="Version: V1.00.000_build_160726")
+        version_label = tk.Label(frame, text="Version: V1.0.0_build_160726")
         version_label.pack(side=BOTTOM, padx=20, pady=0)
 
         # Keep a reference to the image to prevent garbage collection
