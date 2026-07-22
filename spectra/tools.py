@@ -16,7 +16,7 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 import os
 import missingno as msno
-from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.widgets import ToastNotification   
 from statsmodels.graphics.tsaplots import plot_acf
 import seaborn as sns
 
@@ -218,11 +218,13 @@ def interpolmass(primarydataset, model):
     alldataiso = readiso(model)
     if model == "Siess 2000":
         ind = 3
+        dind = 6
         ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 3e7, 6e7, 1e8]) / 1e6
         massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2, 1.3, 1.4, 1.5])
 
     elif model == "BHAC15":
         ind = 1
+        dind = 2
         ageiso = np.array([1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 5.e7, 8.e7, 1.e8, 1.2e8, 2e8]) / 1e6
         massiso = np.array([.01, .015, .02, .03, .04, .05, .06, .07, .072, .075, .08, .09,
                             .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
@@ -250,6 +252,7 @@ def interpolmass(primarydataset, model):
 
     else:
         nm = []
+        ny = []
         t = data
 
         for x in range(len(t)):
@@ -261,13 +264,15 @@ def interpolmass(primarydataset, model):
 
                     xp = [alldataiso[i, ind, j - 1], alldataiso[i, ind, j], alldataiso[i, ind, j + 1]]
                     yp = [massiso[j - 1], massiso[j], massiso[j + 1]]
+                    dp = [alldataiso[i, dind, j - 1], alldataiso[i, dind, j], alldataiso[i, dind, j + 1]]
                 elif j == 0:
                     xp = [alldataiso[i, ind, j], alldataiso[i, ind, j + 1], alldataiso[i, ind, j + 2]]
                     yp = [massiso[j], massiso[j + 1], massiso[j + 2]]
-
+                    dp = [alldataiso[i, dind, j], alldataiso[i, dind, j+1], alldataiso[i, dind, j + 2]]
                 elif j == len(massiso) - 1:
                     xp = [alldataiso[i, ind, j - 2], alldataiso[i, ind, j - 1], alldataiso[i, ind, j]]
                     yp = [massiso[j - 2], massiso[j - 1], massiso[j]]
+                    dp = [alldataiso[i, dind, j - 2], alldataiso[i, dind, j - 1], alldataiso[i, dind, j]]
                 else:
                     toast = ToastNotification(
                         title='Stellar Mass Interpolation',
@@ -277,13 +282,17 @@ def interpolmass(primarydataset, model):
                     )
                     toast.show_toast()
                     nm.append(np.nan)
+                    ny.append(np.nan)
 
                 y = np.interp(t[x], xp, yp)
+                a = np.interp(t[x], dp, xp)
                 nm.append(y)
+                ny.append(a)
             else:
                 nm.append(np.nan)
+                ny.append(np.nan)
 
-    return nm
+    return nm, ny
 
 
 def fit(X, y, model_name):

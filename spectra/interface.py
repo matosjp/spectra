@@ -1,9 +1,9 @@
 """
 /*********************************************************************************/
 *                             S.P.E.C.T.R.A. Program                              *
-*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis   *
+*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis  *
 *                                                                                 *
-*  Author: [João Paulo Matos Dias Gomes]                                          *
+*  Author: [João Paulo Almeida da Silva Matos]                                    *
 *  Version: 1.0                                                                   *
 *  Date: [05/06/2024]                                                             *
 *                                                                                 *
@@ -18,13 +18,14 @@
 *  This program is intended for research and educational purposes, offering a     *
 *  user-friendly interface and accurate analytical capabilities for studying the  *
 *  properties and behaviors of stars across the cosmos.                           *
-*********************************************************************************/
+**********************************************************************************/
 """
+
 from traceback import print_tb
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.widgets import ToastNotification   
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
@@ -61,7 +62,7 @@ class App(ttk.Window):
         super().__init__()
         self.target = tk.StringVar
         self.title("S.P.E.C.T.R.A")
-        self.geometry("820x560")
+        self.geometry("800x600")
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.dark_mode_var = tk.BooleanVar(value=True if self.current_theme == 'dark_theme' else False)
@@ -416,7 +417,7 @@ class Sidebar(ttk.Frame):
         version_label.pack(padx=20, pady=0)
 
         # Label displaying program version
-        version_label = tk.Label(frame, text="Version: V1.00.000_build_160726")
+        version_label = tk.Label(frame, text="Version: V1.0.0_build_220726")
         version_label.pack(side=BOTTOM, padx=20, pady=0)
 
         # Keep a reference to the image to prevent garbage collection
@@ -840,6 +841,14 @@ class Sidebar(ttk.Frame):
         uncertainty = np.sqrt(y_hat * sigma)
         return uncertainty
 
+    @staticmethod
+    def age_uncertainty(y):
+            y_hat = 1.424
+            mu = np.mean(np.nan_to_num(y))
+            sigma = np.var(np.nan_to_num(y))
+            uncertainty = np.sqrt(y_hat * sigma)
+            return uncertainty
+
     def predict_mass(self):
         global table_data
 
@@ -894,8 +903,6 @@ class Sidebar(ttk.Frame):
         var, Nlines, alldataiso = intpol(model)
 
 
-
-
         primarydataset = []
         ff = []
         if Nobjects > 1:
@@ -919,27 +926,44 @@ class Sidebar(ttk.Frame):
         primarydataset = pd.DataFrame(primarydataset)
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
 
-        mass = interpolmass(primarydataset, self.iso_selected_model.get())
+        na = primarydataset['Age']
+        
+        mass, age = interpolmass(primarydataset, self.iso_selected_model.get())
+
         yerr = np.zeros(Nobjects)
+        aerr = np.zeros(Nobjects)
 
         row = pd.DataFrame({'mass': mass})
         hold = np.zeros(Nobjects)
 
+        arow = pd.DataFrame({'age': age})
+        ahold = np.zeros(Nobjects)
+
         if Nobjects > 1:
             hold[ff] = row.loc[ff, 'mass'].values
             yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+
+            ahold[ff] = arow.loc[ff, 'age'].values
+            aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.1
+
             mass = hold
+            age = ahold
         elif Nobjects == 1:
             yerr = 0.01
+            aerr = 100
 
         if table_data is None:
-            primarydataset['Mass_calc'] = mass
-            primarydataset['Mass_e'] = yerr
+            primarydataset['Age_calc'] = np.round(age, 2)
+            primarydataset['Age_e'] = np.round(aerr, 2)
+            primarydataset['Mass_calc'] = np.round(mass, 4)
+            primarydataset['Mass_e'] = np.round(yerr, 4)
             table_data = primarydataset
 
         else:
-            table_data['Mass_calc'] = mass
-            table_data['Mass_e'] = yerr
+            table_data['Age_calc'] = np.round(age, 2)
+            table_data['Age_e'] = np.round(aerr, 2)
+            table_data['Mass_calc'] = np.round(mass, 4)
+            table_data['Mass_e'] = np.round(yerr, 4)
 
         table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
         self.master.show_hrd_plot()

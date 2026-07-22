@@ -1,0 +1,11 @@
+name: spectra
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - tk
+  - pip
+  - pip:
+    - git+https://github.com/mfouesneau/tap
+    - -r requirements.txt
