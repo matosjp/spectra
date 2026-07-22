@@ -66,7 +66,17 @@ conda create -n spectra python=3.11
 conda activate spectra
 
 pip install -r requirements.txt
+
 ```
+`madys` additionally depends on the TAP Gaia Query package (`tap`), which
+should be installed *before* `madys` to avoid pulling in an unrelated PyPI
+package of the same name:
+
+```bash
+pip install git+https://github.com/mfouesneau/tap.git
+pip install madys
+```
+
 ### Requirements
 
 - Python 3.9+
@@ -96,14 +106,6 @@ madys
 gdown
 ```
 
-`madys` additionally depends on the TAP Gaia Query package (`tap`), which
-should be installed *before* `madys` to avoid pulling in an unrelated PyPI
-package of the same name:
-
-```bash
-pip install git+https://github.com/mfouesneau/tap.git
-pip install madys
-```
 
 (`ttkbootstrap`, `madys`, and `gdown` aren't on the default conda channels,
 so `pip install` inside the activated conda environment is the simplest
