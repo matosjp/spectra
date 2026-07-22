@@ -1,9 +1,9 @@
 """
 /*********************************************************************************/
 *                             S.P.E.C.T.R.A. Program                              *
-*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis   *
+*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis  *
 *                                                                                 *
-*  Author: [João Paulo Matos Dias Gomes]                                          *
+*  Author: [João Paulo Almeida da Silva Matos]                                    *
 *  Version: 1.0                                                                   *
 *  Date: [05/06/2024]                                                             *
 *                                                                                 *
@@ -18,8 +18,9 @@
 *  This program is intended for research and educational purposes, offering a     *
 *  user-friendly interface and accurate analytical capabilities for studying the  *
 *  properties and behaviors of stars across the cosmos.                           *
-*********************************************************************************/
+**********************************************************************************/
 """
+
 from traceback import print_tb
 
 import ttkbootstrap as ttk
@@ -61,7 +62,7 @@ class App(ttk.Window):
         super().__init__()
         self.target = tk.StringVar
         self.title("S.P.E.C.T.R.A")
-        self.geometry("820x560")
+        self.geometry("800x600")
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.dark_mode_var = tk.BooleanVar(value=True if self.current_theme == 'dark_theme' else False)
@@ -416,7 +417,7 @@ class Sidebar(ttk.Frame):
         version_label.pack(padx=20, pady=0)
 
         # Label displaying program version
-        version_label = tk.Label(frame, text="Version: V1.0.0_build_160726")
+        version_label = tk.Label(frame, text="Version: V1.0.0_build_220726")
         version_label.pack(side=BOTTOM, padx=20, pady=0)
 
         # Keep a reference to the image to prevent garbage collection
