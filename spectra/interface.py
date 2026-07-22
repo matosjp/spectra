@@ -953,7 +953,6 @@ class Sidebar(ttk.Frame):
             aerr = 100
 
         if table_data is None:
-            primarydataset['Near_age'] = np.round((na * 1e3), 2)
             primarydataset['Age_calc'] = np.round(age, 2)
             primarydataset['Age_e'] = np.round(aerr, 2)
             primarydataset['Mass_calc'] = np.round(mass, 4)
@@ -961,7 +960,6 @@ class Sidebar(ttk.Frame):
             table_data = primarydataset
 
         else:
-            table_data['Near_age'] = np.round((na * 1e3), 2)
             table_data['Age_calc'] = np.round(age, 2)
             table_data['Age_e'] = np.round(aerr, 2)
             table_data['Mass_calc'] = np.round(mass, 4)
