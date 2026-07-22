@@ -207,28 +207,9 @@ project-root/
 - Building a Mass-Magnitude model caps the training data fed into
   `RegressionReport` at 5,000 randomly-sampled points
   (`Sidebar.MAX_TRAINING_SAMPLES` in `interface.py`) to keep the SVR/grid-search
-  step from exhausting memory on the full isochrone grid (which defaults to
+  step from exhausting memory on the full isochrone grid and avoid overfitted model (which defaults to
   `n_steps=[1000, 1000]`, i.e. up to ~1,000,000 points). This trades a bit of
-  training-set size for the model actually finishing — see *Troubleshooting*
-  if you want to tune it.
-
-## Troubleshooting
-
-**"Model Download" warning listing `list index out of range` for one or
-more models.** This means `madys.ModelHandler.download_model(model_name)`
-didn't recognize the short name (`bhac15`, `parsec`, `mist`) passed to it —
-MADYS expects an exact `model_grid` identifier, which may differ from the
-family name. The warning dialog now also prints whatever
-`madys.ModelHandler.available()` reports, so you can read off the correct
-identifier(s) from there and update `REQUIRED_MODELS` in `spectra/paths.py`
-accordingly. You can also check this directly:
-```bash
-python -c "import madys; madys.ModelHandler.available()"
-```
-Until this is fixed, isochrone fitting features that depend on the failed
-model(s) won't work, but the rest of the app is unaffected — dismissing the
-warning lets you continue.
-
+  training-set size for the model actually finishing.
 
 ## Authors
 
