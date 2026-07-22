@@ -88,6 +88,8 @@ The structure of the code, the environment and the setup for running it, the mod
 
 3. **Output Artifact Generation:** All generated diagnostics—including annotated HR/Color-Magnitude diagrams, statistical summary tables (`.csv`), regression report logs, and diagnostic residual plots—are automatically organized and saved in the localized `outputs/` repository for direct export into publications.
 
+To support users and ensure smooth software adoption, a detailed step-by-step user manual is provided alongside the package. This documentation guides researchers through dataset formatting, interface navigation, parameter setup for both `IsocFit` and Mass-Magnitude Modeling modules, as well as troubleshooting common runtime errors.
+
 # Research impact & empirical case study
 
 The practical effectiveness of `SPECTRA` was validated through a comprehensive study of young stellar clusters covering distinct evolutionary stages: Orion Nebula Cluster (ONC, ~1 Myr) [@hillenbrand_stellar_1997], Upper Scorpius (~5–11 Myr) [@pecaut_revised_2012; @rebull_rotation_2018], $h$ Persei / NGC 869 (~13 Myr), Pleiades (~112 Myr) [@dahm_reexamining_2015; @lodieu_5d_2019; @gossage_age_2018], and NGC 2516 (~150 Myr).
