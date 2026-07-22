@@ -840,6 +840,14 @@ class Sidebar(ttk.Frame):
         uncertainty = np.sqrt(y_hat * sigma)
         return uncertainty
 
+    @staticmethod
+    def age_uncertainty(y):
+            y_hat = 1.424
+            mu = np.mean(np.nan_to_num(y))
+            sigma = np.var(np.nan_to_num(y))
+            uncertainty = np.sqrt(y_hat * sigma)
+            return uncertainty
+
     def predict_mass(self):
         global table_data
 
@@ -894,8 +902,6 @@ class Sidebar(ttk.Frame):
         var, Nlines, alldataiso = intpol(model)
 
 
-
-
         primarydataset = []
         ff = []
         if Nobjects > 1:
@@ -919,27 +925,46 @@ class Sidebar(ttk.Frame):
         primarydataset = pd.DataFrame(primarydataset)
         primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
 
-        mass = interpolmass(primarydataset, self.iso_selected_model.get())
+        na = primarydataset['Age']
+        
+        mass, age = interpolmass(primarydataset, self.iso_selected_model.get())
+
         yerr = np.zeros(Nobjects)
+        aerr = np.zeros(Nobjects)
 
         row = pd.DataFrame({'mass': mass})
         hold = np.zeros(Nobjects)
 
+        arow = pd.DataFrame({'age': age})
+        ahold = np.zeros(Nobjects)
+
         if Nobjects > 1:
             hold[ff] = row.loc[ff, 'mass'].values
             yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+
+            ahold[ff] = arow.loc[ff, 'age'].values
+            aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.1
+
             mass = hold
+            age = ahold
         elif Nobjects == 1:
             yerr = 0.01
+            aerr = 100
 
         if table_data is None:
-            primarydataset['Mass_calc'] = mass
-            primarydataset['Mass_e'] = yerr
+            primarydataset['Near_age'] = np.round((na * 1e3), 2)
+            primarydataset['Age_calc'] = np.round(age, 2)
+            primarydataset['Age_e'] = np.round(aerr, 2)
+            primarydataset['Mass_calc'] = np.round(mass, 4)
+            primarydataset['Mass_e'] = np.round(yerr, 4)
             table_data = primarydataset
 
         else:
-            table_data['Mass_calc'] = mass
-            table_data['Mass_e'] = yerr
+            table_data['Near_age'] = np.round((na * 1e3), 2)
+            table_data['Age_calc'] = np.round(age, 2)
+            table_data['Age_e'] = np.round(aerr, 2)
+            table_data['Mass_calc'] = np.round(mass, 4)
+            table_data['Mass_e'] = np.round(yerr, 4)
 
         table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
         self.master.show_hrd_plot()
