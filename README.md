@@ -45,7 +45,7 @@ git clone <this-repository-url>
 cd spectra
 ```
 
-### Option A — `venv` (built into Python)
+### Option A — `venv` (built into Python - not compatible with MacOS)
 
 ```bash
 python -m venv .venv
