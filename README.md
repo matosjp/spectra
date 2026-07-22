@@ -148,6 +148,14 @@ Both downloads can take a while depending on your connection and run
 independently of each other, so if only one is missing, only that one is
 fetched.
 
+## 📖 Documentation & User Manual
+
+For detailed step-by-step instructions on operating SPECTRA, please refer to the official [User Manual](Manual.md). The manual covers:
+* Input dataset formatting and CSV structure requirements.
+* Complete walkthroughs for Isochrone Fitting (`IsocFit`) and Mass-Magnitude Modeling (RMM).
+* Parameter tuning and feature selection in the Mathematical Modeling tab.
+* Interpretation and export of output diagnostic plots and tables.
+
 ## Project structure
 
 ```
