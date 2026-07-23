@@ -1,0 +1,7 @@
+outputs/
+isochrone_models/
+*.egg-info/
+.stelar_models_downloaded
+__pycache__/
+*.pyc
+.venv/
