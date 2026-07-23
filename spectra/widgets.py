@@ -6,7 +6,7 @@ import os
 import io
 import contextlib
 from tkinter import filedialog, messagebox
-
+import sys
 
 class SessionManager:
     @staticmethod
@@ -38,21 +38,20 @@ class AboutWindow(ttk.Toplevel):
         self.create_widgets()
 
     def create_widgets(self):
-        author_label = tk.Label(self, text="Author: João Paulo Matos Dias Gomes")
-        author_label.pack(padx=20, pady=10)
 
-        # Label displaying program version
-        version_label = tk.Label(self, text="Version: 1.0")
-        version_label.pack(padx=20, pady=5)
-
-        # Label displaying program date
-        date_label = tk.Label(self, text="Date: 20/12/2024")
-        date_label.pack(padx=20, pady=5)
+        # License label
+        license_label = tk.Label(self, 
+        text="S.P.E.C.T.R.A. v1.0.0 \n"
+        "Copyright (C) 2026 João Paulo Almeida da Silva Matos, Maria Jaqueline Vasconcelos, Adriano Hoth Cerqueira \n"
+        "This program comes with ABSOLUTELY NO WARRANTY. \n"
+        "This is free software, and you are welcome to redistribute it under certain conditions under the  \n" 
+        "terms of the GNU General Public License v3. For full license details, visit: https://www.gnu.org/licenses/")
+        license_label.pack(padx=20, pady=20)
 
         # Description label
         description_label = tk.Label(self,
-                                     text="Description:\nS.P.E.C.T.R.A. (Stellar Parameter Estimation and Calculation "
-                                          "Tools for Research and Analysis) "
+                                     text="Description: S.P.E.C.T.R.A. \n"
+                                          "(Stellar Parameter Estimation and Calculation Tools for Research and Analysis) "
                                           "\nis a software tool designed for the comprehensive analysis of stellar "
                                           "data."
                                           "\nIt provides astronomers and astrophysicists with a suite of powerful "
@@ -60,18 +59,15 @@ class AboutWindow(ttk.Toplevel):
                                           "\nfor determining various parameters related to stars, including stellar"
                                           ' type,'
                                           "\nluminosity, temperature, radius, mass, age, and distance. This program is "
-                                          "\nintended for research and educational purposes, offering a user-friendly "
+                                          "\nintended foSiess 2000r research and educational purposes, offering a user-friendly "
                                           "\ninterface and accurate analytical capabilities for studying the properties"
                                           "\nand behaviors of stars across the cosmos.")
         description_label.pack(padx=20, pady=10)
 
-        # License label
-        license_label = tk.Label(self, 
-        text="S.P.E.C.T.R.A. v0.1.0 \n"
-        "Copyright (C) 2026 João Paulo Matos Dias Gomes, Maria Jaqueline Vasconcelos, Adriano Hoth Cerqueira \n"
-        "This program comes with ABSOLUTELY NO WARRANTY. \n"
-        "This is free software, and you are welcome to redistribute it under certain conditions under the terms of the GNU General Public License v3. \n"
-        "For full license details, visit: https://www.gnu.org/licenses/")
+        # Label displaying program date
+        date_label = tk.Label(self, text="Last update: 23/07/2026")
+        date_label.pack(padx=20, pady=5)
+
 
 
 class ModelDownloadWindow(ttk.Toplevel):
@@ -126,11 +122,28 @@ class ModelDownloadWindow(ttk.Toplevel):
         for model in self.models:
             self.after(0, lambda m=model: self.status_var.set(f"Downloading model: {m} ..."))
             try:
-                madys.ModelHandler.download_model(model)
+                old_stdin = sys.stdin
+                sys.stdin = io.StringIO("Y\n")
+                max_retries = 3
+
+                for attempt in range(max_retries):
+                    try:
+                        madys.ModelHandler.download_model(model)
+                        break  # Concluído com sucesso, sai do loop de retentativas
+                    except Exception as download_err:
+                        if attempt == max_retries - 1:
+                            raise download_err  # Lança a exceção se falhar na última tentativa
+                        self.after(0, lambda a=attempt+2: self.status_var.set(
+                            f"Retrying download for {model} (Attempt {a}/{max_retries})..."
+                        ))
+                
             except Exception as e:
                 if available_hint is None:
                     available_hint = self._get_available_models_hint()
                 failed.append((model, f"{e}\n  Valid model_grid names reported by madys:\n  {available_hint}"))
+            finally:
+                sys.stdin = old_stdin
+
             step += 1
             self.after(0, lambda v=step: self.progress.configure(value=v))
 

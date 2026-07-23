@@ -28,7 +28,7 @@ ISOCHRONE_MODELS_DIR = os.path.join(PROJECT_ROOT, 'isochrone_models')
 
 # --- first-run switch ---------------------------------------------------
 MODELS_FLAG_FILE = os.path.join(PROJECT_ROOT, '.stelar_models_downloaded')
-REQUIRED_MODELS = ['bhac15', 'parsec', 'mist']
+REQUIRED_MODELS = ["bhac15_p0.00"]
 ISOCHRONE_MODELS_URL = 'https://drive.google.com/drive/folders/1KE3X647EJJtYFjv3pknPge02R2Rf92MR?usp=sharing'
 
 # Make sure every output directory exists up front, regardless of which

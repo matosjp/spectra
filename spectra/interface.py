@@ -1,26 +1,3 @@
-"""
-/*********************************************************************************/
-*                             S.P.E.C.T.R.A. Program                              *
-*   Stellar Parameter Estimation and Calculation Tools for Research and Analysis  *
-*                                                                                 *
-*  Author: [João Paulo Almeida da Silva Matos]                                    *
-*  Version: 1.0                                                                   *
-*  Date: [05/06/2024]                                                             *
-*                                                                                 *
-*  Description:                                                                   *
-*  S.P.E.C.T.R.A. (Stellar Parameter Estimation and Calculation Tools for         *
-*  Research and Analysis) is a software tool designed for the comprehensive       *
-*  analysis of stellar data. It provides astronomers and astrophysicists with a   *
-*  suite of powerful algorithms for determining various parameters related to     *
-*  stars, including stellar type, luminosity, temperature, radius, mass, age,     *
-*  and distance.                                                                  *
-*                                                                                 *
-*  This program is intended for research and educational purposes, offering a     *
-*  user-friendly interface and accurate analytical capabilities for studying the  *
-*  properties and behaviors of stars across the cosmos.                           *
-**********************************************************************************/
-"""
-
 # S.P.E.C.T.R.A. - Stellar Parameter Estimation and Calculation Tools for Research and Analysis
 # Copyright (C) 2026  João Paulo Matos Dias Gomes, Maria Jaqueline Vasconcelos, Adriano Hoth Cerqueira
 #
@@ -60,8 +37,11 @@ from sklearn.preprocessing import StandardScaler
 
 import missingno as msno
 import os
+import sys
+import io
 import pandas as pd
 import numpy as np
+import webbrowser
 
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
@@ -801,11 +781,22 @@ class Sidebar(ttk.Frame):
         selected_model_name = self.selected_model.get()
 
         def _task():
-            # Runs on a background thread: numerical work only (madys,
-            # scikit-learn/statsmodels, matplotlib-Agg figure saving) —
-            # no Tk widget creation here, since Tk is not thread-safe.
-            th_model = madys.IsochroneGrid(selected_model_name, mag_filter, mass_range=range_mass,
-                                           age_range=clust_age, n_steps=[1000, 1000])
+            # Redireciona a entrada do terminal para responder 'y' automaticamente 
+            # se o MADYS pedir confirmação de download/unzip no Zenodo
+            old_stdin = sys.stdin
+            sys.stdin = io.StringIO("y\ny\ny\n")
+            try:
+                # O próprio MADYS baixa automaticamente se o modelo não existir localmente
+                th_model = madys.IsochroneGrid(
+                    selected_model_name, 
+                    mag_filter, 
+                    mass_range=range_mass,
+                    age_range=clust_age, 
+                    n_steps=[1000, 1000]
+                )
+            finally:
+                sys.stdin = old_stdin
+                    
             y_full = np.log10(th_model.masses)
             X_full = th_model.data[:, :, 0].ravel()
 
@@ -849,8 +840,9 @@ class Sidebar(ttk.Frame):
 
         BusyWindow(
             self.master,
-            "Building the Mass-Magnitude regression model — this can take "
-            "a while depending on the selected mass/age range...",
+             f"Loading model {selected_model_name} (downloading if not found locally) "
+              "and building the Mass-Magnitude regression model - this can take a while     "
+              "depending on the selected mass/age range...",
             _task,
             _on_done,
         )
@@ -902,100 +894,125 @@ class Sidebar(ttk.Frame):
             ToastNotification("Mass Determination",
                               f"Mass calculated successfully for filter {self.selected_filter.get()}.",
                               duration=6000, bootstyle='dark').show_toast()
-
     def locate_stars(self):
         global table_data
-        if self.teff.get() and self.logl.get() != 0.:
-            Tinput = self.teff.get()
-            Linput = self.logl.get()
-            Nobjects = 1
+        
+        # 1. Leitura inicial dos campos da interface (rodado na thread principal da GUI)
+        teff_input = self.teff.get()
+        logl_input = self.logl.get()
+        save_var = self.save_var.get()
+        model_selected = self.iso_selected_model.get()
+        self.method = 'ISO'
 
-        elif table_data is None:
+        # Verifica se há dados nos campos manuais ou se deve usar/solicitar a tabela carregada
+        has_manual_input = bool(teff_input) and (logl_input != 0.0)
+
+        if not has_manual_input and table_data is None:
             open_table()
 
-        if  isinstance(table_data, pd.DataFrame):
-            teff = table_data['Teff'].values
+        # Determina a origem das variáveis de entrada
+        if has_manual_input:
+            Tinput = teff_input
+            Linput = logl_input
+            Nobjects = 1
+            is_single_star = True
+        elif isinstance(table_data, pd.DataFrame):
+            Tinput = table_data['Teff'].values
             Linput = table_data['logL'].values
-            Tinput = teff
             Nobjects = len(Tinput)
-
-
-        model = self.iso_selected_model.get()
-        self.method = 'ISO'
-        var, Nlines, alldataiso = intpol(model)
-
-
-        primarydataset = []
-        ff = []
-        if Nobjects > 1:
-            for i in range(Nobjects):
-                if np.isfinite(Linput) is not None:
-                    res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, self.save_var.get())
-                    ff.append(i)
-                    primarydataset.append(res)
-
-                    self.progress['value'] = (i + 1) / Nobjects * 100
-                    self.update_idletasks()
-        elif Nobjects == 1:
-            res = interp(Tinput, Linput, var, Nlines, alldataiso, self.save_var.get())
-            primarydataset.append(res)
-
-            self.progress['value'] = 100
-            self.update_idletasks()
-
-        # Convert primarydataset to DataFrame
-
-        primarydataset = pd.DataFrame(primarydataset)
-        primarydataset = primarydataset.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
-
-        na = primarydataset['Age']
-        
-        mass, age = interpolmass(primarydataset, self.iso_selected_model.get())
-
-        yerr = np.zeros(Nobjects)
-        aerr = np.zeros(Nobjects)
-
-        row = pd.DataFrame({'mass': mass})
-        hold = np.zeros(Nobjects)
-
-        arow = pd.DataFrame({'age': age})
-        ahold = np.zeros(Nobjects)
-
-        if Nobjects > 1:
-            hold[ff] = row.loc[ff, 'mass'].values
-            yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
-
-            ahold[ff] = arow.loc[ff, 'age'].values
-            aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.1
-
-            mass = hold
-            age = ahold
-        elif Nobjects == 1:
-            yerr = 0.01
-            aerr = 100
-
-        if table_data is None:
-            primarydataset['Age_calc'] = np.round(age, 2)
-            primarydataset['Age_e'] = np.round(aerr, 2)
-            primarydataset['Mass_calc'] = np.round(mass, 4)
-            primarydataset['Mass_e'] = np.round(yerr, 4)
-            table_data = primarydataset
-
+            is_single_star = False
         else:
-            table_data['Age_calc'] = np.round(age, 2)
-            table_data['Age_e'] = np.round(aerr, 2)
-            table_data['Mass_calc'] = np.round(mass, 4)
-            table_data['Mass_e'] = np.round(yerr, 4)
+            # Caso o usuário cancele a abertura de arquivo e não tenha informado dados
+            return
 
-        table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
-        self.master.show_hrd_plot()
-        toast = ToastNotification(
-            title='Star Localization',
-            message="Stars completely localized on HR-Diagram.",
-            duration=5000,
-            bootstyle='dark'
-            )
-        toast.show_toast()
+        def _task():
+            # Executado em thread de fundo: processamento numérico e de dados
+            var, Nlines, alldataiso = intpol(model_selected)
+
+            primarydataset = []
+            ff = []
+
+            if Nobjects > 1:
+                for i in range(Nobjects):
+                    if np.isfinite(Linput[i]) is not None:
+                        res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, save_var)
+                        ff.append(i)
+                        primarydataset.append(res)
+            elif Nobjects == 1:
+                res = interp(Tinput, Linput, var, Nlines, alldataiso, save_var)
+                primarydataset.append(res)
+
+            # Conversão para DataFrame e renomeação de colunas
+            df_primary = pd.DataFrame(primarydataset)
+            df_primary = df_primary.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
+
+            # Interpolação de massa e idade
+            mass, age = interpolmass(df_primary, model_selected)
+
+            yerr = np.zeros(Nobjects)
+            aerr = np.zeros(Nobjects)
+
+            row = pd.DataFrame({'mass': mass})
+            hold = np.zeros(Nobjects)
+
+            arow = pd.DataFrame({'age': age})
+            ahold = np.zeros(Nobjects)
+
+            if Nobjects > 1:
+                hold[ff] = row.loc[ff, 'mass'].values
+                yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+
+                ahold[ff] = arow.loc[ff, 'age'].values
+                aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.1
+
+                mass = hold
+                age = ahold
+            elif Nobjects == 1:
+                yerr = 0.01
+                aerr = 100
+
+            # Atualização dos resultados calculados
+            if is_single_star or table_data is None:
+                res_table = df_primary.copy()
+            else:
+                res_table = table_data.copy()
+
+            res_table['Age_calc (Myr)'] = np.round(age * 1e-6, 3)
+            res_table['Age_e (Myr)'] = np.round(aerr * 1e-6, 3)
+            res_table['Mass_calc'] = np.round(mass, 4)
+            res_table['Mass_e'] = np.round(yerr, 4)
+
+            # Exportação do resultado para disco na thread secundária
+            res_table.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
+
+            return res_table
+
+        def _on_done(result, error):
+            global table_data
+            if error is not None:
+                # O BusyWindow já trata e exibe erros de exceção
+                return
+
+            # Atualiza o estado global da tabela na thread principal
+            table_data = result
+
+            # Atualização da interface gráfica
+            self.master.show_hrd_plot()
+
+            ToastNotification(
+                title='Star Localization',
+                message="Stars completely localized on HR-Diagram.",
+                duration=5000,
+                bootstyle='dark'
+            ).show_toast()
+
+        # Janela modal de aguarde executando a task em background
+        BusyWindow(
+            self.master,
+            "Locating stars on the HR-Diagram - please wait...",
+            _task,
+            _on_done,
+        )
 
 
 class TopMenu(ttk.Frame):
@@ -1022,7 +1039,7 @@ class TopMenu(ttk.Frame):
         self.toolbar_menu.add_cascade(label='File', menu=self.file_menu)
 
         self.help_menu = tk.Menu(self.toolbar_menu, tearoff=False)
-        self.help_menu.add_command(label='Documentation', command=lambda: print('Test button'))
+        self.help_menu.add_command(label='Documentation', command=self.open_documentation)
         self.help_menu.add_command(label='About', command=self.open_about_window)
         self.help_menu.add_checkbutton(label='Dark Mode', 
                                 variable=self.master.dark_mode_var, 
@@ -1040,6 +1057,13 @@ class TopMenu(ttk.Frame):
         """
         about_window = AboutWindow(self)
         about_window.grab_set()
+
+    def open_documentation(self):
+        """
+        Open the Manual.
+        """
+        manual_url = "https://github.com/matosjp/spectra/blob/main/Manual.md"
+        webbrowser.open_new_tab(manual_url)
 
 
 def create_regression_model(X, y):
