@@ -1,0 +1,26 @@
+name: spectra
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - tk
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - statsmodels
+  - matplotlib
+  - seaborn
+  - pillow
+  - pip
+  - pip:
+      - ttkbootstrap
+      - missingno
+      - gdown
+      # tap must be installed before madys (a plain "pip install tap" pulls
+      # an unrelated package of the same name). See README.md for a macOS
+      # fallback if this specific fork isn't reachable.
+      - git+https://github.com/mfouesneau/tap.git
+      - madys
+      - -e .

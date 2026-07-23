@@ -28,197 +28,148 @@ a single graphical interface.
   tracks and isochrones, with results saved as image files.
 - **First-run data download** — on first launch, S.P.E.C.T.R.A. automatically
   downloads the MADYS stellar evolutionary models and the Siess 2000/BHAC15
-  isochrone data tables it depends on (see below).
-
-
-## Installation
-
-It's strongly recommended to install S.P.E.C.T.R.A. into an isolated virtual
-environment rather than your system/base Python — this avoids version
-conflicts with other projects (`madys`, `scikit-learn`, and `statsmodels` in
-particular tend to pull in specific dependency versions) and makes it easy
-to start clean if something goes wrong. Pick **one** of the two options
-below.
-
-```bash
-git clone <this-repository-url>
-cd spectra
-```
-
-### Option A — `venv` (built into Python - not compatible with MacOS)
-
-```bash
-python -m venv .venv
-
-# activate it:
-source .venv/bin/activate        # Linux / macOS
-.venv\Scripts\activate            # Windows (cmd.exe)
-.venv\Scripts\Activate.ps1        # Windows (PowerShell)
-
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Option B — conda / mamba
-
-```bash
-conda create -n spectra python=3.11
-conda activate spectra
-
-pip install -r requirements.txt
-
-```
-`madys` additionally depends on the TAP Gaia Query package (`tap`), which
-should be installed *before* `madys` to avoid pulling in an unrelated PyPI
-package of the same name:
-
-```bash
-pip install git+https://github.com/mfouesneau/tap.git
-pip install madys
-```
-
-### Requirements
-
-- Python 3.9+
-- A Python distribution with **Tk** support (`tkinter`). This ships with
-  Python on Windows/macOS; on Linux you typically need the system package:
-  ```bash
-  sudo apt install python3-tk        # Debian/Ubuntu
-  sudo dnf install python3-tkinter   # Fedora
-  ```
-  If you're using a **conda** environment, install it via conda instead so
-  it's linked correctly inside the env: `conda install tk`.
-
-
-`requirements.txt`:
-```
-ttkbootstrap
-Pillow
-numpy
-pandas
-scipy
-scikit-learn
-statsmodels
-matplotlib
-seaborn
-missingno
-madys
-gdown
-```
-
-
-(`ttkbootstrap`, `madys`, and `gdown` aren't on the default conda channels,
-so `pip install` inside the activated conda environment is the simplest
-path — just make sure the environment is activated first, so packages land
-inside it rather than your base environment.)
+  isochrone data tables it depends on.
 
 ---
 
-Once dependencies are installed (in either environment), you can also
-install S.P.E.C.T.R.A. itself as a package:
+## Installation
 
+Using **Conda** (or Mamba) is the recommended and unified way to install S.P.E.C.T.R.A. across all operating systems. It handles Python, `tkinter` GUI support, and system-level dependencies automatically without compilation errors.
+
+### 1. Clone the repository
 ```bash
-pip install .
+git clone <this-repository-url>
+cd spectra
+
 ```
 
-Remember to activate the same environment (`source .venv/bin/activate` or
-`conda activate spectra`) every time before running the app in a new
-terminal session — see below.
+### 2. Create the environment
 
-## Running the application
+Create the Conda environment using the provided `spectra.yml` configuration:
 
 ```bash
+conda env create -f spectra.yml
+
+```
+
+### 3. Activate the environment
+
+```bash
+conda activate spectra
+
+```
+
+---
+
+### Operating System Specific Configuration
+
+#### macOS / Linux
+
+On Unix-based systems, you can optionally add the project folder to your PATH environment variables so S.P.E.C.T.R.A. can be configured globally:
+
+```bash
+# Get the full absolute path of the repository
+rota=$(pwd)
+
+# For ZSH users (default shell on macOS):
+echo "export SPECTRA=$rota:\$PATH" >> ~/.zshrc
+source ~/.zshrc
+
+# For BASH users (default shell on most Linux distributions):
+echo "export SPECTRA=$rota:\$PATH" >> ~/.bashrc
+source ~/.bashrc
+
+```
+
+#### Windows
+
+On Windows, open **Anaconda Prompt** or **PowerShell** and navigate to the project directory:
+
+```cmd
+cd path\to\spectra
+conda env create -f spectra.yml
+conda activate spectra
+
+```
+
+---
+
+## Running the Application
+
+Always ensure your Conda environment is activated before launching:
+
+```bash
+conda activate spectra
 python main.py
+
 ```
 
-On the **first launch** — or any time the relevant local data is
-missing — a small "Downloading Stellar Models" window appears and fetches
-whichever of the following isn't yet present:
+### First-Run Data Download
 
-- The BHAC15, PARSEC, and MIST models via
-  `madys.ModelHandler.download_model(model_name)`. A flag file,
-  `.stelar_models_downloaded`, is written to the project root once this
-  succeeds so subsequent launches skip it. Delete this flag file to force
-  a re-download.
-- The `isochrone_models/` folder (Siess 2000 and BHAC15 evolutionary-track
-  and isochrone data tables), pulled via `gdown` from
-  [this shared Google Drive folder](https://drive.google.com/drive/folders/1KE3X647EJJtYFjv3pknPge02R2Rf92MR?usp=sharing).
-  This one is checked by folder presence rather than a flag file — delete
-  or empty `isochrone_models/` to force a re-download.
+On the **first launch** — or any time the relevant local data is missing — a small "Downloading Stellar Models" window appears and fetches whichever of the following isn't yet present:
 
-Both downloads can take a while depending on your connection and run
-independently of each other, so if only one is missing, only that one is
-fetched.
+* The BHAC15, PARSEC, and MIST models via
+`madys.ModelHandler.download_model(model_name)`. A flag file,
+`.stelar_models_downloaded`, is written to the project root once this
+succeeds so subsequent launches skip it.
+* The `isochrone_models/` folder (Siess 2000 and BHAC15 evolutionary-track
+and isochrone data tables), pulled via `gdown` from Google Drive.
+
+Both downloads can take a while depending on your connection and run independently of each other.
+
+---
 
 ## Documentation & User Manual
 
-For detailed step-by-step instructions on operating SPECTRA, please refer to the official [User Manual](Manual.md). The manual covers:
+For detailed step-by-step instructions on operating S.P.E.C.T.R.A., please refer to the official [User Manual](Manual.md). The manual covers:
+
 * Input dataset formatting and CSV structure requirements.
 * Complete walkthroughs for Isochrone Fitting (`IsocFit`) and Mass-Magnitude Modeling (RMM).
 * Parameter tuning and feature selection in the Mathematical Modeling tab.
 * Interpretation and export of output diagnostic plots and tables.
 
-## Project structure
+---
+
+## Project Structure
 
 ```
 project-root/
-├── main.py                # entry point (imports from the spectra package)
+├── main.py                 # entry point (imports from the spectra package)
 ├── setup.py                # packaging metadata
-├── icon.png                 # application icon
-├── requirements.txt           # Python dependencies
-├── README.md                   # this file
-├── spectra/                       # the installable package
+├── pyproject.toml          # build and dependency specifications
+├── spectra.yml             # Conda environment definition
+├── icon.png                # application icon
+├── requirements.txt        # Python dependencies list
+├── README.md               # this file
+├── spectra/                # the installable package
 │   ├── __init__.py
-│   ├── paths.py                      # single source of truth for every runtime path (outputs/, isochrone_models/, etc.)
-│   ├── interface.py                   # main GUI (App, Sidebar, TopMenu)
-│   ├── tools.py                         # regression models, math/statistical tools
-│   ├── StarLocalization.py                # isochrone/evolutionary-track reading & HR-diagram fitting
-│   └── widgets.py                           # reusable widgets (SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, SizeNotifier)
+│   ├── paths.py            # single source of truth for runtime paths
+│   ├── interface.py        # main GUI (App, Sidebar, TopMenu)
+│   ├── tools.py            # regression models, math/statistical tools
+│   ├── StarLocalization.py # isochrone/HR-diagram fitting
+│   └── widgets.py          # reusable widgets
 ├── external/
-│   └── themes.json                            # custom ttkbootstrap theme definitions (light/dark)
-├── isochrone_models/
-│   ├── SIESS/
-│   │   ├── Grid/OV02/                            # Siess 2000 evolutionary tracks
-│   │   └── Isoc/                                  # Siess 2000 isochrone tables
-│   └── BAHC15/
-│       ├── Grid/BWeLM/                            # BHAC15 evolutionary tracks
-│       └── Isoc/                                   # BHAC15 isochrone tables
-└── outputs/
-    ├── tables/                                      # exported result tables (CSV)
-    ├── plots/                                         # regression/correlation/PCA/HRD-summary report images
-    └── isocfit_outputs/                                 # per-star HR-diagram fit plots (saved when requested)
+│   └── themes.json         # custom ttkbootstrap theme definitions
+├── isochrone_models/       # evolutionary-track data
+└── outputs/                # exported result tables and plots
+
 ```
 
-> **Note:** `main.py`, `setup.py`, `icon.png`, and the `external/`,
-> `isochrone_models/`, and `outputs/` directories stay at the project root —
-> only the application's Python modules live inside the `spectra/` package.
-> The `external/` and `isochrone_models/` directories (and their contents)
-> are required at runtime but are not tracked in this upload — see *Known
-> Issues* below. `outputs/` and its subfolders **are** created automatically
-> on startup (via `spectra/paths.py`), so you don't need to create those
-> yourself.
+---
 
-## Known issues / setup gaps
+## Known Issues / Setup Gaps
 
-- `external/themes.json` must exist before startup; there is currently no
-  fallback if it's missing.
-- The exact `model_grid` identifiers MADYS expects for
-  `madys.ModelHandler.download_model()` haven't been confirmed against a
-  live install — if the first-run download reports failures, see
-  *Troubleshooting* below.
-- Building a Mass-Magnitude model caps the training data fed into
-  `RegressionReport` at 5,000 randomly-sampled points
-  (`Sidebar.MAX_TRAINING_SAMPLES` in `interface.py`) to keep the SVR/grid-search
-  step from exhausting memory on the full isochrone grid and avoid overfitted model (which defaults to
-  `n_steps=[1000, 1000]`, i.e. up to ~1,000,000 points). This trades a bit of
-  training-set size for the model actually finishing.
+* `external/themes.json` must exist before startup; there is currently no fallback if it's missing.
+* Building a Mass-Magnitude model caps the training data fed into `RegressionReport` at 5,000 randomly-sampled points (`Sidebar.MAX_TRAINING_SAMPLES` in `interface.py`) to keep the SVR/grid-search step from exhausting memory on the full isochrone grid and avoid an overfitted model.
+
+---
 
 ## Authors
 
-+ João Paulo Matos Dias Gomes — jpmdgomes.bf@gmail.com
-+ Maria Jaqueline Vasconcelos — mjvasc@uesc.br
-+ Adriano Hoth Cerqueira — hoth@uesc.br
+* João Paulo Matos Dias Gomes — jpmdgomes.bf@gmail.com
+* Maria Jaqueline Vasconcelos — mjvasc@uesc.br
+* Adriano Hoth Cerqueira — hoth@uesc.br
 
 ## License
 
-Not yet specified.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

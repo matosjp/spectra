@@ -8,18 +8,21 @@ This manual explains how to use each feature of the **S.P.E.C.T.R.A.** graphical
 
 ## Table of Contents
 
-1. [Input Data Prerequisites (File Format & Required Columns)](https://www.google.com/search?q=%230-input-data-prerequisites-file-format--required-columns)
-2. [Module Architecture & Functional Breakdown](https://www.google.com/search?q=%231-module-architecture--functional-breakdown)
-3. [Launching the Application](https://www.google.com/search?q=%232-launching-the-application)
-4. [Interface Overview](https://www.google.com/search?q=%233-interface-overview)
-5. [Home Tab](https://www.google.com/search?q=%234-home-tab)
-6. [Isochrone Fitting Tab](https://www.google.com/search?q=%235-isochrone-fitting-tab)
-7. [Mass-Magnitude Modeling Tab](https://www.google.com/search?q=%236-mass-magnitude-modeling-tab)
-8. [Mathematical Modeling Tab](https://www.google.com/search?q=%237-mathematical-modeling-tab)
-9. [File Menu](https://www.google.com/search?q=%238-file-menu)
-10. [Help Menu](https://www.google.com/search?q=%239-help-menu)
-11. [Output Directory & File Locations](https://www.google.com/search?q=%2310-output-directory--file-locations)
-12. [Known Limitations](https://www.google.com/search?q=%2311-known-limitations)
+## Table of Contents
+
+1. [Input Data Prerequisites (File Format & Required Columns)](#0-input-data-prerequisites-file-format--required-columns)
+2. [Module Architecture & Functional Breakdown](#1-module-architecture--functional-breakdown)
+3. [Launching the Application](#2-launching-the-application)
+4. [Interface Overview](#3-interface-overview)
+5. [Home Tab](#4-home-tab)
+6. [Isochrone Fitting Tab](#5-isochrone-fitting-tab)
+7. [Mass-Magnitude Modeling Tab](#6-mass-magnitude-modeling-tab)
+8. [Mathematical Modeling Tab](#7-mathematical-modeling-tab)
+9. [File Menu](#8-file-menu)
+10. [Help Menu](#9-help-menu)
+11. [Output Directory & File Locations](#10-output-directory--file-locations)
+12. [Output Interpretation Guide (Tables & Plots)](#11-output-interpretation-guide-tables--plots)
+13. [Known Limitations](#12-known-limitations)
 
 ---
 
@@ -35,7 +38,7 @@ Before importing any dataset into S.P.E.C.T.R.A., ensure your input file meets t
 * **For Isochrone Fitting:** The dataset must contain columns named strictly **`Teff`** (Effective Temperature in Kelvin, $K$) and **`logL`** (Luminosity in $\log(L/L_\odot)$).
 * **For Mass-Magnitude Modeling:** The dataset must contain a magnitude column named according to the pattern `<Filter>mag` corresponding to your chosen photometric filter (e.g., `Gmag`, `Vmag`, `Jmag`).
 * **For Distance Corrections (Optional):** If distance correction is enabled, include a column named **`pc`** (distance in parsecs).
-
+4. **Example Datasets:** To test the application and inspect the expected column structures, example tables are provided directly within the project at `isochrone_models/SIESS/` (e.g., `1myrZ002o.csv` and `3myrZ002o.csv`).
 
 
 ---
@@ -69,11 +72,11 @@ Contains reusable GUI components, including progress monitoring windows, downloa
 
 ## 2. Launching the Application
 
-Activate your virtual environment (Conda or `venv`) and run the main entry point from your terminal:
+Before running S.P.E.C.T.R.A., always activate your Conda environment from the terminal:
 
 ```bash
+conda activate spectra
 python main.py
-
 ```
 
 ### First-Run Data Download

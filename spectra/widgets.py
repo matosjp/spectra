@@ -38,7 +38,6 @@ class AboutWindow(ttk.Toplevel):
         self.create_widgets()
 
     def create_widgets(self):
-        # Label displaying information about the program author
         author_label = tk.Label(self, text="Author: João Paulo Matos Dias Gomes")
         author_label.pack(padx=20, pady=10)
 
@@ -65,6 +64,14 @@ class AboutWindow(ttk.Toplevel):
                                           "\ninterface and accurate analytical capabilities for studying the properties"
                                           "\nand behaviors of stars across the cosmos.")
         description_label.pack(padx=20, pady=10)
+
+        # License label
+        license_label = tk.Label(self, 
+        text="S.P.E.C.T.R.A. v0.1.0 \n"
+        "Copyright (C) 2026 João Paulo Matos Dias Gomes, Maria Jaqueline Vasconcelos, Adriano Hoth Cerqueira \n"
+        "This program comes with ABSOLUTELY NO WARRANTY. \n"
+        "This is free software, and you are welcome to redistribute it under certain conditions under the terms of the GNU General Public License v3. \n"
+        "For full license details, visit: https://www.gnu.org/licenses/")
 
 
 class ModelDownloadWindow(ttk.Toplevel):
