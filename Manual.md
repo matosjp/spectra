@@ -54,7 +54,7 @@ Handles the GUI built on `ttkbootstrap`. It manages the primary application wind
 * ### `spectra.StarLocalization`
 
 
-Contains the core astrophysical fitting engines. It reads stellar evolutionary grids (Siess 2000, BHAC15, PARSEC), maps observed stars onto the Hertzsprung–Russell (HR) diagram, performs 2D bilinear/multivariate interpolation across age-mass tracks, and calculates interpolative parameter uncertainties.
+Contains the core astrophysical fitting engines. It reads stellar evolutionary grids (Siess 2000, BHAC15), maps observed stars onto the Hertzsprung–Russell (HR) diagram, performs 2D bilinear/multivariate interpolation across age-mass tracks, and calculates interpolative parameter uncertainties.
 * ### `spectra.tools`
 
 
@@ -116,11 +116,11 @@ Displays application metadata, version information, software overview, and autho
 
 ## 5. Isochrone Fitting Tab
 
-Maps stars onto Hertzsprung–Russell (HR) diagrams and derives individual stellar ages and masses by interpolating against evolutionary track grids (Siess 2000, BHAC15, PARSEC).
+Maps stars onto Hertzsprung–Russell (HR) diagrams and derives individual stellar ages and masses by interpolating against evolutionary track grids (Siess 2000, BHAC15).
 
 ### Step-by-Step Guide:
 
-1. **Isochrone Model:** Select the target evolutionary model grid (*Siess 2000*, *BHAC15*, or *PARSEC*).
+1. **Isochrone Model:** Select the target evolutionary model grid (*Siess 2000* or *BHAC15*).
 2. **Data Input:** Choose your input method:
 * **Single Star:** Enter **Effective Temperature (K)** and **Luminosity (in log)** manually in the input boxes.
 * **Multi-Star Table:** Click **Input Table** and select a `.csv` file with `Teff` and `logL` columns. *(Note: Table input overrides manual entries if both are supplied).*
