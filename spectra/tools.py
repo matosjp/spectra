@@ -231,91 +231,101 @@ class MagCorrector:
 
 
 def interpolmass(primarydataset, model):
-    nm = []
-
-    data = primarydataset['Teff']
-    ages = primarydataset['Age']
-    masses = primarydataset['Mass']
+    teffs = primarydataset['Teff']
+    masses = primarydataset['Mass'] # Ou aproximação inicial
+    ages = primarydataset['Age']    # Aproximação inicial (Near Age)
 
     alldataiso = readiso(model)
+
     if model == "Siess 2000":
-        ind = 3
-        dind = 6
+        at = 3  # Teff
+        am = 4  # Mass
+        # Idades em Myr: [0.01, 0.05, 0.2, 0.5, 2.0, 5.0, 10.0, 30.0, 60.0, 100.0]
         ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 3e7, 6e7, 1e8]) / 1e6
         massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2, 1.3, 1.4, 1.5])
 
     elif model == "BHAC15":
-        ind = 1
-        dind = 2
+        at = 1
+        am = 0
         ageiso = np.array([1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 5.e7, 8.e7, 1.e8, 1.2e8, 2e8]) / 1e6
         massiso = np.array([.01, .015, .02, .03, .04, .05, .06, .07, .072, .075, .08, .09,
                             .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
                             1.2, 1.3, 1.4])
-
-    ai = []
-    mi = []
-
-    for age in ages:
-        index = np.where(ageiso == age)[0]
-        ai.append(index[0] if index.size > 0 else None)
-
-    for mass in masses:
-        index = np.where(massiso == mass)[0]
-        mi.append(index[0] if index.size > 0 else None)
-
-    if len(ai) == 0 or len(mi) == 0:
-        toast = ToastNotification(
-            title='Stellar Mass Interpolation',
-            message="Stellar mass(es) can't be derived",
-            duration=5000,
-            bootstyle='light'
-        )
-        toast.show_toast()
-
     else:
-        nm = []
-        ny = []
-        t = data
+        raise ValueError(f"Modelo desconhecido: {model}")
 
-        for x in range(len(t)):
-            i = ai[x]
-            j = mi[x]
+    calc_masses = []
+    calc_ages = []
 
-            if j is not None:
-                if 0 < j < len(massiso) - 1:
+    for x in range(len(teffs)):
+        teff_obs = teffs[x]
+        age_near = ages[x]
 
-                    xp = [alldataiso[i, ind, j - 1], alldataiso[i, ind, j], alldataiso[i, ind, j + 1]]
-                    yp = [massiso[j - 1], massiso[j], massiso[j + 1]]
-                    dp = [alldataiso[i, dind, j - 1], alldataiso[i, dind, j], alldataiso[i, dind, j + 1]]
-                elif j == 0:
-                    xp = [alldataiso[i, ind, j], alldataiso[i, ind, j + 1], alldataiso[i, ind, j + 2]]
-                    yp = [massiso[j], massiso[j + 1], massiso[j + 2]]
-                    dp = [alldataiso[i, dind, j], alldataiso[i, dind, j+1], alldataiso[i, dind, j + 2]]
-                elif j == len(massiso) - 1:
-                    xp = [alldataiso[i, ind, j - 2], alldataiso[i, ind, j - 1], alldataiso[i, ind, j]]
-                    yp = [massiso[j - 2], massiso[j - 1], massiso[j]]
-                    dp = [alldataiso[i, dind, j - 2], alldataiso[i, dind, j - 1], alldataiso[i, dind, j]]
-                else:
-                    toast = ToastNotification(
-                        title='Stellar Mass Interpolation',
-                        message=f"Unexpected case: j = {j}, massiso length = {len(massiso)}",
-                        duration=5000,
-                        bootstyle='light'
-                    )
-                    toast.show_toast()
-                    nm.append(np.nan)
-                    ny.append(np.nan)
+        if np.isnan(teff_obs) or age_near is None or np.isnan(age_near):
+            calc_masses.append(np.nan)
+            calc_ages.append(np.nan)
+            continue
 
-                y = np.interp(t[x], xp, yp)
-                a = np.interp(t[x], dp, xp)
-                nm.append(y)
-                ny.append(a)
+        # 1. Encontra o nó temporal mais próximo na grade (i)
+        i_near = np.argmin(np.abs(ageiso - age_near))
+
+        # 2. Identifica as isócronas vizinhas (anterior i1 e posterior i2) para limitar a idade
+        if i_near == 0:
+            i1, i2 = 0, 1
+        elif i_near == len(ageiso) - 1:
+            i1, i2 = len(ageiso) - 2, len(ageiso) - 1
+        else:
+            i1, i2 = i_near - 1, i_near + 1
+
+        t1, t2 = ageiso[i1], ageiso[i2] # Ex: 2.0 Myr e 5.0 Myr
+
+        # --- A. INTERPOLAÇÃO DA MASSA (Na isócrona mais próxima) ---
+        teff_grid_near = alldataiso[i_near, at, :]
+        mass_grid_near = alldataiso[i_near, am, :]
+
+        sort_idx = np.argsort(teff_grid_near)
+        teff_sorted_near = teff_grid_near[sort_idx]
+        mass_sorted_near = mass_grid_near[sort_idx]
+
+        if teff_sorted_near[0] <= teff_obs <= teff_sorted_near[-1]:
+            m_calc = np.interp(teff_obs, teff_sorted_near, mass_sorted_near)
+        else:
+            m_calc = np.nan
+
+        # --- B. INTERPOLAÇÃO DA IDADE (Entre as duas isócronas i1 e i2) ---
+        # Extrai Teff para as duas isócronas limitantes
+        teff_i1 = alldataiso[i1, at, :]
+        mass_i1 = alldataiso[i1, am, :]
+        
+        teff_i2 = alldataiso[i2, at, :]
+        mass_i2 = alldataiso[i2, am, :]
+
+        # Interpola a Teff teórica que a estrela teria em t1 e t2 para a massa calculada
+        sort_m1 = np.argsort(mass_i1)
+        sort_m2 = np.argsort(mass_i2)
+
+        if not np.isnan(m_calc) and (mass_i1[sort_m1][0] <= m_calc <= mass_i1[sort_m1][-1]):
+            teff_at_t1 = np.interp(m_calc, mass_i1[sort_m1], teff_i1[sort_m1])
+            teff_at_t2 = np.interp(m_calc, mass_i2[sort_m2], teff_i2[sort_m2])
+
+            # Interpolação linear/logarítmica do tempo t com base na variação de Teff
+            if teff_at_t1 != teff_at_t2:
+                # Fração da posição de Teff_obs entre Teff(t1) e Teff(t2)
+                frac = (teff_obs - teff_at_t1) / (teff_at_t2 - teff_at_t1)
+                frac = np.clip(frac, 0.0, 1.0) # Restringe entre as duas tabelas
+                
+                # Idade interpolada no espaço logarítmico (padrão em evolução estelar)
+                log_age = np.log10(t1) + frac * (np.log10(t2) - np.log10(t1))
+                age_calc = 10**log_age
             else:
-                nm.append(np.nan)
-                ny.append(np.nan)
+                age_calc = t1
+        else:
+            age_calc = age_near # Mantém a aproximação se estiver na borda
 
-    return nm, ny
+        calc_masses.append(float(m_calc))
+        calc_ages.append(float(age_calc))
 
+    return calc_masses, calc_ages
 
 def fit(X, y, model_name):
     """

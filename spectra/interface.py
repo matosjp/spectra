@@ -853,15 +853,18 @@ class Sidebar(ttk.Frame):
         mu = np.mean(np.nan_to_num(y))
         sigma = np.var(np.nan_to_num(y))
         uncertainty = np.sqrt(y_hat * sigma)
-        return uncertainty
+        e = y*uncertainty 
+        return e
 
     @staticmethod
     def age_uncertainty(y):
-            y_hat = 1.424
+            y_hat = 0.0424
             mu = np.mean(np.nan_to_num(y))
             sigma = np.var(np.nan_to_num(y))
             uncertainty = np.sqrt(y_hat * sigma)
-            return uncertainty
+            e = y*uncertainty
+            
+            return e
 
     def predict_mass(self):
         global table_data
@@ -960,10 +963,10 @@ class Sidebar(ttk.Frame):
 
             if Nobjects > 1:
                 hold[ff] = row.loc[ff, 'mass'].values
-                yerr[ff] = self.mass_uncertainty(hold[ff]) * 0.1
+                yerr[ff] = self.mass_uncertainty(hold[ff])
 
                 ahold[ff] = arow.loc[ff, 'age'].values
-                aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.1
+                aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.05
 
                 mass = hold
                 age = ahold
@@ -977,8 +980,8 @@ class Sidebar(ttk.Frame):
             else:
                 res_table = table_data.copy()
 
-            res_table['Age_calc (Myr)'] = np.round(age * 1e-6, 3)
-            res_table['Age_e (Myr)'] = np.round(aerr * 1e-6, 3)
+            res_table['Age_calc (Myr)'] = np.round(age, 3)
+            res_table['Age_e (Myr)'] = np.round(aerr, 3)
             res_table['Mass_calc'] = np.round(mass, 4)
             res_table['Mass_e'] = np.round(yerr, 4)
 
