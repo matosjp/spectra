@@ -42,6 +42,7 @@ import io
 import pandas as pd
 import numpy as np
 import webbrowser
+import threading
 
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
@@ -606,7 +607,7 @@ class Sidebar(ttk.Frame):
         model_label = tk.Label(frame, text="Isochrone Model:")
         model_label.grid(row=1, column=0, pady=(10, 5), padx=10, sticky="w")
 
-        models = ('Siess 2000', 'BHAC15', 'PARSEC')
+        models = ('Siess 2000', 'BHAC15')
 
         iso_model_combobox = ttk.Combobox(frame, textvariable=self.iso_selected_model, width=10)
         iso_model_combobox['values'] = models
@@ -778,15 +779,14 @@ class Sidebar(ttk.Frame):
             messagebox.showinfo("Regression model", "Failed to build the regression model for these parameters.")
             return
 
-        selected_model_name = self.selected_model.get()
+        selected_model_name = self.selected_model.get().strip()
 
-        def _task():
-            # Redireciona a entrada do terminal para responder 'y' automaticamente 
-            # se o MADYS pedir confirmação de download/unzip no Zenodo
+        def _task(cancel_event=None):
+            # 2. Silencia o prompt de terminal redirecionando o sys.stdin
             old_stdin = sys.stdin
             sys.stdin = io.StringIO("y\ny\ny\n")
+            
             try:
-                # O próprio MADYS baixa automaticamente se o modelo não existir localmente
                 th_model = madys.IsochroneGrid(
                     selected_model_name, 
                     mag_filter, 
@@ -795,7 +795,7 @@ class Sidebar(ttk.Frame):
                     n_steps=[1000, 1000]
                 )
             finally:
-                sys.stdin = old_stdin
+                sys.stdin = old_stdin  # Restaura a entrada padrão
                     
             y_full = np.log10(th_model.masses)
             X_full = th_model.data[:, :, 0].ravel()
@@ -928,20 +928,25 @@ class Sidebar(ttk.Frame):
             # Caso o usuário cancele a abertura de arquivo e não tenha informado dados
             return
 
-        def _task():
-            # Executado em thread de fundo: processamento numérico e de dados
+        def _task(cancel_event=None):
             var, Nlines, alldataiso = intpol(model_selected)
-
             primarydataset = []
             ff = []
 
             if Nobjects > 1:
                 for i in range(Nobjects):
+                    # 🛑 CHECAGEM DE CANCELAMENTO
+                    if cancel_event.is_set():
+                        raise InterruptedError("Process cancelled by the user.")
+
                     if np.isfinite(Linput[i]) is not None:
                         res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, save_var)
                         ff.append(i)
                         primarydataset.append(res)
+                        
             elif Nobjects == 1:
+                if cancel_event.is_set():
+                    raise InterruptedError("Process cancelled by the user.")
                 res = interp(Tinput, Linput, var, Nlines, alldataiso, save_var)
                 primarydataset.append(res)
 
@@ -993,13 +998,16 @@ class Sidebar(ttk.Frame):
         def _on_done(result, error):
             global table_data
             if error is not None:
-                # O BusyWindow já trata e exibe erros de exceção
+                if isinstance(error, InterruptedError):
+                    ToastNotification(
+                        title='Star Localization',
+                        message="Calculation cancelled by user.",
+                        duration=4000,
+                        bootstyle='warning'
+                    ).show_toast()
                 return
 
-            # Atualiza o estado global da tabela na thread principal
             table_data = result
-
-            # Atualização da interface gráfica
             self.master.show_hrd_plot()
 
             ToastNotification(
@@ -1009,7 +1017,6 @@ class Sidebar(ttk.Frame):
                 bootstyle='dark'
             ).show_toast()
 
-        # Janela modal de aguarde executando a task em background
         BusyWindow(
             self.master,
             "Locating stars on the HR-Diagram - please wait...",

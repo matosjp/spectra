@@ -13,7 +13,6 @@ dependencies:
   - matplotlib
   - seaborn
   - pillow
-  - webbrowser
   - pip
   - pip:
       - ttkbootstrap

@@ -24,8 +24,8 @@ def readiso(model):
     global Ntabage, Nlinesa, Ncoluma, ageiso, tablenames, sptype, it, il, ia, im, at, al, am, evoltracks, isoctables
 
     if model == "Siess 2000":
-        evoltracks = isocs + 'SIESS/Grid/OV02/'
-        isoctables = isocs + 'SIESS/Isoc/'
+        evoltracks = os.path.join(isocs, 'SIESS', 'Grid', 'OV02') + '/'
+        isoctables = os.path.join(isocs, 'SIESS', 'Isoc') + '/'
         Ntabage = 10
         Nlinesa = 15
         Ncoluma = 21
@@ -35,18 +35,12 @@ def readiso(model):
                       'zamsZ002oiso5e5.dat', 'zamsZ002oiso2e6.dat', 'zamsZ002oiso5e6.dat',
                       'zamsZ002oiso1e7.dat', 'zamsZ002oiso3e7.dat', 'zamsZ002oiso6e7.dat',
                       'zamsZ002oiso1e8.dat']
-        # evolutionary tracks table index for temperature, luminosity, age and mass
-        it = 6
-        il = 2
-        ia = 10
-        im = 9
-        #  Isochrones table index for luminosity, temperature and mass
-        al = 1
-        at = 3
-        am = 4
+        it, il, ia, im = 6, 2, 10, 9
+        al, at, am = 1, 3, 4
+
     elif model == "BHAC15":
-        evoltracks = isocs + 'BAHC15/Grid/BWeLM/'
-        isoctables = isocs + 'BAHC15/Isoc/'
+        evoltracks = os.path.join(isocs, 'BAHC15', 'Grid', 'BWeLM') + '/'
+        isoctables = os.path.join(isocs, 'BAHC15', 'Isoc') + '/'
         Ntabage = 10
         Nlinesa = 30
         Ncoluma = 9
@@ -56,28 +50,42 @@ def readiso(model):
                       'bahc15iso1e7.dat', 'bahc15iso2e7.dat', 'bahc15iso5e7.dat',
                       'bahc15iso8e7.dat', 'bahc15iso1e8.dat', 'bahc15iso1.2e8.dat',
                       'bahc15iso2e8.dat']
-        # isocrhones table index for temperature, luminosity, age and mass
-        it = 2
-        il = 3
-        ia = 1
-        im = 0
-        # evolutionary tracks index for luminosity, temperature and mass
-        al = 2
-        at = 1
-        am = 0
+        it, il, ia, im = 2, 3, 1, 0
+        al, at, am = 2, 1, 0
 
     sptype = ['M', 'K', 'G', 'F', 'A', 'B', 'O']
 
     alldataiso = np.zeros((Ntabage, Ncoluma, Nlinesa))
-    dataiso = np.zeros((Ncoluma, Nlinesa))
 
     for i in range(Ntabage):
-        file = isoctables + tablenames[i].strip()
-        with open(file, 'r') as f:
-            for j in range(Nlinesa):
-                line = f.readline().split()
-                for k in range(Ncoluma):
-                    dataiso[k, j] = float(line[k])
+        file_path = os.path.join(isoctables, tablenames[i].strip())
+
+        # Verifica se o arquivo da tabela realmente existe antes de abrir
+        if not os.path.exists(file_path):
+            print(f"⚠️ Alerta: Arquivo de isócrona não encontrado: {file_path}")
+            continue
+
+        dataiso = np.zeros((Ncoluma, Nlinesa))
+        j = 0
+
+        with open(file_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                # Ignora linhas em branco ou comentários/cabeçalhos
+                if not parts or line.startswith('#') or line.startswith('!'):
+                    continue
+
+                # Tenta converter os elementos numéricos
+                try:
+                    floats = [float(x) for x in parts]
+                    if len(floats) >= Ncoluma and j < Nlinesa:
+                        for k in range(Ncoluma):
+                            dataiso[k, j] = floats[k]
+                        j += 1
+                except ValueError:
+                    # Ignora linhas que contêm texto em vez de números
+                    continue
+
         alldataiso[i, :, :] = dataiso[:, :]
 
     return alldataiso
@@ -88,6 +96,7 @@ def tablestr(model):
         Ntables = 15
     else:
         Ntables = 14
+        
     mass = [(x+1) / 10 for x in range(Ntables)]
     imass = []
 
@@ -396,10 +405,17 @@ def plot_HRD(result, model):
             cumulative_sum = end
 
         for i in range(len(alldataiso[:, am, 0])):
-            plt.plot(alldataiso[i, at, :],
-                     (alldataiso[i, al, :]),
-                     label=f'{orderedage[i] / 1e6} Myr',
-                     color=colors_[i])
+            x_vals = alldataiso[i, at, :]
+            y_vals = alldataiso[i, al, :]
+            
+            # Filtra apenas pontos válidos (onde Teff > 0 e logL não é zero zerado artificialmente)
+            valid_mask = (x_vals > 0) & (y_vals != 0.0)
+            
+            if np.any(valid_mask):
+                plt.plot(x_vals[valid_mask],
+                         y_vals[valid_mask],
+                         label=f'{orderedage[i] / 1e6} Myr',
+                         color=colors_[i])
 
 
     plt. scatter(result['Teff'][flag],

@@ -225,50 +225,57 @@ class BusyWindow(ttk.Toplevel):
     that's the right place to create ToastNotifications, update widgets,
     etc.
     """
-    def __init__(self, parent, message, task, on_complete):
+    def __init__(self, parent, message, task_func, on_done_func):
         super().__init__(parent)
         self.title("Please Wait")
-        self.geometry("420x140")
-        self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", lambda: None)
-
-        self.task = task
-        self.on_complete = on_complete
-
-        tk.Label(self, text=message, wraplength=380, justify="left").pack(
-            padx=20, pady=(20, 10), fill="x"
-        )
-        self.progress = ttk.Progressbar(self, mode='indeterminate')
-        self.progress.pack(fill='x', padx=20, pady=10)
-        self.progress.start(12)
-
+        self.geometry("400x200")
+        self.transient(parent)
         self.grab_set()
-        self.after(100, self._start)
 
-    def _start(self):
-        threading.Thread(target=self._run, daemon=True).start()
+        self.cancel_event = threading.Event()
 
-    def _run(self):
-        result, error = None, None
-        try:
-            result = self.task()
-        except Exception as e:
-            error = e
-        self.after(0, lambda: self._finish(result, error))
+        lbl = ttk.Label(self, text=message, wraplength=350, justify="center")
+        lbl.pack(pady=15)
 
-    def _finish(self, result, error):
+        self.progress = ttk.Progressbar(self, mode="indeterminate")
+        self.progress.pack(fill="x", padx=20, pady=5)
+        self.progress.start(10)
+
+        # 🔘 Botão de Cancelar
+        self.btn_cancel = ttk.Button(
+            self, 
+            text="Cancel", 
+            bootstyle="dark", 
+            command=self._on_cancel
+        )
+        self.btn_cancel.pack(pady=10)
+
+        def runner():
+            try:
+                # Passa o cancel_event para a tarefa de fundo
+                try:
+                    res = task_func(self.cancel_event)
+                except TypeError:
+                    res = task_func()
+                err = None
+            except Exception as e:
+                res = None
+                err = e
+            
+            self.after(0, lambda r=res, e=err: self._finish(r, e, on_done_func))
+
+        threading.Thread(target=runner, daemon=True).start()
+
+    def _on_cancel(self):
+        # Dispara o sinal de cancelamento para o laço
+        self.cancel_event.set()
+        self.btn_cancel.config(text="Canceling...", state="disabled")
+
+    def _finish(self, res, err, on_done_func):
         self.progress.stop()
-        self.grab_release()
-        self.protocol("WM_DELETE_WINDOW", self.destroy)
-
-        if error is not None:
-            messagebox.showerror(
-                "Error",
-                f"The operation failed and was stopped safely:\n\n{error}",
-                parent=self,
-            )
         self.destroy()
-        self.on_complete(result, error)
+        if on_done_func:
+            on_done_func(res, err)
 
 
 class SizeNotifier:
