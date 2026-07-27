@@ -890,8 +890,8 @@ class Sidebar(ttk.Frame):
             key = np.where(np.array(mass) == 0.)[0]
             hold_mass = np.array(mass)
             hold_mass[key] = np.nan
-            table_data['Mass_calc'] = 10**hold_mass
-            table_data['Mass_e'] = yerr
+            table_data['Mass_calc'] = round(10**hold_mass, 4)
+            table_data['Mass_e'] = round(yerr, 4)
             table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
 
             ToastNotification("Mass Determination",
