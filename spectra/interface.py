@@ -28,8 +28,7 @@ from ttkbootstrap.widgets import ToastNotification
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
-import madys
-import locale
+
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import KNNImputer, IterativeImputer
 from sklearn.model_selection import train_test_split
@@ -42,7 +41,10 @@ import io
 import pandas as pd
 import numpy as np
 import webbrowser
-import threading
+import subprocess
+import madys
+import local
+
 
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
@@ -127,6 +129,7 @@ class App(ttk.Window):
             # Fallback configuration or manual switch if needed
             self.style.theme_use(theme_name)
 
+    
     def change_app_style(self):
         # Determine the new theme based on the checkbutton state
         if self.dark_mode_var.get():
