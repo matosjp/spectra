@@ -371,7 +371,7 @@ def plot_HRD(result, model):
 
     colors = [cm.Purples(i) for i in np.linspace(0.5, 1, len(imass))]
     colors_ = [cm.Greens(i) for i in np.linspace(0.5, 1, len(imass))]
-    plt.figure(figsize=(10, 8), tight_layout=True)
+    fig, ax = plt.subplots(figsize=(12, 8))
     orderedage = np.sort(ageiso)
     cumulative_sum = 0
     if model == 'Siess 2000':
@@ -379,29 +379,34 @@ def plot_HRD(result, model):
         for j in range(len(mass)):
             start = cumulative_sum
             end = start + Nlines[j]
-            plt.plot(var[it, start:end-1],
-                     np.log10(var[il, start:end-1]),
-                     label=f'Mass: {mass[j]}',
-                     color=colors[j],
-                     linestyle='dashed')
+            ax.plot(var[it, start:end-1],
+                    np.log10(var[il, start:end-1]),
+                    label=fr'M = {mass[j]} M$_\odot$',
+                    color=colors[j],
+                    linestyle='dashed',
+                    linewidth=1.2)
             cumulative_sum = end
 
         for i in range(len(alldataiso[:, am, 0])):
-            plt.plot(alldataiso[i, at, :],
-                     np.log10(alldataiso[i, al, :]),
-                     label=f'{orderedage[i] / 1e6} Myr',
-                     color=colors_[i])
+            age_myr = orderedage[i] / 1e6
+            age_str = f'{age_myr:.1f}' if age_myr % 1 != 0 else f'{int(age_myr)}'
+            ax.plot(alldataiso[i, at, :],
+                    np.log10(alldataiso[i, al, :]),
+                    label=f'{age_str} Myr',
+                    color=colors_[i],
+                    linewidth=1.2)
 
     elif model == 'BHAC15':
         flag = np.where(result['Mass_calc'].values <= 1.4)[0]
         for j in range(len(mass)):
             start = cumulative_sum
             end = start + Nlines[j]
-            plt.plot(var[it, start:end-1],
-                     (var[il, start:end-1]),
-                     label=f'Mass: {mass[j]}',
-                     color=colors[j],
-                     linestyle='dashed')
+            ax.plot(var[it, start:end-1],
+                    (var[il, start:end-1]),
+                    label=fr'M = {mass[j]} M$_\odot$',
+                    color=colors[j],
+                    linestyle='dashed',
+                    linewidth=1.2)
             cumulative_sum = end
 
         for i in range(len(alldataiso[:, am, 0])):
@@ -412,26 +417,43 @@ def plot_HRD(result, model):
             valid_mask = (x_vals > 0) & (y_vals != 0.0)
             
             if np.any(valid_mask):
-                plt.plot(x_vals[valid_mask],
-                         y_vals[valid_mask],
-                         label=f'{orderedage[i] / 1e6} Myr',
-                         color=colors_[i])
+                age_myr = orderedage[i] / 1e6
+                age_str = f'{age_myr:.1f}' if age_myr % 1 != 0 else f'{int(age_myr)}'
+                ax.plot(x_vals[valid_mask],
+                        y_vals[valid_mask],
+                        label=f'{age_str} Myr',
+                        color=colors_[i],
+                        linewidth=1.2)
 
+    ax.scatter(result['Teff'][flag],
+               result['logL'][flag],
+               marker='*',
+               facecolor='crimson',
+               edgecolors='black',
+               linewidths=0.5,
+               s=90,
+               alpha=0.9,
+               label='Target Stars',
+               zorder=5)
 
-    plt. scatter(result['Teff'][flag],
-                 result['logL'][flag],
-                 marker='*',
-                 facecolor='brown',
-                 s=60,
-                 alpha=0.8)
-    plt.xlabel(r'T$_{eff}$ (K)')
-    plt.ylabel(r'log L/L$_\odot$')
-    plt.xlim(6000, 2500)
-    plt.title('HR Diagram')
-    plt.grid(True)
-    plt.legend(loc='best',
-               frameon=True,
-               borderpad=1,
-               borderaxespad=1,
-               ncol=2)
-    plt.savefig(os.path.join(PLOTS_DIR, '_hrd_complete.png'), dpi=300)
+    ax.set_xlabel(r'T$_{eff}$ (K)', fontsize=12, weight='bold')
+    ax.set_ylabel(r'log L/L$_\odot$', fontsize=12, weight='bold')
+    ax.set_xlim(6000, 2500)
+    ax.set_title(f'HR Diagram ({model})', fontsize=14, weight='bold')
+    ax.grid(True, linestyle='--', alpha=0.5)
+
+    # Position legend outside the plot area to the right to avoid overlapping data points
+    ax.legend(bbox_to_anchor=(1.02, 1.0),
+              loc='upper left',
+              fontsize=8.5,
+              frameon=True,
+              framealpha=0.9,
+              edgecolor='gray',
+              borderpad=0.6,
+              labelspacing=0.3,
+              handlelength=1.5,
+              ncol=2)
+
+    plt.savefig(os.path.join(PLOTS_DIR, '_hrd_complete.png'), dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    plt.close()

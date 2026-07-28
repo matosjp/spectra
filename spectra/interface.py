@@ -65,9 +65,10 @@ themes_path = THEMES_PATH
 class App(ttk.Window):
     def __init__(self):
         super().__init__()
-        self.target = tk.StringVar
+        self.target = tk.StringVar()
         self.title("S.P.E.C.T.R.A")
-        self.geometry("800x600")
+        self.geometry("960x650")
+        self.minsize(900, 600)
         self.current_theme = 'light_theme'  # Default theme
         self.load_custom_theme(self.current_theme)
         self.dark_mode_var = tk.BooleanVar(value=True if self.current_theme == 'dark_theme' else False)
@@ -160,45 +161,81 @@ class App(ttk.Window):
         self.top_menu = TopMenu(self)
         self.top_menu.pack(side=TOP, fill=X)
 
-    def show_result_plot(self):
+    def show_result_plot(self, target_type='Mass'):
         tab1 = table_data
+        if tab1 is None:
+            messagebox.showinfo("Result Plot", "No data table loaded. Please open a CSV file first.")
+            return
+
         method = self.sidebar.method
+        feature_name = None
+        target_name = None
 
         if method == 'MMR':
             targ = 'Mass'
-            x = tab1[f'{self.sidebar.selected_filter.get()}mag'].values
+            target_name = 'Mass'
+            calc_col = 'Mass_calc'
+            err_col = 'Mass_e'
+            filter_col = f'{self.sidebar.selected_filter.get()}mag'
+            if filter_col not in tab1.columns:
+                messagebox.showinfo("Result Plot", f"Column '{filter_col}' not found in dataset.")
+                return
+            x = tab1[filter_col].values
 
         elif method == 'ISO':
+            if 'Teff' not in tab1.columns:
+                messagebox.showinfo("Result Plot", "Column 'Teff' not found in dataset.")
+                return
             x = tab1['Teff'].values
-            targ = 'Mass'
+
+            if target_type == 'Age':
+                targ = 'Age'
+                target_name = 'Age (Myr)'
+                calc_col = 'Age_calc (Myr)'
+                err_col = 'Age_e (Myr)'
+            else:
+                targ = 'Mass'
+                target_name = 'Mass'
+                calc_col = 'Mass_calc'
+                err_col = 'Mass_e'
 
         else:
-            x = tab1[self.sidebar.selected_features]
             targ = self.sidebar.target.get()
+            target_name = targ
+            calc_col = targ + '_calc'
+            err_col = targ + '_e'
+            selected_feats = self.sidebar.selected_features
+            if isinstance(selected_feats, list) and len(selected_feats) == 1:
+                feature_name = selected_feats[0]
+                x = tab1[feature_name].values
+            elif targ in tab1.columns:
+                feature_name = f"Observed {targ}"
+                x = tab1[targ].values
+            else:
+                feature_name = "Sample Index"
+                x = np.arange(1, len(tab1) + 1)
 
-        y = tab1[targ + '_calc'].values
+        if calc_col not in tab1.columns or err_col not in tab1.columns:
+            messagebox.showinfo("Result Plot", f"No calculation result available for target '{target_name or targ}'. Please run 'Locate Stars' or 'Calculate' first.")
+            return
 
-        yerr = tab1[targ + '_e'].values
-        fra = ResultDisplay(x, y, yerr, method)
+        y = tab1[calc_col].values
+        yerr = tab1[err_col].values
+
+        fra = ResultDisplay(x, y, yerr, method, feature_name=feature_name, target_name=target_name)
         if fra:
-            # Create and save the image plot
             fra.res_plot(save_file=True)
 
-            # Create a new Toplevel window
             plot_window = ttk.Toplevel(self)
             plot_window.title("Results Plot")
 
-            # Load the image and scale it to fit the window
             photo = Image.open(os.path.join(PLOTS_DIR, '_results_display.png')).resize((800, 600))
             image_tk = ImageTk.PhotoImage(photo)
 
-            # Create a Label to display the image
             image_label = ttk.Label(plot_window, image=image_tk)
             image_label.pack(padx=20, pady=20)
 
-            # Keep a reference to the image to prevent garbage collection
             image_label.image = image_tk
-
         else:
             messagebox.showinfo("Result Plot", "No result data available.")
 
@@ -344,7 +381,7 @@ class Sidebar(ttk.Frame):
         self.filtered_data = None
         self.save_var = tk.IntVar()
         self.master = parent
-        self.selected_features = pd.DataFrame
+        self.selected_features = []
         self.features = []
         self.method = tk.StringVar()
         self.comp_method = tk.StringVar()
@@ -371,7 +408,7 @@ class Sidebar(ttk.Frame):
                              tabposition=tk.W + tk.N,
                              tabplacement=tk.N + tk.EW)
         self.style.theme_settings(current_theme,
-                                  {"TNotebook.Tab": {"configure": {'background': 'lightblue', "padding": [10, 8]}}})
+                                  {"TNotebook.Tab": {"configure": {"padding": [12, 8]}}})
 
         self.notebook = ttk.Notebook(self, style='lefttab.TNotebook')
         self.notebook.grid(row=0, column=0, sticky="nsew")
@@ -410,7 +447,7 @@ class Sidebar(ttk.Frame):
                              tabposition=tk.W + tk.N,
                              tabplacement=tk.N + tk.EW)
         self.style.theme_settings(current_theme,
-                                  {"TNotebook.Tab": {"configure": {'background': 'lightblue', "padding": [10, 8]}}})
+                                  {"TNotebook.Tab": {"configure": {"padding": [12, 8]}}})
 
     def refresh_sidebar(self):
         # Clear existing widgets and recreate them
@@ -419,114 +456,83 @@ class Sidebar(ttk.Frame):
         self.create_widgets()
 
     def setup_home_ui(self, frame):
-        frame.grid_rowconfigure(0, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
+        container = ttk.Frame(frame, padding=20)
+        container.pack(expand=True, fill=BOTH)
 
-        photo = Image.open(ICON_PATH).resize((400, 400))
+        photo = Image.open(ICON_PATH).resize((320, 320))
         image_tk = ImageTk.PhotoImage(photo)
 
-        # Create a Label to display the image
-        image_label = ttk.Label(frame, image=image_tk)
-        image_label.pack(padx=20, pady=10)
+        image_label = ttk.Label(container, image=image_tk)
+        image_label.pack(padx=20, pady=(10, 5))
 
-        version_label = tk.Label(frame, text="S.P.E.C.T.R.A", font=('Helvetica', 46, 'bold'))
-        version_label.pack(padx=20, pady=0)
+        title_label = ttk.Label(container, text="S.P.E.C.T.R.A.", font=('Helvetica', 38, 'bold'), bootstyle="primary")
+        title_label.pack(padx=20, pady=(0, 2))
 
-        # Button to update program
-        update_btn = ttk.Button(
-            frame,
-            text="🔄 Atualizar Programa",
-            bootstyle="primary-outline",
-            command=self.master.update_program
+        subtitle_label = ttk.Label(
+            container,
+            text="Stellar Parameter Estimation & Calculation Tools for Research & Analysis",
+            font=('Helvetica', 11, 'italic'),
+            bootstyle="secondary"
         )
-        update_btn.pack(side=BOTTOM, padx=20, pady=10)
+        subtitle_label.pack(padx=20, pady=(0, 15))
 
-        # Label displaying program version
-        version_label = tk.Label(frame, text="Version: V1.0.0_build_220726")
+        update_btn = ttk.Button(
+            container,
+            text="🔄  Atualizar Programa",
+            bootstyle="primary-outline",
+            command=self.master.update_program,
+            padding=(15, 8)
+        )
+        update_btn.pack(side=BOTTOM, padx=20, pady=(10, 5))
+
+        version_label = ttk.Label(container, text="Version 1.0.0 (build 220726)", font=('Helvetica', 9), bootstyle="secondary")
         version_label.pack(side=BOTTOM, padx=20, pady=2)
 
-        # Keep a reference to the image to prevent garbage collection
         image_label.image = image_tk
 
     def setup_modeling_ui(self, frame):
-        frame.grid_columnconfigure(3, weight=1)
-        frame.grid_rowconfigure(12, weight=1)
+        container = ttk.Frame(frame, padding=15)
+        container.pack(expand=True, fill=BOTH)
 
+        # Card 1: Feature Selection & Imputation
+        card1 = ttk.Labelframe(container, text=" 1. Feature Selection & Data Imputation ", padding=15)
+        card1.pack(fill=X, pady=(0, 15))
 
-        title_label_1 = tk.Label(frame, text="1. Feature Selection",
-                              font=('Helvetica', 14, 'bold'))
-        title_label_1.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+        f_step1 = ttk.Frame(card1)
+        f_step1.pack(fill=X, pady=(0, 12))
+        ttk.Button(f_step1, text="🔍  Analyze Features & Load Dataset", bootstyle="primary", command=self.correlation_analysis, padding=(12, 6)).pack(side=LEFT)
 
-        data_split_button = tk.Button(frame,
-                                      text="Analyze",
-                                      command=self.correlation_analysis)
-        data_split_button.grid(row=2, column=0, pady=(10, 5), padx=10, sticky="w")
+        f_params = ttk.Frame(card1)
+        f_params.pack(fill=X)
 
-        data_label = tk.Label(frame, text="Missing Imputation:",
-                              font=('Helvetica', 10))
-        data_label.grid(row=1, column=1, pady=(10, 5), padx=10, sticky="w")
-
-        data_completition_combobox = ttk.Combobox(frame,
-                                                  textvariable=self.comp_method,
-                                                  width=12)
-        data_completition_combobox['values']=['None',
-                                              'KNN',
-                                              'Iterative',
-                                              'MICE']
+        ttk.Label(f_params, text="Missing Imputation:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=(0, 10), pady=6, sticky="w")
+        data_completition_combobox = ttk.Combobox(f_params, textvariable=self.comp_method, values=['None', 'KNN', 'Iterative', 'MICE'], width=12, state="readonly")
         data_completition_combobox.current(0)
-        data_completition_combobox.grid(row=2, column=1, pady=(10,5), padx=10, stick='w')
+        data_completition_combobox.grid(row=0, column=1, padx=(0, 25), pady=6, sticky="w")
 
-        target_label = tk.Label(frame, text="Select Target:",
-                              font=('Helvetica', 10))
-        target_label.grid(row=1, column=2, pady=(10, 5), padx=10, sticky="w")
+        ttk.Label(f_params, text="Select Target:", font=('Helvetica', 10, 'bold')).grid(row=0, column=2, padx=(0, 10), pady=6, sticky="w")
+        self.target_combobox = ttk.Combobox(f_params, textvariable=self.target, width=15, state="readonly")
+        self.target_combobox.grid(row=0, column=3, padx=0, pady=6, sticky="w")
 
-        self.target_combobox = ttk.Combobox(frame,
-                                            textvariable=self.target,
-                                            width=12)
-        self.target_combobox.grid(row=2, column=2,  pady=(10, 5), padx=10, sticky="w")
+        # Card 2: Model Training
+        card2 = ttk.Labelframe(container, text=" 2. Model Training & Evaluation ", padding=15)
+        card2.pack(fill=X, pady=(0, 15))
 
+        f_build = ttk.Frame(card2)
+        f_build.pack(fill=X)
+        ttk.Button(f_build, text="🔨 Build Model", bootstyle="primary", command=self.modeling).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_build, text="📋 Model Report", bootstyle="info-outline", command=self.master.show_report).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_build, text="📉 Report Plot", bootstyle="success-outline", command=self.master.show_report_plot).pack(side=LEFT)
 
-        separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=3, column=0, columnspan=4, pady=10, sticky="ew")
+        # Card 3: Calculate & Results
+        card3 = ttk.Labelframe(container, text=" 3. Calculation & Outputs ", padding=15)
+        card3.pack(fill=X, pady=(0, 10))
 
-
-        title_label_2 = tk.Label(frame,
-                               text="2. Modeling",
-                               font=('Helvetica', 14, 'bold'))
-        title_label_2.grid(row=4, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
-
-        data_pca_button = tk.Button(frame,
-                                    text="Build Model",
-                                    command=self.modeling)
-        data_pca_button.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
-
-        report_button = tk.Button(frame,
-                                  text="Model Report",
-                                  command=self.master.show_report)
-        report_button.grid(row=5, column=1, pady=(10, 5), padx=10, sticky="w")
-
-        report_plot_button = tk.Button(frame,
-                                       text="Model Report Plot",
-                                       command=self.master.show_report_plot)
-        report_plot_button.grid(row=5, column=2, pady=(10, 5), padx=10, sticky="w")
-
-        separator = ttk.Separator(frame, orient='horizontal')
-        separator.grid(row=6, column=0, columnspan=4, pady=10, sticky="ew")
-
-        title_label_1 = tk.Label(frame, text="3. Calculate",
-                                 font=('Helvetica', 14, 'bold'))
-        title_label_1.grid(row=7, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
-
-        derive_button = tk.Button(frame,
-                                       text="Calculate",
-                                       command=self.derive)
-        derive_button.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
-
-        results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=8, column=1, pady=(10, 5), padx=10, sticky="w")
-
-        table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=8, column=2, pady=(10, 5), padx=10, sticky="w")
+        f_out = ttk.Frame(card3)
+        f_out.pack(fill=X)
+        ttk.Button(f_out, text="⚡ Calculate Target", bootstyle="primary", command=self.derive).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_out, text="📊 Show Table", bootstyle="info-outline", command=self.master.show_table).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_out, text="📈 Result Plot", bootstyle="success", command=self.master.show_result_plot).pack(side=LEFT)
 
     def get_info_columns(self):
         if table_data is None:
@@ -605,9 +611,10 @@ class Sidebar(ttk.Frame):
     def modeling(self):
         self.method = 'MOD'
         self.data_treat()
-        selected_features = MathModels.select_features(self.filtered_data, self.target.get())
+        target_name = self.target.get() if hasattr(self.target, 'get') else str(self.target)
+        selected_features = MathModels.select_features(self.filtered_data, target_name)
         X = self.filtered_data[selected_features].values
-        y = self.filtered_data[self.target.get()].values
+        y = self.filtered_data[target_name].values
 
         def _task(cancel_event=None):
             self.model, self.report = create_regression_model(X, y)
@@ -632,20 +639,46 @@ class Sidebar(ttk.Frame):
         )
 
     def derive(self):
+        if table_data is None:
+            open_table()
+            if table_data is None:
+                return
+
+        if not hasattr(self, 'model') or self.model is None:
+            messagebox.showwarning("Derivation Error", "No model built yet. Please run 'Build Model' first.")
+            return
+
+        if not hasattr(self, 'selected_features') or not isinstance(self.selected_features, list) or not self.selected_features:
+            messagebox.showwarning("Derivation Error", "No features selected. Please run 'Build Model' first.")
+            return
+
+        target_name = self.target.get()
+        if not target_name:
+            messagebox.showwarning("Derivation Error", "No target selected.")
+            return
+
         X = table_data[self.selected_features]
         yerr = np.zeros(len(X))
         y_out = np.zeros(len(X))
 
-        k = ~np.isnan(X).any(axis=1)
+        k = ~np.isnan(X.values).any(axis=1) if hasattr(X, 'values') else ~np.isnan(X).any(axis=1)
         x = X.loc[k]
-        y_out[k] = self.model.predict((x.values.reshape(-1, 1)))
-        yerr[k] = self.mass_uncertainty(y_out[k]) * 0.15
 
-        table_data[self.target.get() + '_calc'] = y_out
-        table_data[self.target.get() + '_e'] = yerr
+        if len(x) > 0:
+            preds = self.model.predict(x.values)
+            y_out[k] = preds
+
+            # Incerteza do modelo baseada no RMSE do modelo treinado
+            model_rmse = 0.05
+            if hasattr(self, 'report') and isinstance(self.report, pd.DataFrame) and 'RMSE' in self.report.columns:
+                model_rmse = float(self.report['RMSE'].min())
+            yerr[k] = model_rmse
+
+        table_data[target_name + '_calc'] = np.round(y_out, 4)
+        table_data[target_name + '_e'] = np.round(yerr, 4)
         table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
         ToastNotification("Derivation by Mathematical Model",
-                          f"{self.target.get()} calculated successfully.",
+                          f"{target_name} calculated successfully.",
                           duration=6000, bootstyle='dark').show_toast()
 
 
@@ -657,166 +690,142 @@ class Sidebar(ttk.Frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
     def setup_isocfit_ui(self, frame):
-        frame.grid_columnconfigure(3, weight=1)
-        frame.grid_rowconfigure(12, weight=1)
-        isoc_label = tk.Label(frame, text="Isochrone Fitting", font=('Helvetica', 16, 'bold'))
-        isoc_label.grid(row=0, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+        container = ttk.Frame(frame, padding=15)
+        container.pack(expand=True, fill=BOTH)
 
-        # Define widgets and layout for Isochrones Fitting
-        model_label = tk.Label(frame, text="Isochrone Model:")
-        model_label.grid(row=1, column=0, pady=(10, 5), padx=10, sticky="w")
+        # Card 1: Configuration
+        card1 = ttk.Labelframe(container, text=" 1. Model & Input Parameters ", padding=15)
+        card1.pack(fill=X, pady=(0, 15))
+        card1.grid_columnconfigure(1, weight=1)
 
+        ttk.Label(card1, text="Isochrone Model:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
         models = ('Siess 2000', 'BHAC15')
-
-        iso_model_combobox = ttk.Combobox(frame, textvariable=self.iso_selected_model, width=10)
-        iso_model_combobox['values'] = models
+        iso_model_combobox = ttk.Combobox(card1, textvariable=self.iso_selected_model, values=models, width=15, state="readonly")
         iso_model_combobox.current(0)
-        iso_model_combobox.grid(row=2, column=0, pady=(10, 5), padx=10, sticky="w")
+        iso_model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
 
+        ttk.Label(card1, text="Effective Temp (Teff):", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
+        f_teff = ttk.Frame(card1)
+        f_teff.grid(row=1, column=1, padx=10, pady=8, sticky="w")
+        ttk.Entry(f_teff, textvariable=self.teff, width=12).pack(side=LEFT, padx=(0, 5))
+        ttk.Label(f_teff, text="K", font=('Helvetica', 9)).pack(side=LEFT)
 
-        teff_label = tk.Label(frame, text="Effective Temperature:")
-        teff_label.grid(row=1, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        ttk.Label(card1, text="Luminosity (log L):", font=('Helvetica', 10, 'bold')).grid(row=2, column=0, padx=10, pady=8, sticky="w")
+        f_logl = ttk.Frame(card1)
+        f_logl.grid(row=2, column=1, padx=10, pady=8, sticky="w")
+        ttk.Entry(f_logl, textvariable=self.logl, width=12).pack(side=LEFT, padx=(0, 5))
+        ttk.Label(f_logl, text="log L/L_sun", font=('Helvetica', 9)).pack(side=LEFT)
 
-        teff_entry = ttk.Entry(frame,
-                               textvariable= self.teff,
-                               width=17)
-        teff_entry.grid(row=2, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        # Card 2: Processing & Action
+        card2 = ttk.Labelframe(container, text=" 2. Processing & Star Localization ", padding=15)
+        card2.pack(fill=X, pady=(0, 15))
 
-        logl_label = tk.Label(frame, text="Luminosity (in log):")
-        logl_label.grid(row=1, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
+        f_btns = ttk.Frame(card2)
+        f_btns.pack(fill=X)
 
-        logl_entry = ttk.Entry(frame,
-                               textvariable=self.logl,
-                               width=14)
-        logl_entry.grid(row=2, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
-
-        input_table_button = tk.Button(frame, text="Input Table", command=open_table)
-        input_table_button.grid(row=3, column=0, pady=(10, 5), padx=10, sticky="w")
+        ttk.Button(f_btns, text="📁 Input Table", bootstyle="info-outline", command=open_table).pack(side=LEFT, padx=(0, 10))
 
         def verbose_on():
             self.save_var.set(1)
-            menu_toggle_iso = ttk.Button(frame,
-                                         text='Verbose',
-                                         command=verbose_off)
-            menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
+            btn_verb.configure(text="Verbose ON", bootstyle="secondary")
+            btn_verb.configure(command=verbose_off)
 
         def verbose_off():
             self.save_var.set(0)
-            menu_toggle_iso = ttk.Button(frame,
-                                         text='Verbose',
-                                         command=verbose_on,
-                                         style='dark')
-            menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
+            btn_verb.configure(text="Verbose OFF", bootstyle="secondary-outline")
+            btn_verb.configure(command=verbose_on)
 
-        menu_toggle_iso = ttk.Button(frame,
-                                     text='Verbose',
-                                     command=verbose_on,
-                                     style='dark')
-        menu_toggle_iso.grid(row=3, column=1, pady=(10, 5), padx=0, sticky="w")
+        btn_verb = ttk.Button(f_btns, text="Verbose OFF", bootstyle="secondary-outline", command=verbose_on)
+        btn_verb.pack(side=LEFT, padx=(0, 10))
 
-        locate_stars_button = tk.Button(frame, text="Locate Stars", command=self.locate_stars)
-        locate_stars_button.grid(row=3, column=2, pady=(10, 5), padx=0, sticky="w")
+        ttk.Button(f_btns, text="⭐ Locate Stars", bootstyle="primary", command=self.locate_stars).pack(side=LEFT, padx=(0, 10))
 
-        table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=4, column=0, pady=(10, 5), padx=10, sticky="w")
+        # Card 3: Results
+        card3 = ttk.Labelframe(container, text=" 3. Results & Visualization ", padding=15)
+        card3.pack(fill=X, pady=(0, 15))
 
-        results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=4, column=1, pady=(10, 5), padx=0, sticky="w")
+        f_res = ttk.Frame(card3)
+        f_res.pack(fill=X)
 
-        self.progress = ttk.Progressbar(frame, length=200, mode='determinate', style='info')
-        self.progress.grid(row=9, column=0, columnspan=4, pady=200, ipadx=0, sticky='ew')
+        ttk.Button(f_res, text="📊 Show Table", bootstyle="info-outline", command=self.master.show_table).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_res, text="📈 Mass Plot", bootstyle="success-outline", command=lambda: self.master.show_result_plot('Mass')).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_res, text="⏳ Age Plot", bootstyle="success-outline", command=lambda: self.master.show_result_plot('Age')).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_res, text="🌌 HRD Plot", bootstyle="success", command=self.master.show_hrd_plot).pack(side=LEFT)
+
+        self.progress = ttk.Progressbar(container, mode='determinate', bootstyle='info')
+        self.progress.pack(fill=X, side=BOTTOM, pady=(10, 0))
 
     def setup_rml_ui(self, frame):
-        frame.grid_columnconfigure(3, weight=1)
-        frame.grid_rowconfigure(12, weight=1)
+        container = ttk.Frame(frame, padding=15)
+        container.pack(expand=True, fill=BOTH)
 
-        isoc_label = tk.Label(frame, text="Mass-Magnitude Modeling", font=('Helvetica', 16, 'bold'))
-        isoc_label.grid(row=3, column=0, columnspan=3, pady=(10, 5), padx=10, sticky="w")
+        # Card 1: Model & Mass Range
+        card1 = ttk.Labelframe(container, text=" 1. Model Configuration & Mass Range ", padding=15)
+        card1.pack(fill=X, pady=(0, 15))
 
-        model_label = tk.Label(frame, text="Isochrone Model:")
-        model_label.grid(row=4, column=0, pady=(10, 5), padx=10, sticky="w")
-
+        ttk.Label(card1, text="Isochrone Model:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
         models = ('bhac15', 'parsec', 'mist')
-
-        model_combobox = ttk.Combobox(frame, textvariable=self.selected_model, width=10)
-        model_combobox['values'] = models
+        model_combobox = ttk.Combobox(card1, textvariable=self.selected_model, values=models, width=12, state="readonly")
         model_combobox.current(0)
-        model_combobox.grid(row=4, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
 
+        ttk.Label(card1, text="Mass Range:", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
         self.low_int.set(0.1)
         self.hig_int.set(1.3)
 
-        entry_low = tk.Entry(frame, textvariable=self.low_int, width=5)
-        entry_low.grid(row=5, column=1, pady=(10, 5), padx=0, sticky="w")
-        entry_low_label = tk.Label(frame, text='Msun')
-        entry_low_label.grid(row=5, column=1, pady=(10, 5), padx=70, sticky="w")
+        f_mass = ttk.Frame(card1)
+        f_mass.grid(row=1, column=1, padx=10, pady=8, sticky="w")
+        ttk.Label(f_mass, text="Min:").pack(side=LEFT, padx=(0, 4))
+        ttk.Entry(f_mass, textvariable=self.low_int, width=6).pack(side=LEFT, padx=(0, 2))
+        ttk.Label(f_mass, text="M_sun").pack(side=LEFT, padx=(0, 15))
 
-        entry_high = tk.Entry(frame, textvariable=self.hig_int, width=5)
-        entry_high.grid(row=5, column=2, pady=(10, 5), padx=0, sticky="w")
-        entry_high_label = tk.Label(frame, text='Msun')
-        entry_high_label.grid(row=5, column=2, pady=(10, 5), padx=70, sticky="w")
+        ttk.Label(f_mass, text="Max:").pack(side=LEFT, padx=(0, 4))
+        ttk.Entry(f_mass, textvariable=self.hig_int, width=6).pack(side=LEFT, padx=(0, 2))
+        ttk.Label(f_mass, text="M_sun").pack(side=LEFT)
 
-        spin_label = ttk.Label(frame, text='Mass range:')
-        spin_label.grid(row=5, column=0, pady=(10, 5), padx=10, sticky="w")
+        # Card 2: Age & Filter Selection
+        card2 = ttk.Labelframe(container, text=" 2. Isochrone Age & Filter Selection ", padding=15)
+        card2.pack(fill=X, pady=(0, 15))
 
-        label = tk.Label(frame, text='Isochrone Age:')
-        label.grid(row=7, column=0, pady=(10, 5), padx=10, sticky="w")
-
+        ttk.Label(card2, text="Isochrone Age:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
         self.scale_int.set(112)
-        scale = ttk.Scale(frame, from_=1, to=1000, length=165, orient='horizontal', variable=self.scale_int)
-        scale.grid(row=7, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        f_age = ttk.Frame(card2)
+        f_age.grid(row=0, column=1, padx=10, pady=8, sticky="w")
+        ttk.Scale(f_age, from_=1, to=1000, length=150, orient='horizontal', variable=self.scale_int).pack(side=LEFT, padx=(0, 8))
+        ttk.Entry(f_age, textvariable=self.scale_int, width=6).pack(side=LEFT, padx=(0, 4))
+        ttk.Label(f_age, text="Myr").pack(side=LEFT)
 
-        entry = tk.Entry(frame, textvariable=self.scale_int, width=5)
-        entry.grid(row=7, column=2, pady=(10, 5), padx=(0, 10), sticky="w")
-        label = ttk.Label(frame, text='Myr')
-        label.grid(row=7, column=2, pady=(10, 5), padx=65, sticky="w")
-
-        filter_label = tk.Label(frame, text="Select Magnitude Filter:")
-        filter_label.grid(row=8, column=0, pady=(10, 5), padx=10, sticky="w")
-
+        ttk.Label(card2, text="Photometric Filter:", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
         filters = ('G', 'G_BP', 'G_RP', 'U', 'B', 'V', 'I', 'J', 'H', 'K')
         self.selected_filter.set(filters[0])
+        filter_combobox = ttk.Combobox(card2, textvariable=self.selected_filter, values=filters, width=12, state="readonly")
+        filter_combobox.grid(row=1, column=1, padx=10, pady=8, sticky="w")
 
-        filter_combobox = ttk.Combobox(frame, textvariable=self.selected_filter, width=10)
-        filter_combobox['values'] = filters
-        filter_combobox.grid(row=8, column=1, pady=(10, 5), padx=(0, 10), sticky="w")
+        f_mod_btns = ttk.Frame(card2)
+        f_mod_btns.grid(row=2, column=0, columnspan=2, padx=10, pady=(10, 0), sticky="w")
+        ttk.Button(f_mod_btns, text="🔨 Build Model", bootstyle="primary", command=self.build_model).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_mod_btns, text="📋 Model Report", bootstyle="info-outline", command=self.master.show_report).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_mod_btns, text="📉 Report Plot", bootstyle="success-outline", command=self.master.show_report_plot).pack(side=LEFT)
 
-        # Create button to calculate mass
-        build_button = tk.Button(frame, text="Build Model", command=self.build_model)
-        build_button.grid(row=8, column=2, pady=(10, 5), padx=0, sticky="w")
-
-        report_button = tk.Button(frame, text="Model Report", command=self.master.show_report)
-        report_button.grid(row=9, column=0, pady=(10, 5), padx=10, sticky="w")
-        report_plot_button = tk.Button(frame, text="Model Report Plot", command=self.master.show_report_plot)
-        report_plot_button.grid(row=9, column=1, pady=(10, 5), padx=0, sticky="w")
+        # Card 3: Distance Correction & Calculation
+        card3 = ttk.Labelframe(container, text=" 3. Distance Correction & Mass Calculation ", padding=15)
+        card3.pack(fill=X, pady=(0, 10))
 
         self.check_var.set(1)
-        menu_toggle = ttk.Checkbutton(frame,
-                                      text='Distance Correction',
-                                      variable=self.check_var,
-                                      onvalue=1,
-                                      offvalue=0)
-        menu_toggle.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
-
         self.cluster_dist.set(125)
+        f_dist = ttk.Frame(card3)
+        f_dist.pack(fill=X, pady=(0, 10))
+        ttk.Checkbutton(f_dist, text="Distance Correction", variable=self.check_var, onvalue=1, offvalue=0).pack(side=LEFT, padx=(0, 15))
+        ttk.Label(f_dist, text="Distance:").pack(side=LEFT, padx=(0, 4))
+        ttk.Entry(f_dist, textvariable=self.cluster_dist, width=7).pack(side=LEFT, padx=(0, 4))
+        ttk.Label(f_dist, text="pc").pack(side=LEFT)
 
-        entry2 = tk.Entry(frame, textvariable=self.cluster_dist, width=5)
-        entry2.grid(row=10, column=1, pady=(10, 5), padx=0, sticky="w")
-        label = ttk.Label(frame, text='pc')
-        label.grid(row=10, column=1, pady=(10, 5), padx=65, sticky="w")
-
-
-        input_table_button = tk.Button(frame, text="Input Table", command=open_table)
-        input_table_button.grid(row=10, column=2, pady=(10, 5), padx=0, sticky="w")
-
-        calculate_mass_button = tk.Button(frame, text="Calculate Mass", command=self.predict_mass)
-        calculate_mass_button.grid(row=11, column=0, pady=(10, 5), padx=10, sticky="w")
-
-        table_button = tk.Button(frame, text="Show Table", command=self.master.show_table)
-        table_button.grid(row=11, column=1, pady=(10, 5), padx=0, sticky="w")
-
-        results_button = tk.Button(frame, text="Result Plot", command=self.master.show_result_plot)
-        results_button.grid(row=11, column=2, pady=(10, 5), padx=0, sticky="w")
+        f_calc_btns = ttk.Frame(card3)
+        f_calc_btns.pack(fill=X)
+        ttk.Button(f_calc_btns, text="📁 Input Table", bootstyle="info-outline", command=open_table).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_calc_btns, text="⚡ Calculate Mass", bootstyle="primary", command=self.predict_mass).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_calc_btns, text="📊 Show Table", bootstyle="info-outline", command=self.master.show_table).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_calc_btns, text="📈 Result Plot", bootstyle="success", command=self.master.show_result_plot).pack(side=LEFT)
 
     # GridSearchCV in RegressionReport fits 9 models (including an SVR with
     # rbf/sigmoid kernels, which scale roughly O(n^2)-O(n^3)) across
@@ -906,25 +915,6 @@ class Sidebar(ttk.Frame):
             _on_done,
         )
 
-    @staticmethod
-    def mass_uncertainty(y):
-        y_hat = 0.0424
-        mu = np.mean(np.nan_to_num(y))
-        sigma = np.var(np.nan_to_num(y))
-        uncertainty = np.sqrt(y_hat * sigma)
-        e = y*uncertainty 
-        return e
-
-    @staticmethod
-    def age_uncertainty(y):
-            y_hat = 0.0424
-            mu = np.mean(np.nan_to_num(y))
-            sigma = np.var(np.nan_to_num(y))
-            uncertainty = np.sqrt(y_hat * sigma)
-            e = y*uncertainty
-            
-            return e
-
     def predict_mass(self):
         global table_data
 
@@ -936,21 +926,32 @@ class Sidebar(ttk.Frame):
                               f"Magnitude in filter {self.selected_filter.get()} isn't found on your table.",
                               duration=6000, bootstyle='light').show_toast()
         else:
-            mag = table_data[f'{self.selected_filter.get()}mag'].values
+            mag = np.array(table_data[f'{self.selected_filter.get()}mag'].values, copy=True, dtype=float)
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
-            self.target = "Mass"
+            if hasattr(self.target, 'set'):
+                self.target.set("Mass")
+            else:
+                self.target = tk.StringVar(value="Mass")
             if self.check_var.get() == 1:
                 mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.cluster_dist.get())
             else:
                 mag, k = FilterValues.filter_predict_un(mag, self.X)
             mass[k] = self.model.predict(mag.reshape(-1, 1))
-            yerr[k] = self.mass_uncertainty(mass[k]) * 0.15
+
+            # Incerteza do modelo baseada no RMSE do modelo treinado
+            model_rmse = 0.05
+            if hasattr(self, 'report') and isinstance(self.report, pd.DataFrame) and 'RMSE' in self.report.columns:
+                model_rmse = float(self.report['RMSE'].min())
+
             key = np.where(np.array(mass) == 0.)[0]
             hold_mass = np.array(mass)
             hold_mass[key] = np.nan
-            table_data['Mass_calc'] = round(10**hold_mass, 4)
-            table_data['Mass_e'] = round(yerr, 4)
+            calc_mass = 10**hold_mass
+            yerr[k] = calc_mass[k] * np.log(10) * model_rmse
+
+            table_data['Mass_calc'] = np.round(calc_mass, 4)
+            table_data['Mass_e'] = np.round(yerr, 4)
             table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
 
             ToastNotification("Mass Determination",
@@ -965,7 +966,10 @@ class Sidebar(ttk.Frame):
         save_var = self.save_var.get()
         model_selected = self.iso_selected_model.get()
         self.method = 'ISO'
-        self.target = "Mass"
+        if hasattr(self.target, 'set'):
+            self.target.set("Mass")
+        else:
+            self.target = tk.StringVar(value="Mass")
         # Verifica se há dados nos campos manuais ou se deve usar/solicitar a tabela carregada
         has_manual_input = bool(teff_input) and (logl_input != 0.0)
 
@@ -1013,30 +1017,8 @@ class Sidebar(ttk.Frame):
             df_primary = pd.DataFrame(primarydataset)
             df_primary = df_primary.rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
 
-            # Interpolação de massa e idade
-            mass, age = interpolmass(df_primary, model_selected)
-
-            yerr = np.zeros(Nobjects)
-            aerr = np.zeros(Nobjects)
-
-            row = pd.DataFrame({'mass': mass})
-            hold = np.zeros(Nobjects)
-
-            arow = pd.DataFrame({'age': age})
-            ahold = np.zeros(Nobjects)
-
-            if Nobjects > 1:
-                hold[ff] = row.loc[ff, 'mass'].values
-                yerr[ff] = self.mass_uncertainty(hold[ff])
-
-                ahold[ff] = arow.loc[ff, 'age'].values
-                aerr[ff] = self.age_uncertainty(ahold[ff]) * 0.05
-
-                mass = hold
-                age = ahold
-            elif Nobjects == 1:
-                yerr = 0.01
-                aerr = 100
+            # Estimativa Bayesiana de massa e idade (com incertezas 1-sigma reais)
+            mass, age, yerr, aerr = interpolmass(df_primary, model_selected)
 
             # Atualização dos resultados calculados
             if is_single_star or table_data is None:
@@ -1067,7 +1049,6 @@ class Sidebar(ttk.Frame):
                 return
 
             table_data = result
-            self.master.show_hrd_plot()
 
             ToastNotification(
                 title='Star Localization',
@@ -1187,6 +1168,11 @@ def open_table():
 
             # Rename the columns
             table_data.rename(columns=column_mapping, inplace=True)
+
+            # Se a coluna for Luminosidade linear L (ex: 'L', 'lum', 'L/Ls', 'Lsun'), converte para log10(L)
+            linear_l_names = {'L', 'L/Ls', 'Lsun', 'lum', 'Lum', 'Lbol'}
+            if logl_column in linear_l_names:
+                table_data['logL'] = np.log10(np.maximum(1e-10, table_data['logL']))
 
             if not teff_column or not logl_column:
                 missing_columns = []

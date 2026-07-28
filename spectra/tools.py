@@ -23,6 +23,7 @@
 import statsmodels.api as sm
 import statsmodels.stats.api as sms
 import scipy.stats as ss
+import scipy.interpolate as interp
 
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
@@ -56,7 +57,7 @@ class FilterValues:
 
     @staticmethod
     def filter_predict(mag, X, clust_dist):
-        mag = np.array(mag, copy=True)
+        mag = np.array(mag, copy=True, dtype=float)
         ph = np.nan_to_num(mag)
         k = []
         for i in range(len(ph)):
@@ -74,6 +75,7 @@ class FilterValues:
 
     @staticmethod
     def filter_predict_un(mag, X):
+        mag = np.array(mag, copy=True, dtype=float)
         ph = np.nan_to_num(mag)
         k = []
         for i in range(len(ph)):
@@ -91,6 +93,7 @@ class FilterValues:
 
     @staticmethod
     def filter_predict_iso(teff, X):
+        teff = np.array(teff, copy=True, dtype=float)
         ph = np.nan_to_num(teff)
         k = []
         for i in range(len(ph)):
@@ -232,101 +235,161 @@ class MagCorrector:
 
 
 def interpolmass(primarydataset, model):
-    teffs = primarydataset['Teff']
-    masses = primarydataset['Mass'] # Ou aproximação inicial
-    ages = primarydataset['Age']    # Aproximação inicial (Near Age)
+    """
+    Bayesian Isochrone Parameter Estimator (Mass, Age, and 1-sigma uncertainties).
+    Uses full 2D likelihood evaluation over the HR diagram and a Salpeter/Kroupa IMF prior.
+    """
+    teffs = np.array(primarydataset['Teff'], copy=True, dtype=float)
+    if 'logL' in primarydataset:
+        logls = np.array(primarydataset['logL'], copy=True, dtype=float)
+        # Se os valores forem todos positivos e a mediana > 0.05 (Luminosidade linear L em vez de log10(L)), converte para log10(L)
+        valid_l = logls[~np.isnan(logls)]
+        if len(valid_l) > 0 and np.all(valid_l > 0) and np.median(valid_l) > 0.05:
+            logls = np.log10(np.maximum(1e-10, logls))
+    elif 'L' in primarydataset:
+        logls = np.log10(np.maximum(1e-10, np.array(primarydataset['L'], copy=True, dtype=float)))
+    else:
+        raise KeyError("Coluna de luminosidade ('logL' ou 'L') não encontrada.")
+
+    e_teffs = np.array(primarydataset['e_Teff'], copy=True, dtype=float) if 'e_Teff' in primarydataset else np.full(len(teffs), np.nan)
+    e_logls = np.array(primarydataset['e_logL'], copy=True, dtype=float) if 'e_logL' in primarydataset else np.full(len(logls), np.nan)
 
     alldataiso = readiso(model)
 
     if model == "Siess 2000":
         at = 3  # Teff
+        al = 1  # L (linear)
         am = 4  # Mass
-        # Idades em Myr: [0.01, 0.05, 0.2, 0.5, 2.0, 5.0, 10.0, 30.0, 60.0, 100.0]
         ageiso = np.array([1.e4, 5.e4, 2.e5, 5.e5, 2.e6, 5.e6, 1.e7, 3e7, 6e7, 1e8]) / 1e6
-        massiso = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1, 1.2, 1.3, 1.4, 1.5])
-
+        is_logl_in_table = False
     elif model == "BHAC15":
-        at = 1
-        am = 0
+        at = 1  # Teff
+        al = 2  # logL
+        am = 0  # Mass
         ageiso = np.array([1.e6, 2.e6, 5.e6, 1.e7, 2.e7, 5.e7, 8.e7, 1.e8, 1.2e8, 2e8]) / 1e6
-        massiso = np.array([.01, .015, .02, .03, .04, .05, .06, .07, .072, .075, .08, .09,
-                            .1, .11, .13, .15, .17, .2, .3, .4, .5, .6, .7, .8, .9, 1., 1.1,
-                            1.2, 1.3, 1.4])
+        is_logl_in_table = True
     else:
         raise ValueError(f"Modelo desconhecido: {model}")
 
+    log_ageiso = np.log10(ageiso)
+
+    # 1. Extração dos nós válidos da grade do modelo
+    points = []
+    teff_list = []
+    logl_list = []
+
+    for i in range(len(ageiso)):
+        log_a = log_ageiso[i]
+        for j in range(alldataiso.shape[2]):
+            t = alldataiso[i, at, j]
+            l_val = alldataiso[i, al, j]
+            m = alldataiso[i, am, j]
+
+            if t > 0 and not np.isnan(t) and not np.isnan(l_val) and m > 0:
+                l_log = l_val if is_logl_in_table else (np.log10(l_val) if l_val > 0 else np.nan)
+                if not np.isnan(l_log):
+                    points.append((m, log_a))
+                    teff_list.append(t)
+                    logl_list.append(l_log)
+
+    points = np.array(points)
+    teff_arr = np.array(teff_list)
+    logl_arr = np.array(logl_list)
+
+    # 2. Construção dos Interpoladores 2D na malha (Massa, log10(Idade))
+    interp_teff = interp.LinearNDInterpolator(points, teff_arr)
+    interp_logl = interp.LinearNDInterpolator(points, logl_arr)
+    near_teff = interp.NearestNDInterpolator(points, teff_arr)
+    near_logl = interp.NearestNDInterpolator(points, logl_arr)
+
+    # 3. Grade de Avaliação Bayesiana (150x150)
+    m_min, m_max = points[:, 0].min(), points[:, 0].max()
+    log_a_min, log_a_max = points[:, 1].min(), points[:, 1].max()
+
+    m_grid = np.linspace(m_min, m_max, 150)
+    log_a_grid = np.linspace(log_a_min, log_a_max, 150)
+    M_mesh, A_mesh = np.meshgrid(m_grid, log_a_grid)
+    mesh_points = np.column_stack([M_mesh.ravel(), A_mesh.ravel()])
+
+    t_pred = interp_teff(mesh_points).reshape(M_mesh.shape)
+    l_pred = interp_logl(mesh_points).reshape(M_mesh.shape)
+
+    # Máscara dos pontos válidos estritamente dentro da envoltória convexa (convex hull) dos dados do modelo
+    valid_hull = ~np.isnan(t_pred) & ~np.isnan(l_pred)
+
+    # Prior Salpeter / Kroupa IMF
+    imf_prior = np.where(M_mesh <= 0.5, M_mesh**(-1.35), M_mesh**(-2.35))
+
     calc_masses = []
     calc_ages = []
+    calc_mass_errs = []
+    calc_age_errs = []
 
     for x in range(len(teffs)):
-        teff_obs = teffs[x]
-        age_near = ages[x]
+        t_obs = teffs[x]
+        l_obs = logls[x]
 
-        if np.isnan(teff_obs) or age_near is None or np.isnan(age_near):
+        if np.isnan(t_obs) or np.isnan(l_obs) or t_obs <= 0:
             calc_masses.append(np.nan)
             calc_ages.append(np.nan)
+            calc_mass_errs.append(np.nan)
+            calc_age_errs.append(np.nan)
             continue
 
-        # 1. Encontra o nó temporal mais próximo na grade (i)
-        i_near = np.argmin(np.abs(ageiso - age_near))
+        sig_t = e_teffs[x] if not np.isnan(e_teffs[x]) and e_teffs[x] > 0 else max(50.0, 0.03 * t_obs)
+        sig_l = e_logls[x] if not np.isnan(e_logls[x]) and e_logls[x] > 0 else 0.08
 
-        # 2. Identifica as isócronas vizinhas (anterior i1 e posterior i2) para limitar a idade
-        if i_near == 0:
-            i1, i2 = 0, 1
-        elif i_near == len(ageiso) - 1:
-            i1, i2 = len(ageiso) - 2, len(ageiso) - 1
-        else:
-            i1, i2 = i_near - 1, i_near + 1
+        # Se o ponto estiver ligeiramente fora do convex hull, avalia o vizinho mais próximo na borda
+        active_mask = valid_hull
+        t_eval = t_pred
+        l_eval = l_pred
 
-        t1, t2 = ageiso[i1], ageiso[i2] # Ex: 2.0 Myr e 5.0 Myr
+        if not np.any(active_mask):
+            t_eval = near_teff(mesh_points).reshape(M_mesh.shape)
+            l_eval = near_logl(mesh_points).reshape(M_mesh.shape)
+            active_mask = np.ones(M_mesh.shape, dtype=bool)
 
-        # --- A. INTERPOLAÇÃO DA MASSA (Na isócrona mais próxima) ---
-        teff_grid_near = alldataiso[i_near, at, :]
-        mass_grid_near = alldataiso[i_near, am, :]
+        chi2 = np.full(M_mesh.shape, np.inf)
+        chi2[active_mask] = ((t_eval[active_mask] - t_obs) / sig_t)**2 + ((l_eval[active_mask] - l_obs) / sig_l)**2
 
-        sort_idx = np.argsort(teff_grid_near)
-        teff_sorted_near = teff_grid_near[sort_idx]
-        mass_sorted_near = mass_grid_near[sort_idx]
+        min_chi2 = np.min(chi2[active_mask]) if np.any(active_mask) else 0.0
 
-        if teff_sorted_near[0] <= teff_obs <= teff_sorted_near[-1]:
-            m_calc = np.interp(teff_obs, teff_sorted_near, mass_sorted_near)
-        else:
-            m_calc = np.nan
+        log_lik = np.full(M_mesh.shape, -np.inf)
+        log_lik[active_mask] = -0.5 * (chi2[active_mask] - min_chi2)
 
-        # --- B. INTERPOLAÇÃO DA IDADE (Entre as duas isócronas i1 e i2) ---
-        # Extrai Teff para as duas isócronas limitantes
-        teff_i1 = alldataiso[i1, at, :]
-        mass_i1 = alldataiso[i1, am, :]
-        
-        teff_i2 = alldataiso[i2, at, :]
-        mass_i2 = alldataiso[i2, am, :]
+        lik = np.zeros(M_mesh.shape)
+        lik[active_mask] = np.exp(log_lik[active_mask])
 
-        # Interpola a Teff teórica que a estrela teria em t1 e t2 para a massa calculada
-        sort_m1 = np.argsort(mass_i1)
-        sort_m2 = np.argsort(mass_i2)
+        post = lik * imf_prior
+        z = np.sum(post)
 
-        if not np.isnan(m_calc) and (mass_i1[sort_m1][0] <= m_calc <= mass_i1[sort_m1][-1]):
-            teff_at_t1 = np.interp(m_calc, mass_i1[sort_m1], teff_i1[sort_m1])
-            teff_at_t2 = np.interp(m_calc, mass_i2[sort_m2], teff_i2[sort_m2])
+        if z <= 0 or np.isnan(z):
+            calc_masses.append(np.nan)
+            calc_ages.append(np.nan)
+            calc_mass_errs.append(np.nan)
+            calc_age_errs.append(np.nan)
+            continue
 
-            # Interpolação linear/logarítmica do tempo t com base na variação de Teff
-            if teff_at_t1 != teff_at_t2:
-                # Fração da posição de Teff_obs entre Teff(t1) e Teff(t2)
-                frac = (teff_obs - teff_at_t1) / (teff_at_t2 - teff_at_t1)
-                frac = np.clip(frac, 0.0, 1.0) # Restringe entre as duas tabelas
-                
-                # Idade interpolada no espaço logarítmico (padrão em evolução estelar)
-                log_age = np.log10(t1) + frac * (np.log10(t2) - np.log10(t1))
-                age_calc = 10**log_age
-            else:
-                age_calc = t1
-        else:
-            age_calc = age_near # Mantém a aproximação se estiver na borda
+        post_norm = post / z
 
-        calc_masses.append(float(m_calc))
-        calc_ages.append(float(age_calc))
+        # Momentos Posteriores
+        mean_m = np.sum(M_mesh * post_norm)
+        var_m = np.sum((M_mesh - mean_m)**2 * post_norm)
+        std_m = np.sqrt(max(0.0, var_m))
 
-    return calc_masses, calc_ages
+        mean_log_a = np.sum(A_mesh * post_norm)
+        var_log_a = np.sum((A_mesh - mean_log_a)**2 * post_norm)
+        std_log_a = np.sqrt(max(0.0, var_log_a))
+
+        mean_age = 10**mean_log_a
+        std_age = mean_age * np.log(10) * std_log_a
+
+        calc_masses.append(float(mean_m))
+        calc_ages.append(float(mean_age))
+        calc_mass_errs.append(float(std_m))
+        calc_age_errs.append(float(std_age))
+
+    return calc_masses, calc_ages, calc_mass_errs, calc_age_errs
 
 def fit(X, y, model_name):
     """
@@ -838,66 +901,70 @@ class ResultDisplay:
         x (array-like): The input values (e.g. magnitudes or effective temperatures)
         y (array-like): The predicted masses
         yerr (array-like): The errors associated with the predicted masses
-        method (str): The method used for mass prediction (either 'MMR' or 'Isochrone Fitting')
+        method (str): The method used for prediction ('MMR', 'ISO', or 'MOD')
+        feature_name (str, optional): Name of feature for x-axis label.
+        target_name (str, optional): Name of target variable.
 
     Methods:
         res_plot(save_file=False): Plots the results and saves the figure to a file if specified.
-
-    Parameters:
-        save_file (bool or str, optional): If True, saves the figure to a file named 'mass_results_display.png'. If a string, saves the figure to a file with the specified name.
-
-    Notes:
-        This class provides a convenient way to visualize the results of mass prediction models. The `res_plot` method filters the input data, creates a plot with error bars, and customizes the axis labels and title based on the method used.
     """
-    def __init__(self, x, y, yerr, method):
+    def __init__(self, x, y, yerr, method, feature_name=None, target_name=None):
         self.x = x
         self.y = y
         self.yerr = yerr
         self.method = method
+        self.feature_name = feature_name
+        self.target_name = target_name
 
     def res_plot(self, save_file=False):
         """
-        Plots the results of mass prediction models.
-
-        Parameters:
-            save_file (bool or str, optional): If True, saves the figure to a file named '_mass_results_display.png'. If a string, saves the figure to a file with the specified name. Defaults to False.
-
-        Returns:
-            None
-
-        Notes:
-            This method filters the input data using the `FilterValues.filter_results` function, creates a plot with error bars, and customizes the axis labels and title based on the method used. The plot is then displayed and saved to a file if specified.
+        Plots the results of prediction models.
         """
         x, y, yerr = FilterValues.filter_results(self.x, self.y, self.yerr)
         fig = plt.figure(figsize=(12, 8))
+        label_text = f"Calculated {self.target_name}" if self.target_name else "Calculated values"
         plt.plot(x, y, marker="^", color='#7570b3', alpha=0.6,
-                 label="Calculated masses", linestyle='')
+                 label=label_text, linestyle='')
         plt.errorbar(x, y, yerr=yerr, capsize=5, fmt='^', ecolor='gray', alpha=0.6)
+
         if self.method == 'MMR':
             plt.xlabel('Magnitude (mag)')
             plt.title('Mass-Magnitude Relationship Results')
-            plt.xlim(np.min(x) - 0.05, np.max(x) + 0.05)
+            if len(x) > 0:
+                plt.xlim(np.min(x) - 0.05, np.max(x) + 0.05)
 
-        elif self.method== 'ISO':
+        elif self.method == 'ISO':
             plt.xlabel('Effective Temperature (K)')
-            plt.xlim(np.min(x) - 50, np.max(x) + 50)
+            if len(x) > 0:
+                plt.xlim(np.min(x) - 50, np.max(x) + 50)
             plt.gca().invert_xaxis()
-            plt.title('Isocrhone Fitting Results')
+            targ_title = self.target_name if self.target_name else 'Mass'
+            plt.title(f'Isochrone Fitting Results ({targ_title})')
 
         else:
-            plt.xlabel('Feature')
-            plt.title('Mathematical Modeling Results')
+            xlabel = self.feature_name if self.feature_name else 'Observed / Feature'
+            targ_label = self.target_name if self.target_name else 'Target'
+            plt.xlabel(xlabel)
+            plt.title(f'Mathematical Modeling Results ({targ_label})')
+            if len(x) > 0:
+                x_min, x_max = np.min(x), np.max(x)
+                margin = (x_max - x_min) * 0.05 if x_max != x_min else 1.0
+                plt.xlim(x_min - margin, x_max + margin)
 
-        plt.ylabel(r'Predicted Values')
+        ylabel = f'Calculated {self.target_name}' if self.target_name else r'Predicted Values'
+        plt.ylabel(ylabel)
         plt.legend(loc="best")
 
         plt.grid(True)
         plt.tight_layout()
-        plt.ylim(0, 1.45)
+        if len(y) > 0 and np.max(y) > 0:
+            plt.ylim(0, np.max(y) * 1.15)
+        else:
+            plt.ylim(0, 1.45)
         plt.tick_params(axis='both', which='major', labelsize=10)
         plt.tick_params(direction='in')
 
-        if save_file:
+        if save_file is True:
             plt.savefig(
                 os.path.join(PLOTS_DIR, '_results_display.png'), dpi=300)
         elif isinstance(save_file, str):
