@@ -1,6 +1,6 @@
-# User Manual — S.P.E.C.T.R.A.
+# User Manual — S.P.E.C.T.R.A. (v1.1.0)
 
-This manual explains how to use each feature of the **S.P.E.C.T.R.A.** graphical user interface for stellar parameter estimation and data analysis.
+This manual provides detailed instructions for using the **S.P.E.C.T.R.A.** graphical user interface for stellar parameter estimation, 2D Bayesian Isochrone Fitting, machine learning mass–magnitude modeling, and exploratory data analysis.
 
 > **Note:** For environment setup and installation procedures across different operating systems (Windows, macOS, Linux), please refer to the `README.md` file.
 
@@ -8,71 +8,69 @@ This manual explains how to use each feature of the **S.P.E.C.T.R.A.** graphical
 
 ## Table of Contents
 
-## Table of Contents
-
-1. [Input Data Prerequisites (File Format & Required Columns)](#0-input-data-prerequisites-file-format--required-columns)
-2. [Module Architecture & Functional Breakdown](#1-module-architecture--functional-breakdown)
-3. [Launching the Application](#2-launching-the-application)
-4. [Interface Overview](#3-interface-overview)
-5. [Home Tab](#4-home-tab)
-6. [Isochrone Fitting Tab](#5-isochrone-fitting-tab)
-7. [Mass-Magnitude Modeling Tab](#6-mass-magnitude-modeling-tab)
-8. [Mathematical Modeling Tab](#7-mathematical-modeling-tab)
-9. [File Menu](#8-file-menu)
-10. [Help Menu](#9-help-menu)
-11. [Output Directory & File Locations](#10-output-directory--file-locations)
-12. [Output Interpretation Guide (Tables & Plots)](#11-output-interpretation-guide-tables--plots)
-13. [Known Limitations](#12-known-limitations)
+1. [Input Data Prerequisites (File Format & Required Columns)](#1-input-data-prerequisites-file-format--required-columns)
+2. [Module Architecture & Functional Breakdown](#2-module-architecture--functional-breakdown)
+3. [Launching the Application](#3-launching-the-application)
+4. [Interface Overview](#4-interface-overview)
+5. [Home Tab](#5-home-tab)
+6. [Isochrone Fitting Tab (2D Bayesian Estimator)](#6-isochrone-fitting-tab-2d-bayesian-estimator)
+7. [Mass-Magnitude Modeling Tab](#7-mass-magnitude-modeling-tab)
+8. [Mathematical Modeling Tab](#8-mathematical-modeling-tab)
+9. [File & Help Menus](#9-file--help-menus)
+10. [Updating the Application ("Atualizar Programa")](#10-updating-the-application-atualizar-programa)
+11. [Output Directory & File Locations](#11-output-directory--file-locations)
+12. [Output Interpretation Guide (Tables & Plots)](#12-output-interpretation-guide-tables--plots)
+13. [Troubleshooting & Frequently Asked Questions](#13-troubleshooting--frequently-asked-questions)
 
 ---
 
-## 0. Input Data Prerequisites (File Format & Required Columns)
+## 1. Input Data Prerequisites (File Format & Required Columns)
 
 > **CRITICAL — READ BEFORE LOADING YOUR DATA**
 
 Before importing any dataset into S.P.E.C.T.R.A., ensure your input file meets the following specifications:
 
 1. **File Format:** Your dataset **must be saved in `.csv` format** (comma-separated values). Proprietary or binary formats such as `.xlsx`, `.fits`, `.txt`, or `.tsv` must be exported/converted to `.csv` prior to loading.
-2. **Pre-calculated Physical Parameters:** S.P.E.C.T.R.A. does not derive effective temperature ($\text{Teff}$) or luminosity ($\log L$) directly from raw fluxes or spectrum files. **Your input table must already contain pre-calculated values for temperature and luminosity**.
+2. **Pre-calculated Physical Parameters:** S.P.E.C.T.R.A. does not derive effective temperature ($T_{\text{eff}}$) or luminosity ($\log L$) directly from raw fluxes or spectrum files. **Your input table must already contain pre-calculated values for temperature and luminosity**.
 3. **Standard Column Naming Conventions:**
-* **For Isochrone Fitting:** The dataset must contain columns named strictly **`Teff`** (Effective Temperature in Kelvin, $K$) and **`logL`** (Luminosity in $\log(L/L_\odot)$).
-* **For Mass-Magnitude Modeling:** The dataset must contain a magnitude column named according to the pattern `<Filter>mag` corresponding to your chosen photometric filter (e.g., `Gmag`, `Vmag`, `Jmag`).
-* **For Distance Corrections (Optional):** If distance correction is enabled, include a column named **`pc`** (distance in parsecs).
-4. **Example Datasets:** To test the application and inspect the expected column structures, example tables are provided directly within the project at `isochrone_models/SIESS/` (e.g., `1myrZ002o.csv` and `3myrZ002o.csv`).
-
+   * **For Isochrone Fitting:** The dataset must contain columns named **`Teff`** (Effective Temperature in Kelvin, $K$) and **`logL`** (Luminosity in $\log_{10}(L/L_\odot)$).
+   * **Automatic Linear Luminosity Conversion:** If your CSV uses a linear luminosity column (`L`, `lum`, `L/Ls`, `Lsun`), S.P.E.C.T.R.A. automatically detects it and converts the values to $\log_{10}(L/L_\odot)$.
+   * **For Mass-Magnitude Modeling:** The dataset must contain a magnitude column named according to the pattern `<Filter>mag` corresponding to your chosen photometric filter (e.g., `Gmag`, `Vmag`, `Jmag`).
+   * **For Distance Corrections (Optional):** If distance correction is enabled, include a column named **`pc`** (distance in parsecs).
+4. **Example Datasets:** Example test tables are provided directly within the project at `isochrone_models/SIESS/` (e.g., `3myrZ002o.csv`).
 
 ---
 
-## 1. Module Architecture & Functional Breakdown
+## 2. Module Architecture & Functional Breakdown
 
-S.P.E.C.T.R.A. is organized into modular Python packages (`spectra/`), each responsible for a distinct step in the data pipeline:
+S.P.E.C.T.R.A. is organized into modular Python packages (`spectra/`), each responsible for a distinct layer in the data processing pipeline:
+
+* ### `spectra.state` (`DataManager`)
+  Provides a thread-safe, centralized data manager (`DataManager`) that holds active memory datasets. Prevents race conditions during background calculations and keeps tables in sync across tabs.
+
+* ### `spectra.bayesian` (`2D Bayesian Estimator`)
+  Houses the core 2D Bayesian parameter inference engine (`interpolmass`). Computes joint likelihoods across the HR diagram, applies Salpeter/Kroupa Initial Mass Function (IMF) priors, and calculates expected values and $1\text{-}\sigma$ posterior uncertainties for Mass ($M_\odot$) and Age (Myr).
+
+* ### `spectra.StarLocalization`
+  Loads and parses isochrone evolutionary grids (Siess 2000, BHAC15) with in-memory caching (`_ISO_CACHE`), maps observed stars onto the HR diagram, and generates publication-ready Hertzsprung–Russell plots.
+
+* ### `spectra.tools`
+  Contains machine learning regression engines (`MathModels`, `RegressionReport`, `fit`, `ResultDisplay`). Performs missing data imputation (KNN, Iterative), PCA reduction, multi-model regression fitting, and diagnostic plotting.
+
+* ### `spectra.widgets`
+  Contains reusable GUI components, progress windows (`BusyWindow`), update managers (`UpdateWindow`), model download managers (`ModelDownloadWindow`), and modal notifications.
 
 * ### `spectra.interface`
+  Main GUI module built on `ttkbootstrap`. Manages the primary application window (`App`), navigation sidebar, menus, and responsive viewports.
 
-
-Handles the GUI built on `ttkbootstrap`. It manages the primary application window (`App`), navigation sidebar, top menus, and responsive rendering of interactive tables and plots.
-* ### `spectra.StarLocalization`
-
-
-Contains the core astrophysical fitting engines. It reads stellar evolutionary grids (Siess 2000, BHAC15), maps observed stars onto the Hertzsprung–Russell (HR) diagram, performs 2D bilinear/multivariate interpolation across age-mass tracks, and calculates interpolative parameter uncertainties.
-* ### `spectra.tools`
-
-
-Houses the machine learning and statistical engines. It provides automated feature preprocessing, missing data imputation algorithms (KNN, Iterative), Principal Component Analysis (PCA) reduction, multi-model regression fitting (Linear, Ridge, Lasso, SVR, Decision Trees, Random Forest, Gradient Boosting, AdaBoost, KNN)[cite: 1], and automated regression performance evaluation.
 * ### `spectra.paths`
-
-
-Serves as the single source of truth for runtime pathing across the OS. It automatically initializes output folder hierarchies (`outputs/tables/`, `outputs/plots/`, `outputs/isocfit_outputs/`) and handles absolute path resolutions for external assets and models.
-* ### `spectra.widgets`
-
-
-Contains reusable GUI components, including progress monitoring windows, download managers (`ModelDownloadWindow`), session pickle state managers (`SessionManager`), and custom modal notification dialogs.
+  Single source of truth for absolute file paths and automatic creation of output directories (`outputs/tables/`, `outputs/plots/`, `outputs/isocfit_outputs/`).
 
 ---
 
-## 2. Launching the Application
+## 3. Launching the Application
 
-Before running S.P.E.C.T.R.A., always activate your Conda environment from the terminal:
+Activate your Conda environment from the terminal before starting S.P.E.C.T.R.A.:
 
 ```bash
 conda activate spectra
@@ -81,196 +79,135 @@ python main.py
 
 ### First-Run Data Download
 
-Upon your first launch (or whenever local models are missing), a **"Downloading Stellar Models"** dialog will pop up. S.P.E.C.T.R.A. automatically fetches:
-
-1. MADYS stellar evolutionary models (BHAC15, PARSEC, MIST) via the `madys` API.
-2. The `isochrone_models/` directory (Siess 2000 & BHAC15 grids) via Google Drive download.
-
-> *Download times depend on your internet bandwidth.* Once completed, the main window opens. Refer to `README.md` if the download fails.
+Upon your first launch, a **"Downloading Stellar Models"** dialog will appear. S.P.E.C.T.R.A. automatically fetches:
+1. MADYS stellar evolutionary models (BHAC15, PARSEC, MIST).
+2. The `isochrone_models/` directory (Siess 2000 & BHAC15 grids).
 
 ---
 
-## 3. Interface Overview
+## 4. Interface Overview
 
 The interface consists of three primary regions:
 
 1. **Top Menu Bar:** System utilities (**File** and **Help**).
 2. **Sidebar (Left):** Navigation tabs corresponding to core workflows:
-* `Home`
-* `Isochrone Fitting`
-* `Mass-Magnitude Modeling`
-* `Mathematical Modeling`
-
-
-3. **Main Display Area:** Interactive space where generated data tables, diagnostic charts, and regression summaries open in dedicated viewports.
-
-> **Workflow Tip:** Loading a `.csv` via **Input Table** or **Open table** stores the dataset in global memory (`table_data`), making it immediately available across all sidebar tabs.
+   * `Home`
+   * `Isochrone Fitting`
+   * `Mass-Magnitude Modeling`
+   * `Mathematical Modeling`
+3. **Main Display Area:** Interactive space organized into structured cards (`ttk.Labelframe`) containing action controls, data tables, and diagnostic plots.
 
 ---
 
-## 4. Home Tab
+## 5. Home Tab
 
-Displays application metadata, version information, software overview, and author credits. No configuration actions are required here.
+Displays software description, version status (**v1.1.0**), author credits, and quick links to documentation and program updates.
 
 ---
 
-## 5. Isochrone Fitting Tab
+## 6. Isochrone Fitting Tab (2D Bayesian Estimator)
 
-Maps stars onto Hertzsprung–Russell (HR) diagrams and derives individual stellar ages and masses by interpolating against evolutionary track grids (Siess 2000, BHAC15).
+Derives individual stellar masses ($M_\odot$), ages (Myr), and $1\text{-}\sigma$ uncertainties using a 2D Bayesian Posterior probability calculation across theoretical evolutionary tracks.
 
 ### Step-by-Step Guide:
 
-1. **Isochrone Model:** Select the target evolutionary model grid (*Siess 2000* or *BHAC15*).
-2. **Data Input:** Choose your input method:
-* **Single Star:** Enter **Effective Temperature (K)** and **Luminosity (in log)** manually in the input boxes.
-* **Multi-Star Table:** Click **Input Table** and select a `.csv` file with `Teff` and `logL` columns. *(Note: Table input overrides manual entries if both are supplied).*
-
-
+1. **Isochrone Model:** Select the target evolutionary grid (*Siess 2000* or *BHAC15*).
+2. **Data Input:**
+   * **Single Star:** Enter **Effective Temperature (K)** and **Luminosity (in log)** manually.
+   * **Multi-Star Table:** Click **Input Table** and select a `.csv` file containing `Teff` and `logL` (or `L`) columns.
 3. **Verbose Toggle:**
-* **Enabled:** Generates and saves individual HR diagram fit plots (PDFs) for every star in `outputs/isocfit_outputs/`.
-* **Disabled:** Generates only the aggregate summary table and overview plot.
-
-
-4. **Locate Stars:** Click to execute the grid interpolation pipeline. A progress bar tracks execution.
-5. **View Results:**
-* Click **Show Table** to inspect derived values (`Mass_calc`, `Age_calc`, uncertainties).
-* Click **Result Plot** to render the summary HR diagram.
-
-
+   * **Enabled:** Saves individual HR diagram fit plots (PDFs) for every star in `outputs/isocfit_outputs/`.
+   * **Disabled:** Generates summary tables and main diagnostic plots.
+4. **Locate Stars:** Click to execute the 2D Bayesian estimation pipeline.
+5. **View & Export Results:**
+   * **`📊 Show Table`**: Opens the calculated table containing `Mass_calc`, `Mass_e`, `Age_calc (Myr)`, and `Age_e (Myr)`.
+   * **`📈 Mass Plot`**: Renders calculated Mass ($M_\odot$) vs. $T_{\text{eff}}$ with $1\text{-}\sigma$ error bars.
+   * **`⏳ Age Plot`**: Renders calculated Age (Myr) vs. $T_{\text{eff}}$ with $1\text{-}\sigma$ error bars.
+   * **`🌌 HRD Plot`**: Generates and displays the Hertzsprung–Russell diagram with observed stars overlaid on theoretical tracks.
 
 ---
 
-## 6. Mass-Magnitude Modeling Tab
+## 7. Mass-Magnitude Modeling Tab
 
-Generates a specialized mass–magnitude relation model from MADYS isochrone grids and applies the trained machine learning pipeline to derive stellar masses from observed magnitudes.
+Constructs mass–magnitude relationships from MADYS evolutionary grids using machine learning regressors and calculates stellar masses from observed magnitudes.
 
 ### Step-by-Step Guide:
 
-1. **Isochrone Model:** Choose the underlying grid (`bhac15`, `parsec`, or `mist`).
-2. **Mass Range:** Set the minimum and maximum stellar mass limits (in $M_\odot$) for model construction.
-3. **Isochrone Age:** Set the target age (in Myr) using the slider or numeric entry.
-4. **Select Magnitude Filter:** Pick the photometric band matching your observed data (`G`, `G_BP`, `G_RP`, `U`, `B`, `V`, `I`, `J`, `H`, `K`).
-5. **Build Model:** Click to train multiple regression algorithms in the background.
-* **Model Report:** Opens a table comparing performance metrics across all evaluated regression models.
-* **Model Report Plot:** Displays diagnostic plots for the top-performing model.
-
-
-6. **Distance Correction (Optional):** Check the box to apply distance modulus corrections (requires a `pc` distance column in your dataset).
-7. **Input Table:** Load your `.csv` dataset containing the relevant magnitude column (e.g., `Gmag`).
-8. **Calculate Mass:** Apply the winning regression model to predict masses for your input stars.
-* View outputs in **Show Table** (`Mass_calc`, `Mass_e`) or **Result Plot**.
-
-
-
-> **Important:** You must click **Build Model** before running **Calculate Mass**.
+1. **Isochrone Model:** Select grid (`bhac15`, `parsec`, `mist`).
+2. **Mass & Age Range:** Set minimum/maximum mass limits ($M_\odot$) and cluster age (Myr).
+3. **Select Filter:** Choose photometric band (`G`, `BP`, `RP`, `V`, `J`, `H`, `K`, etc.).
+4. **Build Model:** Click to train and evaluate multiple regression algorithms.
+   * **Model Report:** Displays comparison table ($R^2$, RMSE, MAE, AIC) for all models.
+   * **Model Report Plot:** Opens 4-panel diagnostic dashboard for the winning model.
+5. **Input Table:** Load observed CSV table with magnitude column (e.g., `Gmag`).
+6. **Calculate Mass:** Predicts masses (`Mass_calc`, `Mass_e`).
+7. **View Results:** Inspect via **`📊 Show Table`** or **`📈 Result Plot`**.
 
 ---
 
-## 7. Mathematical Modeling Tab
+## 8. Mathematical Modeling Tab
 
-Provides exploratory data analysis (correlation matrices, feature importance, PCA reduction) and general-purpose regression modeling to predict any target column from remaining features.
+Provides general-purpose statistical analysis, missing data imputation, PCA reduction, and multi-feature regression modeling.
 
 ### Step-by-Step Guide:
 
-1. **Analyze:** Click to inspect the active table. Computes correlation matrices and populates numerical feature lists.
-2. **Missing Imputation:** Choose how missing entries should be handled (`None`, `KNN`, `Iterative`).
-> *Note: Avoid selecting `MICE` as it is currently experimental.*
-
-
-3. **Select Target:** Choose the target column you wish to predict from the dropdown menu.
-4. **Build Model:** Trains machine learning regressors and runs a Principal Component Analysis (PCA). Use **Model Report** and **Model Report Plot** to evaluate fit quality.
-5. **Calculate:** Applies the model to add `<target>_calc` and `<target>_e` prediction columns to your table.
+1. **`🔍 Analyze Features`**: Click to compute correlation matrices and populate feature lists.
+2. **Missing Imputation:** Select missing data strategy (`None`, `KNN`, `Iterative`).
+3. **Select Target:** Choose target variable to predict from dropdown.
+4. **Build Model:** Trains machine learning pipeline and computes PCA components.
+5. **Calculate:** Generates `<Target>_calc` and `<Target>_e` prediction columns.
 
 ---
 
-## 8. File Menu
+## 9. File & Help Menus
 
-* **Open table:** Loads a new `.csv` file into shared global memory (`table_data`).
-* **Save session:** Exports the current application state, loaded tables, and trained model parameters to a binary `.pkl` (pickle) file.
-
----
-
-## 9. Help Menu
-
-* **Documentation:** Quick access to user documentation and guides.
-* **About:** Displays application metadata, version history, license info, and author credits.
-* **Dark Mode:** Toggles GUI themes between Light and Dark modes.
+* **File -> Open table:** Opens a CSV file into shared memory (`DataManager`).
+* **File -> Save session:** Exports application state to binary `.pkl` file.
+* **Help -> About:** Displays license, software details, and update option.
+* **Help -> Dark Mode:** Toggles between Light ("Spectra Stellar Light") and Dark ("Spectra Deep Space Dark") themes.
 
 ---
 
-## 10. Output Directory & File Locations
+## 10. Updating the Application ("Atualizar Programa")
 
-All generated assets are saved in the `outputs/` folder at the project root:
+S.P.E.C.T.R.A. includes an integrated update manager:
+
+1. Click **`🔄 Atualizar Programa`** in the Help menu or About window.
+2. The system checks the remote GitHub repository and pulls updates automatically in a background thread.
+3. If new updates are installed, a notification prompts you to restart the application.
+
+---
+
+## 11. Output Directory & File Locations
+
+All output files are saved under `outputs/`:
 
 | Folder Path | Description of Generated Content |
 | --- | --- |
-| `outputs/tables/` | Exported result spreadsheets (`_final_result_table.csv`, regression performance reports). |
-| `outputs/plots/` | Diagnostic plots (HR diagram overview, correlation matrices, PCA plots, mass distribution charts). |
-| `outputs/isocfit_outputs/` | Individual PDF fit charts for every star processed in *Verbose* mode. |
+| `outputs/tables/` | Exported CSV tables (`_final_result_table.csv`, `Regression_model_report.csv`). |
+| `outputs/plots/` | Visual plots (`_hrd_complete.png`, `_results_display.png`, `_visual_report.png`). |
+| `outputs/isocfit_outputs/` | Individual PDF star location charts (when Verbose mode is enabled). |
 
 ---
 
+## 12. Output Interpretation Guide (Tables & Plots)
 
-## 11. Output Interpretation Guide (Tables & Plots)
+### Primary CSV Columns (`_final_result_table.csv`)
 
-This section provides a reference for understanding the physical and statistical meaning of the output data generated by S.P.E.C.T.R.A.
-
----
-
-### A. Results Table (`_final_result_table.csv`)
-
-When a calculation or fitting process completes, the exported CSV table in `outputs/tables/` contains the following primary columns:
-
-| Column | Description & Interpretation |
+| Column Name | Physical Meaning & Statistical Interpretation |
 | :--- | :--- |
-| **`Mass_calc`** | **Estimated Stellar Mass ($M_\odot$):** Derived stellar mass computed by the regression pipeline or by 2D grid interpolation. |
-| **`Mass_e`** | **Mass Uncertainty ($M_\odot$):** Associated error margin of the mass estimate. Lower values indicate higher confidence in the fit. |
-| **`Age_calc`** | **Derived Stellar Age (Myr):** Interpolated age obtained from the HR diagram grid (available in the *Isochrone Fitting* tab). |
-| **`Age_e`** | **Age Uncertainty (Myr):** Error margin associated with the interpolated age. |
-| **`<target>_calc` / `<target>_e`** | **Custom Target Prediction:** Estimated value and error for the custom target feature selected in the *Mathematical Modeling* tab. |
+| **`Mass_calc`** | **Estimated Stellar Mass ($M_\odot$):** Expected mass value ($\hat{M}$) derived from 2D Bayesian posterior distribution or machine learning regression. |
+| **`Mass_e`** | **Mass Uncertainty ($M_\odot$):** $1\text{-}\sigma$ Bayesian posterior standard deviation ($\sigma_M$) or model RMSE. |
+| **`Age_calc (Myr)`** | **Derived Stellar Age (Myr):** Expected age ($\hat{t}$) in millions of years derived from 2D Bayesian posterior distribution. |
+| **`Age_e (Myr)`** | **Age Uncertainty (Myr):** $1\text{-}\sigma$ Bayesian posterior standard deviation ($\sigma_t$) in millions of years. |
 
 ---
 
-### B. Interpreting Visual Output Plots
+## 13. Troubleshooting & Frequently Asked Questions
 
-Plots saved under `outputs/plots/` provide essential diagnostic insights into your dataset and model quality:
-
-#### 1. Hertzsprung–Russell Diagram (`_hrd_complete.png` & PDFs in `isocfit_outputs/`)
-* **Visual Inspection:** Observed stars (data points) are overlaid on the continuous theoretical tracks and isochrones ($\log L$ vs. $T_{\text{eff}}$).
-* **Diagnostic Check:** Stars positioned far outside the grid boundaries indicate potential input data issues (erroneous $T_{\text{eff}}$ or $\log L$) or stars that fall outside the supported age/mass ranges of the chosen evolutionary model.
-
-#### 2. Regression Diagnostic Reports (`_visual_report.png` / `Model Report Plot`)
-The `_visual_report.png` provides a 4-panel diagnostic dashboard evaluating the statistical validity and performance of the trained regression model (e.g., **KNeighbors Regressor**):
-
-1. **Top-Left (Actual vs. Predicted Target Values):**
-   * **Metrics:** Displays $R^2$ score ($R^2 = 0.94$).
-   * **Interpretation:** Measures prediction accuracy against the 1:1 ideal line. Points closely aligned along the diagonal indicate high predictive power.
-
-2. **Top-Right (Residual Normality Histogram):**
-   * **Metrics:** Shapiro-Wilk / Normality test ($p\text{-value} = 0.02$).
-   * **Interpretation:** Checks if prediction errors follow a normal distribution centered at zero. A $p\text{-value} < 0.05$ flags departures from Gaussian normality.
-
-3. **Bottom-Left (Residual Skedasticity):**
-   * **Metrics:** Breusch-Pagan / Goldfeld-Quandt test ($p\text{-value} = 0.45$).
-   * **Interpretation:** Evaluates variance consistency. A $p\text{-value} > 0.05$ confirms **homoscedasticity**, meaning error variance remains uniform across all prediction ranges.
-
-4. **Bottom-Right (Influence Plot):**
-   * **Metrics:** Studentized Residuals ($\hat{\sigma}$) vs. Leverage ($\hat{h}$).
-   * **Interpretation:** Identifies influential data points and extreme outliers. Observations crossing the critical Cook's distance bounds (red dashed lines) or thresholds ($\pm 3$) disproportionately impact model fitting.
-
-#### 3. Correlation Matrix (`_correlation_report.png`)
-* **Color Scale (-1 to +1):** 
-  * Values near **+1 (Blue/Dark)** represent strong positive linear correlation (features increase together).
-  * Values near **-1 (Red/Warm)** represent strong inverse correlation.
-  * Values near **0** indicate no linear relationship, helping identify which magnitudes/parameters most heavily influence mass prediction.
-
-#### 4. Principal Component Analysis (`_pca_report.png`)
-* **Explained Variance Ratio:** Measures how well the top principal components (PC1, PC2) capture the dataset's total variance. If PC1 + PC2 account for >80% of the variance, the feature set effectively captures the underlying physics with minimal noise redundancy.
-
----
-
-## 12. Known Limitations
-
-* **Session Restoration:** Isn't available yet.
-* **MICE Imputation:** The MICE option in Mathematical Modeling is experimental and may raise terminal exceptions.
-* **Training Subsampling:** To prevent memory overflow during grid searches and overfitting on dense isochrone grids, mass-magnitude model training caps input samples at 5,000 randomly selected points.
+* **Q: Why did my age result show in decimals?**
+  * **A:** All ages in S.P.E.C.T.R.A. are expressed in **Myr (Millions of Years)**. An age of `3.0` corresponds to $3\text{ Myr}$ ($3.000.000\text{ years}$).
+* **Q: How does the software handle linear vs. logarithmic luminosity?**
+  * **A:** S.P.E.C.T.R.A. automatically converts linear luminosity columns (`L`, `lum`, `L/Ls`) into $\log_{10}(L/L_\odot)$ upon loading.
+* **Q: How do I revert to a previous working version?**
+  * **A:** Use Git tags: `git checkout v1.0.0-stable` returns to the baseline version, while `git checkout v1.1.0-refactored` selects the current refactored release.
