@@ -46,6 +46,7 @@ import madys
 
 
 
+from . import __version__
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
 from .state import DataManager
@@ -490,7 +491,7 @@ class Sidebar(ttk.Frame):
         )
         update_btn.pack(side=BOTTOM, padx=20, pady=(10, 5))
 
-        version_label = ttk.Label(container, text="Version 1.0.0 (build 220726)", font=('Helvetica', 9), bootstyle="secondary")
+        version_label = ttk.Label(container, text=f"Version {__version__} (build 280726)", font=('Helvetica', 9), bootstyle="secondary")
         version_label.pack(side=BOTTOM, padx=20, pady=2)
 
         image_label.image = image_tk

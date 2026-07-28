@@ -10,6 +10,7 @@ import shutil
 from tkinter import filedialog, messagebox
 import sys
 
+from . import __version__
 from .paths import PROJECT_ROOT
 
 class SessionManager:
@@ -45,7 +46,7 @@ class AboutWindow(ttk.Toplevel):
 
         # License label
         license_label = tk.Label(self, 
-        text="S.P.E.C.T.R.A. v1.0.0 \n"
+        text=f"S.P.E.C.T.R.A. v{__version__} \n"
         "Copyright (C) 2026 João Paulo Almeida da Silva Matos, Maria Jaqueline Vasconcelos, Adriano Hoth Cerqueira \n"
         "This program comes with ABSOLUTELY NO WARRANTY. \n"
         "This is free software, and you are welcome to redistribute it under certain conditions under the  \n" 
@@ -69,7 +70,7 @@ class AboutWindow(ttk.Toplevel):
         description_label.pack(padx=20, pady=10)
 
         # Label displaying program date
-        date_label = tk.Label(self, text="Last update: 23/07/2026")
+        date_label = tk.Label(self, text="Last update: 28/07/2026")
         date_label.pack(padx=20, pady=5)
 
         # Button to check for updates
