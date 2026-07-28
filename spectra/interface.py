@@ -48,6 +48,11 @@ import madys
 
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
+from .state import DataManager
+
+# Global backward-compatibility wrapper for table_data
+def _get_table_data():
+    return DataManager.get_dataset()
 from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow
 from .paths import (
     PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
@@ -1183,8 +1188,9 @@ def open_table():
 
                 messagebox.showerror("Open Data Table", f"Missing required columns for Isochrone Fitting:"
                                                         f" {', '.join(missing_columns)}")
-            else:
-                pass
+            
+            # Sync with DataManager
+            DataManager.set_dataset(table_data)
         else:
             messagebox.showwarning("Open Data Table", "No file selected.")
     except FileNotFoundError:

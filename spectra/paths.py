@@ -31,7 +31,10 @@ MODELS_FLAG_FILE = os.path.join(PROJECT_ROOT, '.stelar_models_downloaded')
 REQUIRED_MODELS = ["bhac15_p0.00"]
 ISOCHRONE_MODELS_URL = 'https://drive.google.com/drive/folders/1KE3X647EJJtYFjv3pknPge02R2Rf92MR?usp=sharing'
 
-# Make sure every output directory exists up front, regardless of which
-# module/feature runs first.
-for _dir in (OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR):
-    os.makedirs(_dir, exist_ok=True)
+def ensure_directories_exist() -> None:
+    """Ensures that all necessary application output directories exist on disk."""
+    for _dir in (OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR):
+        os.makedirs(_dir, exist_ok=True)
+
+# Make sure every output directory exists up front upon import
+ensure_directories_exist()

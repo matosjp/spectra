@@ -20,8 +20,17 @@ isocfit_outputs = ISOCFIT_DIR + os.sep
 isocs = ISOCHRONE_MODELS_DIR + os.sep
 
 
+_ISO_CACHE = {}
+
 def readiso(model):
+    """
+    Reads and parses isochrone grid tables for a specified model ('Siess 2000' or 'BHAC15').
+    Utilizes in-memory caching to optimize performance on repeated calls.
+    """
     global Ntabage, Nlinesa, Ncoluma, ageiso, tablenames, sptype, it, il, ia, im, at, al, am, evoltracks, isoctables
+
+    if model in _ISO_CACHE:
+        return _ISO_CACHE[model].copy()
 
     if model == "Siess 2000":
         evoltracks = os.path.join(isocs, 'SIESS', 'Grid', 'OV02') + '/'
@@ -88,6 +97,7 @@ def readiso(model):
 
         alldataiso[i, :, :] = dataiso[:, :]
 
+    _ISO_CACHE[model] = alldataiso
     return alldataiso
 
 
