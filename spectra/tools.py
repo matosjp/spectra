@@ -56,6 +56,7 @@ class FilterValues:
 
     @staticmethod
     def filter_predict(mag, X, clust_dist):
+        mag = np.array(mag, copy=True)
         ph = np.nan_to_num(mag)
         k = []
         for i in range(len(ph)):

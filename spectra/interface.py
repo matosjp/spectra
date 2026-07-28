@@ -339,7 +339,7 @@ class Sidebar(ttk.Frame):
         self.selected_model = tk.StringVar()
         self.iso_selected_model = tk.StringVar()
         self.selected_filter = tk.StringVar()
-        self.clsuter_dist = tk.DoubleVar()
+        self.cluster_dist = tk.DoubleVar()
         self.low_int = tk.DoubleVar()
         self.hig_int = tk.DoubleVar()
         self.teff = tk.DoubleVar()
@@ -739,9 +739,9 @@ class Sidebar(ttk.Frame):
                                       offvalue=0)
         menu_toggle.grid(row=10, column=0, pady=(10, 5), padx=10, sticky="w")
 
-        self.clsuter_dist.set(125)
+        self.cluster_dist.set(125)
 
-        entry2 = tk.Entry(frame, textvariable=self.clsuter_dist, width=5)
+        entry2 = tk.Entry(frame, textvariable=self.cluster_dist, width=5)
         entry2.grid(row=10, column=1, pady=(10, 5), padx=0, sticky="w")
         label = ttk.Label(frame, text='pc')
         label.grid(row=10, column=1, pady=(10, 5), padx=65, sticky="w")
@@ -882,7 +882,7 @@ class Sidebar(ttk.Frame):
             mass = np.zeros(len(mag))
 
             if self.check_var.get() == 1:
-                mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.clsuter_dist.get())
+                mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.cluster_dist.get())
             else:
                 mag, k = FilterValues.filter_predict_un(mag, self.X)
             mass[k] = self.model.predict(mag.reshape(-1, 1))
