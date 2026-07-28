@@ -43,12 +43,12 @@ import numpy as np
 import webbrowser
 import subprocess
 import madys
-import local
+
 
 
 from .StarLocalization import intpol, interp, readiso, plot_HRD
 from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
-from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow
+from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow
 from .paths import (
     PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
     THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
@@ -148,11 +148,11 @@ class App(ttk.Window):
 
         self.sidebar.refresh_sidebar()
 
-    def create_widgets(self):
-        self.sidebar = Sidebar(self)
-        self.sidebar.pack(side=LEFT, fill=Y)
-        self.top_menu = TopMenu(self)
-        self.top_menu.pack(side=TOP, fill=X)
+    def update_program(self):
+        """
+        Open the update window to check for and apply updates.
+        """
+        UpdateWindow(self)
 
     def create_widgets(self):
         self.sidebar = Sidebar(self)
@@ -163,12 +163,22 @@ class App(ttk.Window):
     def show_result_plot(self):
         tab1 = table_data
         method = self.sidebar.method
-        y = tab1['Mass_calc'].values
+
         if method == 'MMR':
+            targ = 'Mass'
             x = tab1[f'{self.sidebar.selected_filter.get()}mag'].values
-        else:
+
+        elif method == 'ISO':
             x = tab1['Teff'].values
-        yerr = tab1['Mass_e'].values
+            targ = 'Mass'
+
+        else:
+            x = tab1[self.sidebar.selected_features]
+            targ = self.sidebar.target.get()
+
+        y = tab1[targ + '_calc'].values
+
+        yerr = tab1[targ + '_e'].values
         fra = ResultDisplay(x, y, yerr, method)
         if fra:
             # Create and save the image plot
@@ -176,10 +186,10 @@ class App(ttk.Window):
 
             # Create a new Toplevel window
             plot_window = ttk.Toplevel(self)
-            plot_window.title("Mass Results Plot")
+            plot_window.title("Results Plot")
 
             # Load the image and scale it to fit the window
-            photo = Image.open(os.path.join(PLOTS_DIR, '_mass_results_display.png')).resize((800, 600))
+            photo = Image.open(os.path.join(PLOTS_DIR, '_results_display.png')).resize((800, 600))
             image_tk = ImageTk.PhotoImage(photo)
 
             # Create a Label to display the image
@@ -422,9 +432,18 @@ class Sidebar(ttk.Frame):
         version_label = tk.Label(frame, text="S.P.E.C.T.R.A", font=('Helvetica', 46, 'bold'))
         version_label.pack(padx=20, pady=0)
 
+        # Button to update program
+        update_btn = ttk.Button(
+            frame,
+            text="🔄 Atualizar Programa",
+            bootstyle="primary-outline",
+            command=self.master.update_program
+        )
+        update_btn.pack(side=BOTTOM, padx=20, pady=10)
+
         # Label displaying program version
         version_label = tk.Label(frame, text="Version: V1.0.0_build_220726")
-        version_label.pack(side=BOTTOM, padx=20, pady=0)
+        version_label.pack(side=BOTTOM, padx=20, pady=2)
 
         # Keep a reference to the image to prevent garbage collection
         image_label.image = image_tk
@@ -519,9 +538,28 @@ class Sidebar(ttk.Frame):
     def correlation_analysis(self):
         if table_data is None:
             open_table()
-        MathModels.correlation_plot(table_data)
-        self.master.choosing_target()
-        self.get_info_columns()
+            
+        def _task(cancel_event=None):
+            MathModels.correlation_plot(table_data)
+            self.master.choosing_target()
+            self.get_info_columns()
+
+        def _on_done(result, error):
+            if error is not None:
+                if isinstance(error, InterruptedError):
+                    ToastNotification(
+                        title='Correlation Analysis',
+                        message="Analysis cancelled by user.",
+                        duration=4000,
+                        bootstyle='warning'
+                    ).show_toast()
+                return
+        BusyWindow(
+            self.master,
+            "Analysing your dataset - please wait...",
+            _task,
+            _on_done,
+        )
 
     def data_treat(self):
         """
@@ -570,9 +608,28 @@ class Sidebar(ttk.Frame):
         selected_features = MathModels.select_features(self.filtered_data, self.target.get())
         X = self.filtered_data[selected_features].values
         y = self.filtered_data[self.target.get()].values
-        self.model, self.report = create_regression_model(X, y)
-        self.master.pca_analysis()
-        self.selected_features = selected_features
+
+        def _task(cancel_event=None):
+            self.model, self.report = create_regression_model(X, y)
+            self.master.pca_analysis()
+            self.selected_features = selected_features
+
+        def _on_done(result, error):
+            if error is not None:
+                            if isinstance(error, InterruptedError):
+                                ToastNotification(
+                                    title='Mathematical Modeling',
+                                    message="Modeling cancelled by user.",
+                                    duration=4000,
+                                    bootstyle='warning'
+                                ).show_toast()
+                            return
+        BusyWindow(
+            self.master,
+            "Building your model - please wait...",
+            _task,
+            _on_done,
+        )
 
     def derive(self):
         X = table_data[self.selected_features]
@@ -587,7 +644,6 @@ class Sidebar(ttk.Frame):
         table_data[self.target.get() + '_calc'] = y_out
         table_data[self.target.get() + '_e'] = yerr
         table_data.to_csv(os.path.join(TABLES_DIR, '_final_result_table.csv'), index=None)
-
         ToastNotification("Derivation by Mathematical Model",
                           f"{self.target.get()} calculated successfully.",
                           duration=6000, bootstyle='dark').show_toast()
@@ -883,7 +939,7 @@ class Sidebar(ttk.Frame):
             mag = table_data[f'{self.selected_filter.get()}mag'].values
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
-
+            self.target = "Mass"
             if self.check_var.get() == 1:
                 mag, k = FilterValues.filter_predict(mag, self.X, clust_dist=self.cluster_dist.get())
             else:
@@ -909,7 +965,7 @@ class Sidebar(ttk.Frame):
         save_var = self.save_var.get()
         model_selected = self.iso_selected_model.get()
         self.method = 'ISO'
-
+        self.target = "Mass"
         # Verifica se há dados nos campos manuais ou se deve usar/solicitar a tabela carregada
         has_manual_input = bool(teff_input) and (logl_input != 0.0)
 
@@ -1053,6 +1109,7 @@ class TopMenu(ttk.Frame):
 
         self.help_menu = tk.Menu(self.toolbar_menu, tearoff=False)
         self.help_menu.add_command(label='Documentation', command=self.open_documentation)
+        self.help_menu.add_command(label='Atualizar Programa', command=self.master.update_program)
         self.help_menu.add_command(label='About', command=self.open_about_window)
         self.help_menu.add_checkbutton(label='Dark Mode', 
                                 variable=self.master.dark_mode_var, 

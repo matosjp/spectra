@@ -878,13 +878,17 @@ class ResultDisplay:
             plt.title('Mass-Magnitude Relationship Results')
             plt.xlim(np.min(x) - 0.05, np.max(x) + 0.05)
 
-        else:
+        elif self.method== 'ISO':
             plt.xlabel('Effective Temperature (K)')
             plt.xlim(np.min(x) - 50, np.max(x) + 50)
             plt.gca().invert_xaxis()
             plt.title('Isocrhone Fitting Results')
 
-        plt.ylabel(r'Predicted Values (M/M$_\odot$)')
+        else:
+            plt.xlabel('Feature')
+            plt.title('Mathematical Modeling Results')
+
+        plt.ylabel(r'Predicted Values')
         plt.legend(loc="best")
 
         plt.grid(True)
@@ -895,7 +899,7 @@ class ResultDisplay:
 
         if save_file:
             plt.savefig(
-                os.path.join(PLOTS_DIR, '_mass_results_display.png'), dpi=300)
+                os.path.join(PLOTS_DIR, '_results_display.png'), dpi=300)
         elif isinstance(save_file, str):
             plt.savefig(save_file, dpi=300)
         plt.close(fig)
@@ -1043,8 +1047,6 @@ class MathModels:
         plt.grid(True)
 
         plt.savefig(os.path.join(PLOTS_DIR, '_pca_report.png'), dpi=300)
-        print(f'{selected_features=}')
         selected_features = importances[importances['Gini-Importance'] >= 0.1]['Features'].tolist()
-        print(f'{selected_features=}')
 
         return selected_features

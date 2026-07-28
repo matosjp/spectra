@@ -5,8 +5,12 @@ import threading
 import os
 import io
 import contextlib
+import subprocess
+import shutil
 from tkinter import filedialog, messagebox
 import sys
+
+from .paths import PROJECT_ROOT
 
 class SessionManager:
     @staticmethod
@@ -34,7 +38,7 @@ class AboutWindow(ttk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("About")
-        self.geometry("800x400")
+        self.geometry("800x450")
         self.create_widgets()
 
     def create_widgets(self):
@@ -59,7 +63,7 @@ class AboutWindow(ttk.Toplevel):
                                           "\nfor determining various parameters related to stars, including stellar"
                                           ' type,'
                                           "\nluminosity, temperature, radius, mass, age, and distance. This program is "
-                                          "\nintended foSiess 2000r research and educational purposes, offering a user-friendly "
+                                          "\nintended for research and educational purposes, offering a user-friendly "
                                           "\ninterface and accurate analytical capabilities for studying the properties"
                                           "\nand behaviors of stars across the cosmos.")
         description_label.pack(padx=20, pady=10)
@@ -67,6 +71,105 @@ class AboutWindow(ttk.Toplevel):
         # Label displaying program date
         date_label = tk.Label(self, text="Last update: 23/07/2026")
         date_label.pack(padx=20, pady=5)
+
+        # Button to check for updates
+        update_btn = ttk.Button(
+            self,
+            text="🔄 Atualizar Programa",
+            bootstyle="primary",
+            command=self._open_update_window
+        )
+        update_btn.pack(padx=20, pady=10)
+
+    def _open_update_window(self):
+        parent_app = self.master
+        while hasattr(parent_app, 'master') and not hasattr(parent_app, 'update_program') and parent_app.master:
+            parent_app = parent_app.master
+        if hasattr(parent_app, 'update_program'):
+            parent_app.update_program()
+        else:
+            UpdateWindow(self)
+
+
+class UpdateWindow(ttk.Toplevel):
+    """
+    Window to check for and execute program updates via Git repository pull.
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Atualizar Programa")
+        self.geometry("450x180")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+
+        self.status_var = tk.StringVar(value="Verificando atualizações no repositório...")
+        tk.Label(self, textvariable=self.status_var, wraplength=410, justify="center", font=('Helvetica', 10)).pack(
+            padx=20, pady=(20, 10), fill="x"
+        )
+
+        self.progress = ttk.Progressbar(self, mode='indeterminate')
+        self.progress.pack(fill='x', padx=20, pady=10)
+        self.progress.start(10)
+
+        threading.Thread(target=self._run_update_check, daemon=True).start()
+
+    def _run_update_check(self):
+        git_path = shutil.which("git")
+        if not git_path:
+            self.after(0, lambda: self._finish_error("O Git não está instalado ou não foi encontrado no sistema (PATH)."))
+            return
+
+        git_dir = os.path.join(PROJECT_ROOT, ".git")
+        if not os.path.exists(git_dir):
+            self.after(0, lambda: self._finish_error("O diretório do programa não é um repositório Git válido."))
+            return
+
+        try:
+            self.after(0, lambda: self.status_var.set("Conectando ao GitHub e baixando atualizações..."))
+            
+            result = subprocess.run(
+                [git_path, "pull"],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            stdout = result.stdout.strip() if result.stdout else ""
+            stderr = result.stderr.strip() if result.stderr else ""
+
+            if result.returncode == 0:
+                if "Already up to date" in stdout or "Já está atualizado" in stdout or "Already up-to-date" in stdout:
+                    self.after(0, lambda: self._finish_success("O S.P.E.C.T.R.A já está na versão mais recente!"))
+                else:
+                    msg = (
+                        "Atualização realizada com sucesso!\n\n"
+                        "Por favor, reinicie a aplicação para que todas as alterações entrem em vigor."
+                    )
+                    self.after(0, lambda: self._finish_success(msg, is_new_version=True))
+            else:
+                error_msg = stderr if stderr else stdout
+                self.after(0, lambda err=error_msg: self._finish_error(f"Falha ao executar 'git pull':\n{err}"))
+        except subprocess.TimeoutExpired:
+            self.after(0, lambda: self._finish_error("Tempo limite esgotado ao tentar se conectar ao servidor de atualizações."))
+        except Exception as e:
+            self.after(0, lambda err=str(e): self._finish_error(f"Erro inesperado durante a atualização:\n{err}"))
+
+    def _finish_success(self, message, is_new_version=False):
+        self.progress.stop()
+        self.grab_release()
+        self.destroy()
+        if is_new_version:
+            messagebox.showinfo("Atualização Concluída", message)
+        else:
+            messagebox.showinfo("Atualização do Programa", message)
+
+    def _finish_error(self, error_message):
+        self.progress.stop()
+        self.grab_release()
+        self.destroy()
+        messagebox.showwarning("Atualização do Programa", error_message)
 
 
 
