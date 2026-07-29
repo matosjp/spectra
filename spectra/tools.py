@@ -1106,10 +1106,10 @@ def find_mag_column(df, selected_filter):
     return None
 
 
-def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, mass_range, output_filepath=None):
+def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, mass_range, dataset_df=None, output_filepath=None):
     """
-    Generates a standalone, dependency-free interactive HTML report for S.P.E.C.T.R.A.
-    using embedded Chart.js and dark mode styling.
+    Generates a single, comprehensive, standalone interactive HTML report for S.P.E.C.T.R.A.,
+    grouping metadata, model metrics, performance charts, and calculated star mass results.
     """
     import json
     import webbrowser
@@ -1117,7 +1117,7 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
     if output_filepath is None:
         output_dir = os.path.join(os.getcwd(), "outputs")
         os.makedirs(output_dir, exist_ok=True)
-        output_filepath = os.path.join(output_dir, "spectra_regression_report.html")
+        output_filepath = os.path.join(output_dir, "spectra_complete_report.html")
 
     models = report_df['Model'].tolist() if 'Model' in report_df.columns else list(report_df.index)
     r2_scores = [float(v) for v in (report_df['R2'].tolist() if 'R2' in report_df.columns else report_df['R2Score'].tolist())]
@@ -1143,12 +1143,38 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
         </tr>
         """
 
+    star_table_section = ""
+    if dataset_df is not None and isinstance(dataset_df, pd.DataFrame) and not dataset_df.empty:
+        star_rows = ""
+        cols_to_show = [c for c in dataset_df.columns if c in ['ID', 'Target', 'Name', filter_name, f"{filter_name}mag", 'Mass_calc', 'Mass_e', 'Teff', 'logL']]
+        if not cols_to_show:
+            cols_to_show = list(dataset_df.columns[:6])
+
+        for _, s_row in dataset_df.head(100).iterrows():
+            vals_str = "".join([f"<td>{s_row[c]}</td>" for c in cols_to_show])
+            star_rows += f"<tr>{vals_str}</tr>"
+
+        headers_str = "".join([f"<th>{c}</th>" for c in cols_to_show])
+        star_table_section = f"""
+        <div class="card" style="margin-top: 30px;">
+            <div class="card-title">⭐ Calculated Stellar Masses Table (Sample)</div>
+            <table>
+                <thead>
+                    <tr>{headers_str}</tr>
+                </thead>
+                <tbody>
+                    {star_rows}
+                </tbody>
+            </table>
+        </div>
+        """
+
     html_code = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.P.E.C.T.R.A. - Interactive Regression Report</title>
+    <title>S.P.E.C.T.R.A. - Complete Analysis Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {{
@@ -1264,8 +1290,8 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
     <div class="header">
         <div class="title-row">
             <div>
-                <h1>✨ S.P.E.C.T.R.A. — Mass-Magnitude Regression Report</h1>
-                <p style="color: var(--text-sub); margin: 5px 0 0 0;">Interactive Machine Learning Model Evaluation Report</p>
+                <h1>✨ S.P.E.C.T.R.A. — Complete Model & Analysis Report</h1>
+                <p style="color: var(--text-sub); margin: 5px 0 0 0;">Unified Machine Learning Regression & Stellar Parameter Analysis Dashboard</p>
             </div>
             <div style="text-align: right;">
                 <span style="font-size: 12px; color: var(--text-sub);">Best Performer</span>
@@ -1296,7 +1322,7 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
     </div>
 
     <div class="card">
-        <div class="card-title">📋 Comprehensive Performance Metrics Table</div>
+        <div class="card-title">📋 Comprehensive Regressor Evaluation Table</div>
         <table>
             <thead>
                 <tr>
@@ -1312,6 +1338,8 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
             </tbody>
         </table>
     </div>
+
+    {star_table_section}
 
     <script>
         const modelNames = {json.dumps(models)};

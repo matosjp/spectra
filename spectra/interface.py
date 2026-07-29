@@ -357,9 +357,10 @@ class App(ttk.Window):
                 age_myr = self.sidebar.scale_int.get() if hasattr(self.sidebar, 'scale_int') else 100
                 mass_min = self.sidebar.low_int.get() if hasattr(self.sidebar, 'low_int') else 0.1
                 mass_max = self.sidebar.hig_int.get() if hasattr(self.sidebar, 'hig_int') else 1.5
+                dataset_df = DataManager.get_dataset()
                 
                 filepath = generate_spectra_html_report(
-                    report_df, model_name, filter_name, age_myr, (mass_min, mass_max)
+                    report_df, model_name, filter_name, age_myr, (mass_min, mass_max), dataset_df=dataset_df
                 )
                 ToastNotification(
                     title='HTML Report Generated',
