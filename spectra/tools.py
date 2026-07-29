@@ -1103,4 +1103,274 @@ def find_mag_column(df, selected_filter):
         if (short_name.lower() in col_str.lower() or filter_clean.lower() in col_str.lower()) and ('mag' in col_str.lower() or col_str.lower() == short_name.lower()):
             return col
             
-    return None
+    return None
+
+
+def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, mass_range, output_filepath=None):
+    """
+    Generates a standalone, dependency-free interactive HTML report for S.P.E.C.T.R.A.
+    using embedded Chart.js and dark mode styling.
+    """
+    import json
+    import webbrowser
+
+    if output_filepath is None:
+        output_dir = os.path.join(os.getcwd(), "outputs")
+        os.makedirs(output_dir, exist_ok=True)
+        output_filepath = os.path.join(output_dir, "spectra_regression_report.html")
+
+    models = report_df['Model'].tolist() if 'Model' in report_df.columns else list(report_df.index)
+    r2_scores = [float(v) for v in (report_df['R2'].tolist() if 'R2' in report_df.columns else report_df['R2Score'].tolist())]
+    rmse_scores = [float(v) for v in report_df['RMSE'].tolist()]
+    mae_scores = [float(v) for v in report_df['MAE'].tolist()]
+
+    best_idx = r2_scores.index(max(r2_scores))
+    best_model = models[best_idx]
+    best_r2 = r2_scores[best_idx]
+
+    rows_html = ""
+    for i, m in enumerate(models):
+        is_best = (i == best_idx)
+        badge = '<span class="badge-best">🏆 Best Fit</span>' if is_best else ''
+        row_style = 'class="best-row"' if is_best else ''
+        rows_html += f"""
+        <tr {row_style}>
+            <td><strong>{m}</strong></td>
+            <td>{r2_scores[i]:.4f}</td>
+            <td>{rmse_scores[i]:.4f}</td>
+            <td>{mae_scores[i]:.4f}</td>
+            <td>{badge}</td>
+        </tr>
+        """
+
+    html_code = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.P.E.C.T.R.A. - Interactive Regression Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {{
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent-color: #38bdf8;
+            --success-color: #4ade80;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }}
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }}
+        .title-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        h1 {{
+            margin: 0;
+            font-size: 28px;
+            color: var(--accent-color);
+            letter-spacing: -0.5px;
+        }}
+        .meta-badges {{
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }}
+        .meta-pill {{
+            background: #334155;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-main);
+        }}
+        .meta-pill strong {{
+            color: var(--accent-color);
+        }}
+        .cards-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }}
+        .card {{
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }}
+        .card-title {{
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }}
+        th, td {{
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }}
+        th {{
+            background-color: #0f172a;
+            color: var(--accent-color);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        tr.best-row {{
+            background-color: rgba(74, 222, 128, 0.1);
+        }}
+        tr:hover {{
+            background-color: rgba(56, 189, 248, 0.05);
+        }}
+        .badge-best {{
+            background-color: var(--success-color);
+            color: #0f172a;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }}
+        .chart-container {{
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title-row">
+            <div>
+                <h1>✨ S.P.E.C.T.R.A. — Mass-Magnitude Regression Report</h1>
+                <p style="color: var(--text-sub); margin: 5px 0 0 0;">Interactive Machine Learning Model Evaluation Report</p>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-size: 12px; color: var(--text-sub);">Best Performer</span>
+                <div style="font-size: 18px; font-weight: bold; color: var(--success-color);">{best_model} ({best_r2:.4f} R²)</div>
+            </div>
+        </div>
+        <div class="meta-badges">
+            <div class="meta-pill">Isochrone Model: <strong>{model_name}</strong></div>
+            <div class="meta-pill">Photometric Filter: <strong>{filter_name}</strong></div>
+            <div class="meta-pill">Age: <strong>{age_myr} Myr</strong></div>
+            <div class="meta-pill">Mass Bounds: <strong>{mass_range[0]} - {mass_range[1]} M☉</strong></div>
+        </div>
+    </div>
+
+    <div class="cards-grid">
+        <div class="card">
+            <div class="card-title">📈 R² Score Performance Across Regressors</div>
+            <div class="chart-container">
+                <canvas id="r2Chart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📉 RMSE Error Comparison</div>
+            <div class="chart-container">
+                <canvas id="rmseChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 Comprehensive Performance Metrics Table</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Regressor Model</th>
+                    <th>R² Score</th>
+                    <th>Root Mean Squared Error (RMSE)</th>
+                    <th>Mean Absolute Error (MAE)</th>
+                    <th>Performance Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const modelNames = {json.dumps(models)};
+        const r2Values = {json.dumps(r2_scores)};
+        const rmseValues = {json.dumps(rmse_scores)};
+
+        // R2 Chart
+        new Chart(document.getElementById('r2Chart'), {{
+            type: 'bar',
+            data: {{
+                labels: modelNames,
+                datasets: [{{
+                    label: 'R² Score',
+                    data: r2Values,
+                    backgroundColor: r2Values.map(v => v === Math.max(...r2Values) ? '#4ade80' : '#38bdf8'),
+                    borderRadius: 6
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{ legend: {{ display: false }} }},
+                scales: {{
+                    y: {{ grid: {{ color: '#334155' }}, ticks: {{ color: '#94a3b8' }} }},
+                    x: {{ grid: {{ display: false }}, ticks: {{ color: '#94a3b8' }} }}
+                }}
+            }}
+        }});
+
+        // RMSE Chart
+        new Chart(document.getElementById('rmseChart'), {{
+            type: 'bar',
+            data: {{
+                labels: modelNames,
+                datasets: [{{
+                    label: 'RMSE',
+                    data: rmseValues,
+                    backgroundColor: '#f43f5e',
+                    borderRadius: 6
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {{ legend: {{ display: false }} }},
+                scales: {{
+                    y: {{ grid: {{ color: '#334155' }}, ticks: {{ color: '#94a3b8' }} }},
+                    x: {{ grid: {{ display: false }}, ticks: {{ color: '#94a3b8' }} }}
+                }}
+            }}
+        }});
+    </script>
+</body>
+</html>
+"""
+
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+    with open(output_filepath, "w", encoding="utf-8") as f:
+        f.write(html_code)
+
+    webbrowser.open(f"file:///{output_filepath}")
+    return output_filepath

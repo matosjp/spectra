@@ -49,7 +49,8 @@ import madys
 from . import __version__
 from .tools import (
     RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
-    get_available_madys_models, get_madys_model_metadata, find_mag_column
+    get_available_madys_models, get_madys_model_metadata, find_mag_column,
+    generate_spectra_html_report
 )
 
 # Global backward-compatibility wrapper for table_data
@@ -342,6 +343,36 @@ class App(ttk.Window):
             toast = ToastNotification(
                 title='Regression Report',
                 message="The regression models wasn't built yet.",
+                duration=5000,
+                bootstyle='light'
+            )
+            toast.show_toast()
+
+    def generate_html_report(self):
+        if hasattr(self.sidebar, 'report') and self.sidebar.report is not None:
+            try:
+                report_df = self.sidebar.report
+                model_name = self.sidebar.selected_model.get() if hasattr(self.sidebar, 'selected_model') else 'MADYS'
+                filter_name = self.sidebar.selected_filter.get() if hasattr(self.sidebar, 'selected_filter') else 'G'
+                age_myr = self.sidebar.scale_int.get() if hasattr(self.sidebar, 'scale_int') else 100
+                mass_min = self.sidebar.low_int.get() if hasattr(self.sidebar, 'low_int') else 0.1
+                mass_max = self.sidebar.hig_int.get() if hasattr(self.sidebar, 'hig_int') else 1.5
+                
+                filepath = generate_spectra_html_report(
+                    report_df, model_name, filter_name, age_myr, (mass_min, mass_max)
+                )
+                ToastNotification(
+                    title='HTML Report Generated',
+                    message=f"Interactive HTML report generated and opened in browser:\n{filepath}",
+                    duration=5000,
+                    bootstyle='success'
+                ).show_toast()
+            except Exception as e:
+                messagebox.showerror("HTML Report Error", f"Failed to generate HTML report:\n{e}")
+        else:
+            toast = ToastNotification(
+                title='Regression Report',
+                message="The regression models haven't been built yet. Please click 'Build Model' first.",
                 duration=5000,
                 bootstyle='light'
             )
@@ -811,7 +842,7 @@ class Sidebar(ttk.Frame):
             self.filter_combobox.configure(values=filters)
             if filters:
                 if self.selected_filter.get() not in filters:
-                    self.selected_filter.set(filters[0])
+                    self.selected_filter.set('g')
 
     def setup_rml_ui(self, frame):
         container = ttk.Frame(frame, padding=15)
@@ -872,6 +903,7 @@ class Sidebar(ttk.Frame):
         f_mod_btns.grid(row=2, column=0, columnspan=2, padx=10, pady=(10, 0), sticky="w")
         ttk.Button(f_mod_btns, text="🔨 Build Model", bootstyle="primary", command=self.build_model).pack(side=LEFT, padx=(0, 10))
         ttk.Button(f_mod_btns, text="📋 Model Report", bootstyle="info-outline", command=self.master.show_report).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_mod_btns, text="🌐 HTML Report", bootstyle="warning-outline", command=self.master.generate_html_report).pack(side=LEFT, padx=(0, 10))
         ttk.Button(f_mod_btns, text="📉 Report Plot", bootstyle="success-outline", command=self.master.show_report_plot).pack(side=LEFT)
 
         # Card 3: Distance Correction & Calculation

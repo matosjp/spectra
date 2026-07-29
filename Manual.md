@@ -136,11 +136,8 @@ Constructs mass–magnitude relationships from MADYS evolutionary grids using ma
 - **Installation Status & One-Click Download**: Shows real-time status badges (🟢 **Installed** or ⚪ **Not Installed**), mass/age bounds, and allows downloading any missing model grid from Zenodo in the background with a single click.
 
 ### Dynamic MADYS Model & Filter Engine:
-- **Dynamic Parameter & Filter Bounds**: Selecting any model automatically updates:
-  1. **Valid Mass Range** entries ($M_\odot$).
-  2. **Isochrone Age Slider** range (Myr).
-  3. **Supported Photometric Filters** list (up to 127+ filters per model, including Gaia `G`, `BP`, `RP`, 2MASS `J`, `H`, `Ks`, Johnson/Cousins `V`, `I`, `B`, `U`, JWST, HST, etc.).
-- **Flexible Column Matching**: Automatically recognizes magnitude columns named `<Filter>mag`, `<Filter>`, `mag_<Filter>`, or `<Filter>_mag` (e.g., `Gmag`, `G`, `Jmag`, `J`, `Vmag`, `V`).
+- **Dynamic Parameter & Filter Bounds**: Selecting any model automatically updates valid mass boundaries, age slider ranges, and exact supported photometric filters.
+- **Interactive HTML Report (`🌐 HTML Report`)**: Clicking **`🌐 HTML Report`** generates a modern, standalone interactive web report (`outputs/spectra_regression_report.html`) complete with dark mode styling, responsive performance charts ($R^2$ scores, RMSE errors), metadata summaries, and full regression model metrics tables, automatically opening it in the user's default browser.
 
 ### Step-by-Step Guide:
 
