@@ -319,8 +319,7 @@ class App(ttk.Window):
         scrollbarv.place(relx=1, rely=0, relheight=1, anchor='ne')
 
     def show_report(self):
-
-        if self.sidebar.report is not None:
+        if hasattr(self.sidebar, 'report') and self.sidebar.report is not None:
             tab1 = self.sidebar.report.round(6)
             table_window = tk.Toplevel(self)
             table_window.title("Regression Report Table")
@@ -404,6 +403,13 @@ class Sidebar(ttk.Frame):
         self.check_var = ttk.IntVar()
         self.scale_int = tk.IntVar()
         self.current_theme = ttk.Style().theme_use()
+
+        # Mass-Magnitude Regression attributes
+        self.report = None
+        self.model = None
+        self.X = None
+        self.y = None
+        self.th_model_data = None
 
         self.create_widgets()
         self.pack(side=LEFT, fill=Y)

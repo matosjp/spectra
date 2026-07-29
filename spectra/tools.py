@@ -1009,7 +1009,7 @@ def get_madys_model_metadata(model_name):
     default_meta = {
         'mass_range': (0.1, 1.5),
         'age_range': (1.0, 1000.0),
-        'filters': ['G', 'G_BP', 'G_RP', 'U', 'B', 'V', 'I', 'J', 'H', 'K']
+        'filters': ['gaia_G', 'gaia_BP', 'gaia_RP', '2mass_J', '2mass_H', '2mass_Ks', 'bessell_V']
     }
     
     try:
@@ -1036,9 +1036,8 @@ def get_madys_model_metadata(model_name):
                 f_key_str = str(f_key)
                 for sys_name in phot_sys:
                     if f_key_str.lower().startswith(str(sys_name).lower() + '_'):
-                        short_name = f_key_str.split('_', 1)[1] if '_' in f_key_str else f_key_str
-                        if short_name not in matched_filters:
-                            matched_filters.append(short_name)
+                        if f_key_str not in matched_filters:
+                            matched_filters.append(f_key_str)
 
         if not matched_filters:
             matched_filters = default_meta['filters']
@@ -1055,19 +1054,21 @@ def get_madys_model_metadata(model_name):
 def find_mag_column(df, selected_filter):
     """
     Finds the matching magnitude column in the DataFrame for a given filter.
-    Checks: '<filter>mag', '<filter>', 'mag_<filter>', '<filter>_mag' (case-insensitive).
+    Checks: full filter name, short filter name, '<short>mag', 'mag_<short>', '<short>_mag' (case-insensitive).
     """
     if df is None or not hasattr(df, 'columns'):
         return None
         
-    filter_clean = selected_filter.strip()
+    filter_clean = str(selected_filter).strip()
+    short_name = filter_clean.split('_', 1)[1] if '_' in filter_clean else filter_clean
+    
     candidates = [
-        f"{filter_clean}mag",
         filter_clean,
-        f"mag_{filter_clean}",
-        f"{filter_clean}_mag",
-        f"gaia_{filter_clean}mag",
-        f"2mass_{filter_clean}mag"
+        f"{filter_clean}mag",
+        short_name,
+        f"{short_name}mag",
+        f"mag_{short_name}",
+        f"{short_name}_mag"
     ]
     
     col_map = {str(col).lower(): col for col in df.columns}
@@ -1079,7 +1080,7 @@ def find_mag_column(df, selected_filter):
     # Try partial match if not found
     for col in df.columns:
         col_str = str(col)
-        if filter_clean.lower() in col_str.lower() and ('mag' in col_str.lower() or col_str.lower() == filter_clean.lower()):
+        if (short_name.lower() in col_str.lower() or filter_clean.lower() in col_str.lower()) and ('mag' in col_str.lower() or col_str.lower() == short_name.lower()):
             return col
             
     return None
