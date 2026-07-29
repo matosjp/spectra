@@ -20,6 +20,9 @@
 #   Adriano Hoth Cerqueira — hoth@uesc.br
 #   Universidade Estadual de Santa Cruz (UESC), Ilhéus - BA, Brasil
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module=".*madys.*")
+
 from spectra.interface import App
 
 if __name__ == "__main__":
