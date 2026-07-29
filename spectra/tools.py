@@ -989,6 +989,9 @@ def get_available_madys_models():
         import madys
         from madys.madys import stored_data
         models_dict = stored_data.get('models', {})
+        if isinstance(models_dict, dict) and 'data' in models_dict:
+            models_dict = models_dict['data']
+
         all_models = list(models_dict.keys())
         
         # Sort so popular models appear first, followed by remaining models
@@ -1013,9 +1016,12 @@ def get_madys_model_metadata(model_name):
         import madys
         from madys.madys import stored_data
         models_dict = stored_data.get('models', {})
+        if isinstance(models_dict, dict) and 'data' in models_dict:
+            models_dict = models_dict['data']
+
         filters_dict = stored_data.get('filters', {})
         
-        matched_key = next((k for k in models_dict.keys() if k.lower() == model_name.lower()), None)
+        matched_key = next((k for k in models_dict.keys() if str(k).lower() == str(model_name).lower()), None)
         if not matched_key:
             return default_meta
             
