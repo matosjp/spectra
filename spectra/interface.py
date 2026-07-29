@@ -55,7 +55,7 @@ from .tools import (
 # Global backward-compatibility wrapper for table_data
 def _get_table_data():
     return DataManager.get_dataset()
-from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow
+from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
 from .paths import (
     PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
     THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
@@ -768,6 +768,20 @@ class Sidebar(ttk.Frame):
         self.progress = ttk.Progressbar(container, mode='determinate', bootstyle='info')
         self.progress.pack(fill=X, side=BOTTOM, pady=(10, 0))
 
+    def open_madys_manager(self):
+        """
+        Opens the MADYS Isochrone Models Repository Manager window.
+        """
+        MadysModelManagerWindow(self.master, on_update_callback=self.refresh_rml_models_combobox)
+
+    def refresh_rml_models_combobox(self):
+        """
+        Refreshes the available models combobox list in the MMR tab.
+        """
+        if hasattr(self, 'rml_model_combobox'):
+            models = get_available_madys_models()
+            self.rml_model_combobox.configure(values=models)
+
     def on_rml_model_changed(self, event=None):
         """
         Dynamically updates Mass Range, Age Slider bounds, and Photometric Filters
@@ -814,6 +828,8 @@ class Sidebar(ttk.Frame):
             self.selected_model.set(models[0])
         self.rml_model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
         self.rml_model_combobox.bind("<<ComboboxSelected>>", self.on_rml_model_changed)
+
+        ttk.Button(card1, text="📦 Models Manager", bootstyle="info-outline", command=self.open_madys_manager).grid(row=0, column=2, padx=10, pady=8, sticky="w")
 
         ttk.Label(card1, text="Mass Range:", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
         self.low_int.set(0.1)

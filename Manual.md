@@ -131,8 +131,11 @@ Derives individual stellar masses ($M_\odot$), ages (Myr), and $1\text{-}\sigma$
 
 Constructs mass–magnitude relationships from MADYS evolutionary grids using machine learning regressors and calculates stellar masses from observed magnitudes.
 
+### MADYS Models Repository Manager (`📦 Models Manager`):
+- **Interactive Manager Dialog**: Clicking **`📦 Models Manager`** opens a dedicated window displaying all 18+ MADYS evolutionary grids (`bhac15`, `parsec`, `mist`, `baraffe15`, `baraffe98`, `siess2000`, `ames-cond`, `atmo2020`, etc.).
+- **Installation Status & One-Click Download**: Shows real-time status badges (🟢 **Installed** or ⚪ **Not Installed**), mass/age bounds, and allows downloading any missing model grid from Zenodo in the background with a single click.
+
 ### Dynamic MADYS Model & Filter Engine:
-- **Dynamic Model Selection**: Supports all 18+ MADYS evolutionary grids (`bhac15`, `parsec`, `mist`, `baraffe15`, `baraffe98`, `siess2000`, `ames-cond`, `ames-dusty`, `atmo2020`, `marigo17`, `spotted19`, `spotted20`, etc.).
 - **Dynamic Parameter & Filter Bounds**: Selecting any model automatically updates:
   1. **Valid Mass Range** entries ($M_\odot$).
   2. **Isochrone Age Slider** range (Myr).

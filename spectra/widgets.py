@@ -408,3 +408,185 @@ class SizeNotifier:
             if checked_size != self.current_min_size:
                 self.current_min_size = checked_size
                 self.size_dict[self.current_min_size]()
+
+
+def get_madys_models_status():
+    """
+    Checks local installation status for all MADYS models.
+    """
+    try:
+        import madys
+        from madys.madys import stored_data
+        
+        models_dict = stored_data.get('models', {})
+        if isinstance(models_dict, dict) and 'data' in models_dict:
+            models_dict = models_dict['data']
+            
+        local_models = stored_data.get('local_model_list', {})
+        local_names = set()
+        if isinstance(local_models, (dict, list)):
+            for k in local_models:
+                clean_name = str(k).split('_')[0].lower()
+                local_names.add(clean_name)
+                
+        isochrones_path = os.path.join(os.path.dirname(madys.__file__), 'isochrones')
+        if os.path.exists(isochrones_path):
+            for item in os.listdir(isochrones_path):
+                clean_item = str(item).split('_')[0].lower()
+                local_names.add(clean_item)
+
+        results = []
+        popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
+        all_names = list(models_dict.keys())
+        
+        remaining = [m for m in all_names if m not in popular]
+        ordered_names = [m for m in popular if m in all_names] + sorted(remaining)
+
+        for m_name in ordered_names:
+            info = models_dict.get(m_name, {})
+            ref = info.get('ref', '')
+            family = info.get('family', '')
+            mass_r = info.get('mass_range', [0.1, 1.5])
+            age_r = info.get('age_range', [1.0, 1000.0])
+            
+            is_installed = str(m_name).lower() in local_names
+            results.append({
+                'name': m_name,
+                'family': family,
+                'ref': ref,
+                'mass_str': f"{mass_r[0]:.2f} - {mass_r[1]:.2f} M_sun",
+                'age_str': f"{age_r[0]:.1f} - {age_r[1]:.0f} Myr",
+                'installed': is_installed
+            })
+            
+        return results
+    except Exception:
+        return [
+            {'name': 'bhac15', 'family': 'PHOENIX', 'ref': 'Baraffe et al. (2015)', 'mass_str': '0.01 - 1.40 M_sun', 'age_str': '0.5 - 10000 Myr', 'installed': True},
+            {'name': 'parsec', 'family': 'PARSEC', 'ref': 'Bressan et al. (2012)', 'mass_str': '0.09 - 14.00 M_sun', 'age_str': '0.1 - 10000 Myr', 'installed': False},
+            {'name': 'mist', 'family': 'MIST', 'ref': 'Choi et al. (2016)', 'mass_str': '0.10 - 10.00 M_sun', 'age_str': '0.1 - 10000 Myr', 'installed': True},
+        ]
+
+
+class MadysModelManagerWindow(ttk.Toplevel):
+    """
+    Dedicated Manager Dialog allowing users to view, inspect, and download MADYS Isochrone Models.
+    """
+    def __init__(self, parent, on_update_callback=None):
+        super().__init__(parent)
+        self.title("📦 MADYS Isochrone Models Manager")
+        self.geometry("900x580")
+        self.resizable(True, True)
+        self.transient(parent)
+        self.on_update_callback = on_update_callback
+        
+        self._create_ui()
+        self.refresh_list()
+        
+    def _create_ui(self):
+        container = ttk.Frame(self, padding=20)
+        container.pack(fill=BOTH, expand=True)
+        
+        # Header Card
+        header_frame = ttk.Frame(container)
+        header_frame.pack(fill=X, pady=(0, 15))
+        
+        ttk.Label(header_frame, text="📦 MADYS Isochrone Models Repository", font=('Helvetica', 14, 'bold')).pack(anchor="w")
+        ttk.Label(header_frame, text="Inspect installed evolutionary grids or download new model grids from Zenodo.", font=('Helvetica', 9)).pack(anchor="w", pady=(2, 0))
+        
+        self.status_summary_var = tk.StringVar(value="Loading models status...")
+        ttk.Label(header_frame, textvariable=self.status_summary_var, font=('Helvetica', 10, 'bold'), bootstyle="info").pack(anchor="w", pady=(5, 0))
+        
+        # Table / Treeview Frame
+        table_frame = ttk.Frame(container)
+        table_frame.pack(fill=BOTH, expand=True, pady=(0, 15))
+        
+        columns = ("Model", "Status", "Mass Bounds", "Age Bounds", "Reference / Family")
+        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=14)
+        
+        self.tree.heading("Model", text="Isochrone Model")
+        self.tree.heading("Status", text="Status")
+        self.tree.heading("Mass Bounds", text="Mass Range")
+        self.tree.heading("Age Bounds", text="Age Range")
+        self.tree.heading("Reference / Family", text="Reference / Family")
+        
+        self.tree.column("Model", width=110, anchor="center")
+        self.tree.column("Status", width=120, anchor="center")
+        self.tree.column("Mass Bounds", width=130, anchor="center")
+        self.tree.column("Age Bounds", width=140, anchor="center")
+        self.tree.column("Reference / Family", width=340, anchor="w")
+        
+        sb_y = ttk.Scrollbar(table_frame, orient=VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb_y.set)
+        
+        self.tree.pack(side=LEFT, fill=BOTH, expand=True)
+        sb_y.pack(side=RIGHT, fill=Y)
+        
+        # Action Button Frame
+        f_actions = ttk.Frame(container)
+        f_actions.pack(fill=X)
+        
+        ttk.Button(f_actions, text="⬇️ Download Selected Model", bootstyle="primary", command=self.download_selected).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_actions, text="🔄 Refresh List", bootstyle="info-outline", command=self.refresh_list).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_actions, text="❌ Close", bootstyle="secondary-outline", command=self.destroy).pack(side=RIGHT)
+
+    def refresh_list(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+            
+        self.models_data = get_madys_models_status()
+        installed_count = sum(1 for m in self.models_data if m['installed'])
+        self.status_summary_var.set(f"Installed Models: {installed_count} / {len(self.models_data)} Available Grids")
+        
+        for m in self.models_data:
+            status_text = "🟢 Installed" if m['installed'] else "⚪ Not Installed"
+            ref_text = f"{m['ref']} ({m['family']})" if m['ref'] else m['family']
+            self.tree.insert("", "end", values=(m['name'], status_text, m['mass_str'], m['age_str'], ref_text))
+            
+        if self.on_update_callback:
+            try:
+                self.on_update_callback()
+            except Exception:
+                pass
+
+    def download_selected(self):
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Select Model", "Please select a model from the table list to download.", parent=self)
+            return
+            
+        item_vals = self.tree.item(selected_item[0], "values")
+        model_name = item_vals[0]
+        status = item_vals[1]
+        
+        if "Installed" in status and "Not" not in status:
+            messagebox.showinfo("Already Installed", f"Model '{model_name}' is already installed locally.", parent=self)
+            return
+            
+        def _download_task(cancel_event=None):
+            import madys
+            old_stdin = sys.stdin
+            sys.stdin = io.StringIO("Y\nY\nY\nY\nY\n")
+            try:
+                madys.ModelHandler.download_model(model_name)
+            finally:
+                sys.stdin = old_stdin
+
+        def _on_done(res, err):
+            if err:
+                messagebox.showerror("Download Error", f"Failed to download model '{model_name}':\n{err}", parent=self)
+            else:
+                ToastNotification(
+                    title="Model Downloaded",
+                    message=f"MADYS Model '{model_name}' successfully downloaded and cached!",
+                    duration=5000,
+                    bootstyle="success"
+                ).show_toast()
+                self.refresh_list()
+
+        BusyWindow(
+            self,
+            f"Downloading MADYS Model '{model_name}' from Zenodo repository — please wait...",
+            _download_task,
+            _on_done
+        )
