@@ -988,13 +988,22 @@ def get_available_madys_models():
     try:
         import madys
         from madys.madys import stored_data
-        models_dict = stored_data.get('models', {})
-        if isinstance(models_dict, dict) and 'data' in models_dict:
-            models_dict = models_dict['data']
+        all_models = []
+        complete_map = stored_data.get('complete_model_list', {})
+        if isinstance(complete_map, dict):
+            for family, m_list in complete_map.items():
+                if isinstance(m_list, list):
+                    all_models.extend(m_list)
 
-        all_models = list(models_dict.keys())
-        
-        # Sort so popular models appear first, followed by remaining models
+        models_dict = stored_data.get('models', {})
+        if isinstance(models_dict, dict) and 'data' in models_dict and models_dict['data']:
+            for m in models_dict['data'].keys():
+                if m not in all_models:
+                    all_models.append(m)
+
+        if not all_models:
+            all_models = popular
+
         remaining = [m for m in all_models if m not in popular]
         ordered = [m for m in popular if m in all_models] + sorted(remaining)
         return ordered if ordered else popular

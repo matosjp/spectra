@@ -411,62 +411,98 @@ class SizeNotifier:
                 self.size_dict[self.current_min_size]()
 
 
+DEFAULT_MODEL_META = {
+    'bhac15': {'ref': 'Baraffe et al. (2015)', 'mass_range': [0.01, 1.40], 'age_range': [0.5, 10000.0]},
+    'parsec': {'ref': 'Bressan et al. (2012)', 'mass_range': [0.09, 14.00], 'age_range': [0.1, 10000.0]},
+    'mist': {'ref': 'Choi et al. (2016)', 'mass_range': [0.10, 10.00], 'age_range': [0.1, 10000.0]},
+    'baraffe15': {'ref': 'Baraffe et al. (2015)', 'mass_range': [0.01, 1.40], 'age_range': [0.5, 10000.0]},
+    'baraffe98': {'ref': 'Baraffe et al. (1998)', 'mass_range': [0.02, 1.40], 'age_range': [1.0, 10000.0]},
+    'siess2000': {'ref': 'Siess et al. (2000)', 'mass_range': [0.10, 7.00], 'age_range': [0.1, 100.0]},
+    'ames-cond': {'ref': 'Allard et al. (2001)', 'mass_range': [0.001, 0.1], 'age_range': [1.0, 10000.0]},
+    'ames-dusty': {'ref': 'Allard et al. (2001)', 'mass_range': [0.001, 0.1], 'age_range': [1.0, 10000.0]},
+    'atmo': {'ref': 'Phillips et al. (2020)', 'mass_range': [0.001, 0.075], 'age_range': [1.0, 10000.0]},
+    'atmo2020': {'ref': 'Phillips et al. (2020)', 'mass_range': [0.001, 0.075], 'age_range': [1.0, 10000.0]},
+    'atmo2020_ceq': {'ref': 'Phillips et al. (2020)', 'mass_range': [0.001, 0.075], 'age_range': [1.0, 10000.0]},
+    'atmo2020_neq_strong': {'ref': 'Phillips et al. (2020)', 'mass_range': [0.001, 0.075], 'age_range': [1.0, 10000.0]},
+    'atmo2020_neq_weak': {'ref': 'Phillips et al. (2020)', 'mass_range': [0.001, 0.075], 'age_range': [1.0, 10000.0]},
+    'marigo17': {'ref': 'Marigo et al. (2017)', 'mass_range': [0.09, 14.00], 'age_range': [0.1, 10000.0]},
+    'parsec12': {'ref': 'Bressan et al. (2012)', 'mass_range': [0.09, 14.00], 'age_range': [0.1, 10000.0]},
+    'parsec12_v': {'ref': 'Bressan et al. (2012)', 'mass_range': [0.09, 14.00], 'age_range': [0.1, 10000.0]},
+    'spotted19': {'ref': 'Somers et al. (2020)', 'mass_range': [0.1, 1.3], 'age_range': [1.0, 1000.0]},
+    'spotted20': {'ref': 'Somers et al. (2020)', 'mass_range': [0.1, 1.3], 'age_range': [1.0, 1000.0]},
+    'bt-settl': {'ref': 'Allard et al. (2012)', 'mass_range': [0.01, 1.40], 'age_range': [0.5, 10000.0]},
+    'nextgen': {'ref': 'Hauschildt et al. (1999)', 'mass_range': [0.01, 1.40], 'age_range': [0.5, 10000.0]},
+}
+
+
 def get_madys_models_status():
     """
     Checks local installation status for all MADYS models.
     """
+    model_to_family = {}
+    local_names = set()
+
     try:
         import madys
         from madys.madys import stored_data
-        
+
+        complete_map = stored_data.get('complete_model_list', {})
+        if isinstance(complete_map, dict):
+            for family, m_list in complete_map.items():
+                if isinstance(m_list, list):
+                    for m in m_list:
+                        model_to_family[m] = family
+
+        # Fallback to stored_data['models']['data'] if available
         models_dict = stored_data.get('models', {})
-        if isinstance(models_dict, dict) and 'data' in models_dict:
-            models_dict = models_dict['data']
-            
+        if isinstance(models_dict, dict) and 'data' in models_dict and models_dict['data']:
+            for m in models_dict['data'].keys():
+                if m not in model_to_family:
+                    model_to_family[m] = models_dict['data'][m].get('family', 'PHOENIX')
+
         local_models = stored_data.get('local_model_list', {})
-        local_names = set()
         if isinstance(local_models, (dict, list)):
             for k in local_models:
                 clean_name = str(k).split('_')[0].lower()
                 local_names.add(clean_name)
-                
+
         isochrones_path = os.path.join(os.path.dirname(madys.__file__), 'isochrones')
         if os.path.exists(isochrones_path):
-            for item in os.listdir(isochrones_path):
-                clean_item = str(item).split('_')[0].lower()
-                local_names.add(clean_item)
-
-        results = []
-        popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
-        all_names = list(models_dict.keys())
-        
-        remaining = [m for m in all_names if m not in popular]
-        ordered_names = [m for m in popular if m in all_names] + sorted(remaining)
-
-        for m_name in ordered_names:
-            info = models_dict.get(m_name, {})
-            ref = info.get('ref', '')
-            family = info.get('family', '')
-            mass_r = info.get('mass_range', [0.1, 1.5])
-            age_r = info.get('age_range', [1.0, 1000.0])
-            
-            is_installed = str(m_name).lower() in local_names
-            results.append({
-                'name': m_name,
-                'family': family,
-                'ref': ref,
-                'mass_str': f"{mass_r[0]:.2f} - {mass_r[1]:.2f} M_sun",
-                'age_str': f"{age_r[0]:.1f} - {age_r[1]:.0f} Myr",
-                'installed': is_installed
-            })
-            
-        return results
+            for root, dirs, files in os.walk(isochrones_path):
+                for f in files:
+                    if f.endswith('.h5'):
+                        clean_item = f.split('_')[0].lower()
+                        local_names.add(clean_item)
     except Exception:
-        return [
-            {'name': 'bhac15', 'family': 'PHOENIX', 'ref': 'Baraffe et al. (2015)', 'mass_str': '0.01 - 1.40 M_sun', 'age_str': '0.5 - 10000 Myr', 'installed': True},
-            {'name': 'parsec', 'family': 'PARSEC', 'ref': 'Bressan et al. (2012)', 'mass_str': '0.09 - 14.00 M_sun', 'age_str': '0.1 - 10000 Myr', 'installed': False},
-            {'name': 'mist', 'family': 'MIST', 'ref': 'Choi et al. (2016)', 'mass_str': '0.10 - 10.00 M_sun', 'age_str': '0.1 - 10000 Myr', 'installed': True},
-        ]
+        pass
+
+    all_names = list(model_to_family.keys())
+    if not all_names:
+        all_names = list(DEFAULT_MODEL_META.keys())
+
+    popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
+    remaining = [m for m in all_names if m not in popular]
+    ordered_names = [m for m in popular if m in all_names] + sorted(remaining)
+
+    results = []
+    for m_name in ordered_names:
+        family = model_to_family.get(m_name, 'PHOENIX')
+        meta = DEFAULT_MODEL_META.get(m_name, {'ref': family, 'mass_range': [0.1, 1.5], 'age_range': [1.0, 1000.0]})
+        ref = meta.get('ref', family)
+        mass_r = meta.get('mass_range', [0.1, 1.5])
+        age_r = meta.get('age_range', [1.0, 1000.0])
+        
+        is_installed = str(m_name).lower() in local_names
+        results.append({
+            'name': m_name,
+            'family': family,
+            'ref': ref,
+            'mass_str': f"{mass_r[0]:.2f} - {mass_r[1]:.2f} M_sun",
+            'age_str': f"{age_r[0]:.1f} - {age_r[1]:.0f} Myr",
+            'installed': is_installed
+        })
+        
+    return results
 
 
 class MadysModelManagerWindow(ttk.Toplevel):
