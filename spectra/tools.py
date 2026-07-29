@@ -981,10 +981,11 @@ class MathModels:
 
 def get_available_madys_models():
     """
-    Returns the list of available Isochrone Models supported by MADYS,
-    prioritizing popular models (bhac15, parsec, mist, baraffe15, baraffe98, siess2000).
+    Returns the list of available Isochrone Models supported by MADYS for Mass-Magnitude Modeling,
+    excluding ISOCFIT-specific models (siess2000, baraffe98, baraffe15).
     """
-    popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
+    popular = ['bhac15', 'parsec', 'mist', 'ames-cond', 'ames-dusty', 'bt-settl']
+    excluded = {'siess2000', 'baraffe98', 'baraffe15'}
     try:
         import madys
         from madys.madys import stored_data
@@ -1003,6 +1004,9 @@ def get_available_madys_models():
 
         if not all_models:
             all_models = popular
+
+        # Exclude ISOCFIT models
+        all_models = [m for m in all_models if str(m).lower() not in excluded]
 
         remaining = [m for m in all_models if m not in popular]
         ordered = [m for m in popular if m in all_models] + sorted(remaining)

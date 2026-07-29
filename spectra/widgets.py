@@ -522,11 +522,12 @@ def get_madys_models_status():
     except Exception:
         pass
 
-    all_names = list(model_to_family.keys())
+    excluded = {'siess2000', 'baraffe98', 'baraffe15'}
+    all_names = [m for m in model_to_family.keys() if str(m).lower() not in excluded]
     if not all_names:
-        all_names = list(DEFAULT_MODEL_META.keys())
+        all_names = [m for m in DEFAULT_MODEL_META.keys() if str(m).lower() not in excluded]
 
-    popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
+    popular = ['bhac15', 'parsec', 'mist', 'ames-cond', 'ames-dusty', 'bt-settl']
     remaining = [m for m in all_names if m not in popular]
     ordered_names = [m for m in popular if m in all_names] + sorted(remaining)
 
