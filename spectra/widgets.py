@@ -435,6 +435,52 @@ DEFAULT_MODEL_META = {
 }
 
 
+def get_grid_name_for_model(model_name):
+    """
+    Maps a model identifier (e.g. 'parsec', 'mist', 'bhac15') to its standard p0.00 grid name
+    expected by madys.ModelHandler.download_model().
+    """
+    m_lower = str(model_name).lower().strip()
+    
+    defaults = {
+        'mist': 'mist_p0.00_p0.0_p0.0',
+        'parsec': 'parsec_p0.00',
+        'bhac15': 'bhac15_p0.00',
+        'baraffe15': 'baraffe15_p0.00',
+        'baraffe98': 'baraffe98_p0.00',
+        'siess2000': 'siess2000_p0.00',
+        'ames-cond': 'ames-cond_p0.00',
+        'ames-dusty': 'ames-dusty_p0.00',
+        'atmo': 'atmo2020-ceq_p0.00',
+        'atmo2020': 'atmo2020-ceq_p0.00',
+        'atmo2020_ceq': 'atmo2020-ceq_p0.00',
+        'atmo2020_neq_strong': 'atmo2020-neq-s_p0.00',
+        'atmo2020_neq_weak': 'atmo2020-neq-w_p0.00',
+        'atmo2023': 'atmo2023-ceq_p0.00',
+        'bt-settl': 'bt-settl_p0.00',
+        'nextgen': 'nextgen_p0.00',
+        'b97': 'b97_p0.00',
+        'geneva': 'geneva_p0.00',
+        'sonora-bobcat': 'sonora-bobcat_p0.00',
+        'spots': 'spots_p0.00_p0.00',
+        'marigo17': 'marigo17_p0.00',
+        'parsec12': 'parsec12_p0.00',
+        'parsec12_v': 'parsec12_v_p0.00',
+        'spotted19': 'spots_p0.00_p0.00',
+        'spotted20': 'spots_p0.00_p0.00',
+        'dartmouth': 'dartmouth_p0.00_p0.0_B0',
+        'pm13': 'pm13',
+    }
+    
+    if m_lower in defaults:
+        return defaults[m_lower]
+        
+    if not m_lower.endswith('_p0.00') and '_' not in m_lower:
+        return f"{m_lower}_p0.00"
+        
+    return model_name
+
+
 def get_madys_models_status():
     """
     Checks local installation status for all MADYS models.
@@ -599,23 +645,25 @@ class MadysModelManagerWindow(ttk.Toplevel):
         if "Installed" in status and "Not" not in status:
             messagebox.showinfo("Already Installed", f"Model '{model_name}' is already installed locally.", parent=self)
             return
+
+        target_grid = get_grid_name_for_model(model_name)
             
         def _download_task(cancel_event=None):
             import madys
             old_stdin = sys.stdin
             sys.stdin = io.StringIO("Y\nY\nY\nY\nY\n")
             try:
-                madys.ModelHandler.download_model(model_name)
+                madys.ModelHandler.download_model(target_grid)
             finally:
                 sys.stdin = old_stdin
 
         def _on_done(res, err):
             if err:
-                messagebox.showerror("Download Error", f"Failed to download model '{model_name}':\n{err}", parent=self)
+                messagebox.showerror("Download Error", f"Failed to download model grid '{target_grid}' for '{model_name}':\n{err}", parent=self)
             else:
                 ToastNotification(
                     title="Model Downloaded",
-                    message=f"MADYS Model '{model_name}' successfully downloaded and cached!",
+                    message=f"MADYS Model Grid '{target_grid}' successfully downloaded and cached!",
                     duration=5000,
                     bootstyle="success"
                 ).show_toast()
@@ -623,7 +671,7 @@ class MadysModelManagerWindow(ttk.Toplevel):
 
         BusyWindow(
             self,
-            f"Downloading MADYS Model '{model_name}' from Zenodo repository — please wait...",
+            f"Downloading MADYS Model Grid '{target_grid}' from Zenodo repository — please wait...",
             _download_task,
             _on_done
         )
