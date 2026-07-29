@@ -227,7 +227,7 @@ class ModelDownloadWindow(ttk.Toplevel):
             self.after(0, lambda m=model: self.status_var.set(f"Downloading model: {m} ..."))
             try:
                 old_stdin = sys.stdin
-                sys.stdin = io.StringIO("Y\n")
+                sys.stdin = io.StringIO("Y\nY\nY\nY\nY\n")
                 max_retries = 3
 
                 for attempt in range(max_retries):

@@ -858,7 +858,7 @@ class Sidebar(ttk.Frame):
         def _task(cancel_event=None):
             # 2. Silencia o prompt de terminal redirecionando o sys.stdin
             old_stdin = sys.stdin
-            sys.stdin = io.StringIO("y\ny\ny\n")
+            sys.stdin = io.StringIO("Y\nY\nY\nY\nY\n")
             
             try:
                 th_model = madys.IsochroneGrid(
