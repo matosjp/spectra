@@ -1007,7 +1007,6 @@ def get_available_madys_models():
 
         # Exclude ISOCFIT models
         all_models = [m for m in all_models if str(m).lower() not in excluded]
-
         remaining = [m for m in all_models if m not in popular]
         ordered = [m for m in popular if m in all_models] + sorted(remaining)
         return ordered if ordered else popular
@@ -1017,40 +1016,48 @@ def get_available_madys_models():
 
 def get_madys_model_metadata(model_name):
     """
-    Dynamically extracts mass range, age range, and supported filters for a given MADYS model.
+    Dynamically extracts mass range, age range, and exact supported filter strings
+    for a given MADYS model using madys.ModelHandler.available().
     """
     default_meta = {
         'mass_range': (0.1, 1.5),
         'age_range': (1.0, 1000.0),
-        'filters': ['gaia_G', 'gaia_BP', 'gaia_RP', '2mass_J', '2mass_H', '2mass_Ks', 'bessell_V']
+        'filters': ['G', 'G2', 'Gbp', 'Gbp2', 'Grp', 'Grp2', 'J', 'H', 'K', 'Ks', 'V', 'I', 'B', 'U']
     }
     
     try:
         import madys
+        import io
+        import contextlib
         from madys.madys import stored_data
+
+        mass_range = (0.1, 1.5)
+        age_range = (1.0, 1000.0)
+        model_name_clean = str(model_name).lower().strip()
+
         models_dict = stored_data.get('models', {})
         if isinstance(models_dict, dict) and 'data' in models_dict:
             models_dict = models_dict['data']
 
-        filters_dict = stored_data.get('filters', {})
-        
-        matched_key = next((k for k in models_dict.keys() if str(k).lower() == str(model_name).lower()), None)
-        if not matched_key:
-            return default_meta
-            
-        info = models_dict[matched_key]
-        mass_range = info.get('mass_range', [0.1, 1.5])
-        age_range = info.get('age_range', [1.0, 1000.0])
-        phot_sys = info.get('phot_systems', [])
+        if isinstance(models_dict, dict) and model_name_clean in models_dict:
+            info = models_dict[model_name_clean]
+            mass_range = tuple(info.get('mass_range', [0.1, 1.5]))
+            age_range = tuple(info.get('age_range', [1.0, 1000.0]))
 
+        # Capture exact filter list from madys.ModelHandler.available(model_name, show_filters=True)
         matched_filters = []
-        if phot_sys and filters_dict:
-            for f_key in filters_dict.keys():
-                f_key_str = str(f_key)
-                for sys_name in phot_sys:
-                    if f_key_str.lower().startswith(str(sys_name).lower() + '_'):
-                        if f_key_str not in matched_filters:
-                            matched_filters.append(f_key_str)
+        f_buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(f_buf):
+                madys.ModelHandler.available(model_name_clean, show_filters=True)
+            out = f_buf.getvalue()
+            for line in out.split('\n'):
+                if line.startswith('# List of filters:'):
+                    filter_str = line.replace('# List of filters:', '').strip()
+                    matched_filters = [f.strip() for f in filter_str.split(',') if f.strip()]
+                    break
+        except Exception:
+            pass
 
         if not matched_filters:
             matched_filters = default_meta['filters']
@@ -1058,7 +1065,7 @@ def get_madys_model_metadata(model_name):
         return {
             'mass_range': (float(mass_range[0]), float(mass_range[1])),
             'age_range': (float(age_range[0]), float(age_range[1])),
-            'filters': sorted(matched_filters)
+            'filters': matched_filters
         }
     except Exception:
         return default_meta
