@@ -871,18 +871,29 @@ class Sidebar(ttk.Frame):
             finally:
                 sys.stdin = old_stdin  # Restaura a entrada padrão
                     
-            y_full = np.log10(th_model.masses)
-            X_full = th_model.data[:, :, 0].ravel()
+            # Constroi a malha 2D de Massa (log10 Msun) compatível com th_model.data (n_masses, n_ages)
+            if hasattr(th_model.masses, 'ndim') and th_model.masses.ndim == 1 and hasattr(th_model, 'ages') and hasattr(th_model.ages, 'ndim') and th_model.ages.ndim == 1:
+                M_mesh, A_mesh = np.meshgrid(th_model.masses, th_model.ages, indexing='ij')
+                y_raw = np.log10(np.maximum(1e-10, M_mesh.ravel()))
+            else:
+                y_raw = np.log10(np.maximum(1e-10, np.array(th_model.masses).ravel()))
 
-            n = min(len(X_full), len(y_full))
+            X_raw = th_model.data[:, :, 0].ravel()
+
+            # Remove quaisquer valores NaN ou Inf da grade de dados do modelo (ex: MIST)
+            valid_mask = ~np.isnan(X_raw) & ~np.isinf(X_raw) & ~np.isnan(y_raw) & ~np.isinf(y_raw)
+            X_full = X_raw[valid_mask]
+            y_full = y_raw[valid_mask]
+
+            n = len(X_full)
             if n > self.MAX_TRAINING_SAMPLES:
                 rng = np.random.default_rng(42)
                 idx = rng.choice(n, size=self.MAX_TRAINING_SAMPLES, replace=False)
                 X_train_input = X_full[idx].reshape(-1, 1)
                 y_train_input = y_full[idx]
             else:
-                X_train_input = X_full[:n].reshape(-1, 1)
-                y_train_input = y_full[:n]
+                X_train_input = X_full.reshape(-1, 1)
+                y_train_input = y_full
 
             model_name, model, report = RegressionReport(X_train_input, y_train_input)
             if model_name is None:

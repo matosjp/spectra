@@ -424,7 +424,22 @@ def RegressionReport(X, y):
         'AdaBoost Regressor': AdaBoostRegressor(),
         'KNeighbors Regressor': KNeighborsRegressor()
     }
-    # Split the data
+    # Filter out any NaN/Inf entries from input features and target
+    if isinstance(X, pd.DataFrame):
+        valid_idx = ~X.isna().any(axis=1) & ~np.isnan(y) & ~np.isinf(y)
+        X = X.loc[valid_idx]
+        y = y[valid_idx]
+    else:
+        X_arr = np.asarray(X)
+        y_arr = np.asarray(y)
+        if X_arr.ndim == 1:
+            valid_idx = ~np.isnan(X_arr) & ~np.isinf(X_arr) & ~np.isnan(y_arr) & ~np.isinf(y_arr)
+            X = X_arr[valid_idx].reshape(-1, 1)
+            y = y_arr[valid_idx]
+        else:
+            valid_idx = ~np.isnan(X_arr).any(axis=1) & ~np.isinf(X_arr).any(axis=1) & ~np.isnan(y_arr) & ~np.isinf(y_arr)
+            X = X_arr[valid_idx]
+            y = y_arr[valid_idx]
 
     report = []
     metrics = {'rmse': [], 'mae': [], 'r2': [], 'aic': []}
