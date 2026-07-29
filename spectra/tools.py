@@ -1128,20 +1128,45 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
     best_model = models[best_idx]
     best_r2 = r2_scores[best_idx]
 
+    has_aic = 'AIC' in report_df.columns
+    has_score = 'Score' in report_df.columns
+    has_params = 'Best Params' in report_df.columns
+
+    table_headers = ["Regressor Model", "R² Score", "RMSE", "MAE"]
+    if has_aic:
+        table_headers.append("AIC")
+    if has_score:
+        table_headers.append("Weighted Score")
+    if has_params:
+        table_headers.append("Best Hyperparameters")
+    table_headers.append("Performance Status")
+
+    headers_html = "".join([f"<th>{h}</th>" for h in table_headers])
+
     rows_html = ""
-    for i, m in enumerate(models):
+    for i, row in report_df.iterrows():
+        m = row['Model'] if 'Model' in report_df.columns else str(i)
+        r2_val = float(row['R2']) if 'R2' in report_df.columns else float(row['R2Score'])
+        rmse_val = float(row['RMSE'])
+        mae_val = float(row['MAE'])
+        
         is_best = (i == best_idx)
         badge = '<span class="badge-best">🏆 Best Fit</span>' if is_best else ''
         row_style = 'class="best-row"' if is_best else ''
-        rows_html += f"""
-        <tr {row_style}>
-            <td><strong>{m}</strong></td>
-            <td>{r2_scores[i]:.4f}</td>
-            <td>{rmse_scores[i]:.4f}</td>
-            <td>{mae_scores[i]:.4f}</td>
-            <td>{badge}</td>
-        </tr>
-        """
+        
+        row_tds = f"<td><strong>{m}</strong></td><td>{r2_val:.4f}</td><td>{rmse_val:.4f}</td><td>{mae_val:.4f}</td>"
+        if has_aic:
+            aic_val = float(row['AIC'])
+            row_tds += f"<td>{aic_val:.2f}</td>"
+        if has_score:
+            score_val = float(row['Score'])
+            row_tds += f"<td>{score_val:.4f}</td>"
+        if has_params:
+            params_val = str(row['Best Params'])
+            row_tds += f"<td style='font-size:11px; text-align:left;'><code>{params_val}</code></td>"
+        row_tds += f"<td>{badge}</td>"
+
+        rows_html += f"<tr {row_style}>{row_tds}</tr>"
 
     star_table_section = ""
     if dataset_df is not None and isinstance(dataset_df, pd.DataFrame) and not dataset_df.empty:
@@ -1326,11 +1351,7 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
         <table>
             <thead>
                 <tr>
-                    <th>Regressor Model</th>
-                    <th>R² Score</th>
-                    <th>Root Mean Squared Error (RMSE)</th>
-                    <th>Mean Absolute Error (MAE)</th>
-                    <th>Performance Status</th>
+                    {headers_html}
                 </tr>
             </thead>
             <tbody>
