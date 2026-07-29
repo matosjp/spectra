@@ -977,3 +977,103 @@ class MathModels:
         selected_features = importances[importances['Gini-Importance'] >= 0.1]['Features'].tolist()
 
         return selected_features
+
+
+def get_available_madys_models():
+    """
+    Returns the list of available Isochrone Models supported by MADYS,
+    prioritizing popular models (bhac15, parsec, mist, baraffe15, baraffe98, siess2000).
+    """
+    popular = ['bhac15', 'parsec', 'mist', 'baraffe15', 'baraffe98', 'siess2000']
+    try:
+        import madys
+        from madys.madys import stored_data
+        models_dict = stored_data.get('models', {})
+        all_models = list(models_dict.keys())
+        
+        # Sort so popular models appear first, followed by remaining models
+        remaining = [m for m in all_models if m not in popular]
+        ordered = [m for m in popular if m in all_models] + sorted(remaining)
+        return ordered if ordered else popular
+    except Exception:
+        return popular
+
+
+def get_madys_model_metadata(model_name):
+    """
+    Dynamically extracts mass range, age range, and supported filters for a given MADYS model.
+    """
+    default_meta = {
+        'mass_range': (0.1, 1.5),
+        'age_range': (1.0, 1000.0),
+        'filters': ['G', 'G_BP', 'G_RP', 'U', 'B', 'V', 'I', 'J', 'H', 'K']
+    }
+    
+    try:
+        import madys
+        from madys.madys import stored_data
+        models_dict = stored_data.get('models', {})
+        filters_dict = stored_data.get('filters', {})
+        
+        matched_key = next((k for k in models_dict.keys() if k.lower() == model_name.lower()), None)
+        if not matched_key:
+            return default_meta
+            
+        info = models_dict[matched_key]
+        mass_range = info.get('mass_range', [0.1, 1.5])
+        age_range = info.get('age_range', [1.0, 1000.0])
+        phot_sys = info.get('phot_systems', [])
+
+        matched_filters = []
+        if phot_sys and filters_dict:
+            for f_key in filters_dict.keys():
+                f_key_str = str(f_key)
+                for sys_name in phot_sys:
+                    if f_key_str.lower().startswith(str(sys_name).lower() + '_'):
+                        short_name = f_key_str.split('_', 1)[1] if '_' in f_key_str else f_key_str
+                        if short_name not in matched_filters:
+                            matched_filters.append(short_name)
+
+        if not matched_filters:
+            matched_filters = default_meta['filters']
+
+        return {
+            'mass_range': (float(mass_range[0]), float(mass_range[1])),
+            'age_range': (float(age_range[0]), float(age_range[1])),
+            'filters': sorted(matched_filters)
+        }
+    except Exception:
+        return default_meta
+
+
+def find_mag_column(df, selected_filter):
+    """
+    Finds the matching magnitude column in the DataFrame for a given filter.
+    Checks: '<filter>mag', '<filter>', 'mag_<filter>', '<filter>_mag' (case-insensitive).
+    """
+    if df is None or not hasattr(df, 'columns'):
+        return None
+        
+    filter_clean = selected_filter.strip()
+    candidates = [
+        f"{filter_clean}mag",
+        filter_clean,
+        f"mag_{filter_clean}",
+        f"{filter_clean}_mag",
+        f"gaia_{filter_clean}mag",
+        f"2mass_{filter_clean}mag"
+    ]
+    
+    col_map = {str(col).lower(): col for col in df.columns}
+    
+    for candidate in candidates:
+        if candidate.lower() in col_map:
+            return col_map[candidate.lower()]
+            
+    # Try partial match if not found
+    for col in df.columns:
+        col_str = str(col)
+        if filter_clean.lower() in col_str.lower() and ('mag' in col_str.lower() or col_str.lower() == filter_clean.lower()):
+            return col
+            
+    return None

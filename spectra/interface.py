@@ -47,9 +47,10 @@ import madys
 
 
 from . import __version__
-from .StarLocalization import intpol, interp, readiso, plot_HRD
-from .tools import RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass
-from .state import DataManager
+from .tools import (
+    RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
+    get_available_madys_models, get_madys_model_metadata, find_mag_column
+)
 
 # Global backward-compatibility wrapper for table_data
 def _get_table_data():
@@ -761,6 +762,37 @@ class Sidebar(ttk.Frame):
         self.progress = ttk.Progressbar(container, mode='determinate', bootstyle='info')
         self.progress.pack(fill=X, side=BOTTOM, pady=(10, 0))
 
+    def on_rml_model_changed(self, event=None):
+        """
+        Dynamically updates Mass Range, Age Slider bounds, and Photometric Filters
+        whenever the user selects a different Isochrone Model.
+        """
+        model_name = self.selected_model.get()
+        if not model_name:
+            return
+            
+        meta = get_madys_model_metadata(model_name)
+        
+        # 1. Update Mass Range (low_int, hig_int)
+        self.low_int.set(round(meta['mass_range'][0], 3))
+        self.hig_int.set(round(meta['mass_range'][1], 3))
+        
+        # 2. Update Age Scale range
+        if hasattr(self, 'rml_age_scale'):
+            self.rml_age_scale.configure(from_=meta['age_range'][0], to=meta['age_range'][1])
+            # Keep current age if within bounds, otherwise reset to midpoint or min
+            curr_age = self.scale_int.get()
+            if curr_age < meta['age_range'][0] or curr_age > meta['age_range'][1]:
+                self.scale_int.set(round(meta['age_range'][0], 1))
+
+        # 3. Update Photometric Filter combobox
+        if hasattr(self, 'filter_combobox'):
+            filters = meta['filters']
+            self.filter_combobox.configure(values=filters)
+            if filters:
+                if self.selected_filter.get() not in filters:
+                    self.selected_filter.set(filters[0])
+
     def setup_rml_ui(self, frame):
         container = ttk.Frame(frame, padding=15)
         container.pack(expand=True, fill=BOTH)
@@ -770,10 +802,12 @@ class Sidebar(ttk.Frame):
         card1.pack(fill=X, pady=(0, 15))
 
         ttk.Label(card1, text="Isochrone Model:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
-        models = ('bhac15', 'parsec', 'mist')
-        model_combobox = ttk.Combobox(card1, textvariable=self.selected_model, values=models, width=12, state="readonly")
-        model_combobox.current(0)
-        model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
+        models = get_available_madys_models()
+        self.rml_model_combobox = ttk.Combobox(card1, textvariable=self.selected_model, values=models, width=16, state="readonly")
+        if models:
+            self.selected_model.set(models[0])
+        self.rml_model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
+        self.rml_model_combobox.bind("<<ComboboxSelected>>", self.on_rml_model_changed)
 
         ttk.Label(card1, text="Mass Range:", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
         self.low_int.set(0.1)
@@ -797,15 +831,20 @@ class Sidebar(ttk.Frame):
         self.scale_int.set(112)
         f_age = ttk.Frame(card2)
         f_age.grid(row=0, column=1, padx=10, pady=8, sticky="w")
-        ttk.Scale(f_age, from_=1, to=1000, length=150, orient='horizontal', variable=self.scale_int).pack(side=LEFT, padx=(0, 8))
+        self.rml_age_scale = ttk.Scale(f_age, from_=1, to=1000, length=150, orient='horizontal', variable=self.scale_int)
+        self.rml_age_scale.pack(side=LEFT, padx=(0, 8))
         ttk.Entry(f_age, textvariable=self.scale_int, width=6).pack(side=LEFT, padx=(0, 4))
         ttk.Label(f_age, text="Myr").pack(side=LEFT)
 
         ttk.Label(card2, text="Photometric Filter:", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
-        filters = ('G', 'G_BP', 'G_RP', 'U', 'B', 'V', 'I', 'J', 'H', 'K')
-        self.selected_filter.set(filters[0])
-        filter_combobox = ttk.Combobox(card2, textvariable=self.selected_filter, values=filters, width=12, state="readonly")
-        filter_combobox.grid(row=1, column=1, padx=10, pady=8, sticky="w")
+        initial_meta = get_madys_model_metadata(self.selected_model.get() if self.selected_model.get() else 'bhac15')
+        filters = initial_meta['filters']
+        self.selected_filter.set(filters[0] if filters else 'G')
+        self.filter_combobox = ttk.Combobox(card2, textvariable=self.selected_filter, values=filters, width=16, state="readonly")
+        self.filter_combobox.grid(row=1, column=1, padx=10, pady=8, sticky="w")
+
+        # Trigger dynamic metadata population for initial selected model
+        self.on_rml_model_changed()
 
         f_mod_btns = ttk.Frame(card2)
         f_mod_btns.grid(row=2, column=0, columnspan=2, padx=10, pady=(10, 0), sticky="w")
@@ -938,12 +977,13 @@ class Sidebar(ttk.Frame):
         if table_data is None:
             open_table()
 
-        if f'{self.selected_filter.get()}mag' in table_data.items():
+        mag_col = find_mag_column(table_data, self.selected_filter.get())
+        if mag_col is None:
             ToastNotification("Collecting data:",
-                              f"Magnitude in filter {self.selected_filter.get()} isn't found on your table.",
+                              f"Magnitude for filter '{self.selected_filter.get()}' was not found in your table.",
                               duration=6000, bootstyle='light').show_toast()
         else:
-            mag = np.array(table_data[f'{self.selected_filter.get()}mag'].values, copy=True, dtype=float)
+            mag = np.array(table_data[mag_col].values, copy=True, dtype=float)
             yerr = np.zeros(len(mag))
             mass = np.zeros(len(mag))
             if hasattr(self.target, 'set'):

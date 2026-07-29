@@ -131,11 +131,19 @@ Derives individual stellar masses ($M_\odot$), ages (Myr), and $1\text{-}\sigma$
 
 Constructs mass–magnitude relationships from MADYS evolutionary grids using machine learning regressors and calculates stellar masses from observed magnitudes.
 
+### Dynamic MADYS Model & Filter Engine:
+- **Dynamic Model Selection**: Supports all 18+ MADYS evolutionary grids (`bhac15`, `parsec`, `mist`, `baraffe15`, `baraffe98`, `siess2000`, `ames-cond`, `ames-dusty`, `atmo2020`, `marigo17`, `spotted19`, `spotted20`, etc.).
+- **Dynamic Parameter & Filter Bounds**: Selecting any model automatically updates:
+  1. **Valid Mass Range** entries ($M_\odot$).
+  2. **Isochrone Age Slider** range (Myr).
+  3. **Supported Photometric Filters** list (up to 127+ filters per model, including Gaia `G`, `BP`, `RP`, 2MASS `J`, `H`, `Ks`, Johnson/Cousins `V`, `I`, `B`, `U`, JWST, HST, etc.).
+- **Flexible Column Matching**: Automatically recognizes magnitude columns named `<Filter>mag`, `<Filter>`, `mag_<Filter>`, or `<Filter>_mag` (e.g., `Gmag`, `G`, `Jmag`, `J`, `Vmag`, `V`).
+
 ### Step-by-Step Guide:
 
-1. **Isochrone Model:** Select grid (`bhac15`, `parsec`, `mist`).
-2. **Mass & Age Range:** Set minimum/maximum mass limits ($M_\odot$) and cluster age (Myr).
-3. **Select Filter:** Choose photometric band (`G`, `BP`, `RP`, `V`, `J`, `H`, `K`, etc.).
+1. **Isochrone Model:** Select any grid from the dynamic dropdown (`bhac15`, `parsec`, `mist`, `baraffe15`, `siess2000`, etc.).
+2. **Mass & Age Range:** Review or adjust minimum/maximum mass limits ($M_\odot$) and cluster age (Myr).
+3. **Select Filter:** Choose any supported photometric band (`G`, `BP`, `RP`, `V`, `J`, `H`, `Ks`, etc.).
 4. **Build Model:** Click to train and evaluate multiple regression algorithms.
    * **Model Report:** Displays comparison table ($R^2$, RMSE, MAE, AIC) for all models.
    * **Model Report Plot:** Opens 4-panel diagnostic dashboard for the winning model.
