@@ -44,8 +44,7 @@ import webbrowser
 import subprocess
 import madys
 
-
-
+from .state import DataManager
 from . import __version__
 from .tools import (
     RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
