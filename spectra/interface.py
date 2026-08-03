@@ -50,7 +50,7 @@ try:
     from .tools import (
         RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
         get_available_madys_models, get_madys_model_metadata, find_mag_column,
-        generate_spectra_html_report, generate_primary_params_html_report
+        generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
     )
     from .primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
     from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
@@ -67,7 +67,7 @@ except (ImportError, ValueError):
         from spectra.tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
-            generate_spectra_html_report, generate_primary_params_html_report
+            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
         )
         from spectra.primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
         from spectra.widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
@@ -82,7 +82,7 @@ except (ImportError, ValueError):
         from tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
-            generate_spectra_html_report, generate_primary_params_html_report
+            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
         )
         from primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
         from widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
