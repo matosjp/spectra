@@ -506,7 +506,7 @@ class Sidebar(ttk.Frame):
         self.notebook.add(self.page0, text='Home', sticky="nsew")
         self.notebook.add(self.page1, text='Isochrone Fitting', sticky="nsew")
         self.notebook.add(self.page2, text='Mass-Magnitude Modeling', sticky="nsew")
-        self.notebook.add(self.page3, text='⭐ Primary Parameters', sticky="nsew")
+        self.notebook.add(self.page3, text='Primary Parameters', sticky="nsew")
         self.notebook.add(self.page4, text='Mathematical Modeling', sticky="nsew")
 
         self.apply_styles()
