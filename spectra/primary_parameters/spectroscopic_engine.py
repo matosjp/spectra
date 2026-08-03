@@ -58,7 +58,7 @@ def process_spectroscopic_ews(row: pd.Series) -> Dict[str, Any]:
     spt_str = row.get('SpT_phot', row.get('SpT', 'M0V'))
     
     ttauri_class = classify_t_tauri(ew_ha, spt_str)
-    pms_indicator = (ew_li > 0.1) if (not np.isna(ew_li)) else None
+    pms_indicator = (float(ew_li) > 0.1) if (not pd.isna(ew_li)) else None
     
     return {
         'EW_Halpha': ew_ha,
