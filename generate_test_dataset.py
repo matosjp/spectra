@@ -23,6 +23,8 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 13.19,
             'Vmag': 14.82,
             'Bmag': 15.45,
+            'd_pc': 100.0,
+            'parallax': 10.0,
             'EW_Halpha': -1.20,  # Absorption
             'EW_Li': 0.02,
             'TiO_index': 0.98,
@@ -38,6 +40,8 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 10.34,
             'Vmag': 13.80,
             'Bmag': 14.95,
+            'd_pc': 140.0,
+            'parallax': 7.14,
             'EW_Halpha': 28.50,  # Strong accretion emission
             'EW_Li': 0.52,      # Young lithium
             'TiO_index': 0.72,
@@ -53,6 +57,8 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 10.74,
             'Vmag': 13.15,
             'Bmag': 14.10,
+            'd_pc': 140.0,
+            'parallax': 7.14,
             'EW_Halpha': 4.20,   # Moderate chromospheric emission
             'EW_Li': 0.41,      # Young lithium
             'TiO_index': 0.85,
@@ -68,6 +74,8 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 12.39,
             'Vmag': 16.80,
             'Bmag': 18.25,
+            'd_pc': 15.0,
+            'parallax': 66.67,
             'EW_Halpha': 8.10,   # Flares/Chromosphere
             'EW_Li': 0.05,
             'TiO_index': 0.45,  # Strong TiO band
@@ -83,6 +91,8 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 10.25,
             'Vmag': 10.25,
             'Bmag': 10.25,
+            'd_pc': 60.0,
+            'parallax': 16.67,
             'EW_Halpha': -14.50, # Deep Balmer absorption
             'EW_Li': 0.00,
             'TiO_index': 1.00,
@@ -98,11 +108,13 @@ def create_synthetic_spectra_dataset() -> pd.DataFrame:
             'Kmag': 11.01,
             'Vmag': 11.95,
             'Bmag': 12.39,
+            'd_pc': 50.0,
+            'parallax': 20.0,
             'EW_Halpha': -6.80,
             'EW_Li': 0.12,
             'TiO_index': 0.99,
             'Notes': 'F5V Intermediate Dwarf'
-        }
+        },
     ]
     
     df = pd.DataFrame(stars_data)

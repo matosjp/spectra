@@ -72,9 +72,69 @@ def derive_unreddened_colors(row: pd.Series, extinction_av: float = 0.0) -> Dict
     return colors
 
 
+def calculate_stu1488_luminosity(
+    teff: float,
+    row: pd.Series,
+    extinction_av: float = 0.0,
+    m_bol_sun: float = 4.755
+) -> Tuple[float, float, float]:
+    """
+    Calculates logarithmic bolometric luminosity log10(L/Lsun), M_bol, and radius (R/Rsun)
+    following Bell et al. (2014, MNRAS 444, 1157; stu1488.pdf) Section 3.2.
+
+    Formulas from Bell et al. (2014):
+      DM = 5 * log10(d_pc) - 5  (or 15 - 5 * log10(parallax_mas))
+      m_0 = m_obs - A_lambda
+      M_lambda = m_0 - DM
+      BC_lambda = calib_engine.get_bc_g_from_teff(teff)  (or BC_V)
+      M_bol = M_lambda + BC_lambda
+      log10(L/Lsun) = 0.4 * (M_bol_sun - M_bol)
+      log10(R/Rsun) = 0.5 * log10(L/Lsun) - 2 * log10(teff / 5770.0)
+    """
+    if teff is None or np.isnan(teff):
+        return np.nan, np.nan, np.nan
+
+    # 1. Distance Modulus (DM)
+    d_pc = row.get('d_pc', row.get('dist_pc', row.get('distance', row.get('dist', np.nan))))
+    plx_mas = row.get('parallax', row.get('plx', row.get('Plx', np.nan)))
+
+    if not pd.isna(d_pc) and float(d_pc) > 0:
+        dm = 5.0 * np.log10(float(d_pc)) - 5.0
+    elif not pd.isna(plx_mas) and float(plx_mas) > 0:
+        dm = 15.0 - 5.0 * np.log10(float(plx_mas))
+    else:
+        return np.nan, np.nan, np.nan
+
+    # 2. Photometric band and Extinction
+    g_col = row.get('Gmag', row.get('G', np.nan))
+    v_col = row.get('Vmag', row.get('V', np.nan))
+
+    if not pd.isna(g_col):
+        m_obs = float(g_col)
+        a_lam = EXTINCTION_RATIOS['G'] * extinction_av
+        m_abs = m_obs - a_lam - dm
+        bc = calib_engine.get_bc_g_from_teff(teff)
+    elif not pd.isna(v_col):
+        m_obs = float(v_col)
+        a_lam = EXTINCTION_RATIOS['V'] * extinction_av
+        m_abs = m_obs - a_lam - dm
+        bc = calib_engine.get_bc_v_from_teff(teff)
+    else:
+        return np.nan, np.nan, np.nan
+
+    # 3. Bolometric Absolute Magnitude & Luminosity (Bell et al. 2014, Eq. 2 & 3)
+    m_bol = m_abs + bc
+    log_l = 0.4 * (m_bol_sun - m_bol)
+
+    # 4. Stellar Radius (Stefan-Boltzmann law)
+    log_r = 0.5 * log_l - 2.0 * np.log10(teff / 5770.0)
+
+    return round(float(log_l), 3), round(float(m_bol), 3), round(float(10**log_r), 3)
+
+
 def estimate_photometric_parameters(row: pd.Series, extinction_av: float = 0.0) -> Dict[str, Any]:
     """
-    Estimates Teff, SpT, and log g for a single star using multi-band photometry.
+    Estimates Teff, SpT, log g, logL, Mbol, and Radius for a single star using multi-band photometry.
     """
     colors = derive_unreddened_colors(row, extinction_av)
     teff_estimates = []
@@ -85,34 +145,49 @@ def estimate_photometric_parameters(row: pd.Series, extinction_av: float = 0.0) 
             teff_estimates.append(t)
             
     if not teff_estimates:
-        return {'Teff_phot': np.nan, 'SpT_phot': 'Unknown', 'logg_phot': np.nan, 'Av_used': extinction_av}
+        return {
+            'Teff_phot': np.nan, 'SpT_phot': 'Unknown', 'logg_phot': np.nan,
+            'logL_phot': np.nan, 'Mbol_phot': np.nan, 'Radius_phot': np.nan,
+            'Av_used': extinction_av
+        }
         
     teff_mean = float(np.mean(teff_estimates))
     spt_str = calib_engine.get_spt_from_teff(teff_mean)
     logg_val = float(calib_engine.interp_logg_from_teff(teff_mean))
     
+    log_l, m_bol, radius = calculate_stu1488_luminosity(teff_mean, row, extinction_av)
+    
     return {
         'Teff_phot': round(teff_mean, 1),
         'SpT_phot': spt_str,
         'logg_phot': round(logg_val, 2),
+        'logL_phot': log_l,
+        'Mbol_phot': m_bol,
+        'Radius_phot': radius,
         'Av_used': extinction_av
     }
 
 
 def estimate_photometric_dataset(df: pd.DataFrame, extinction_av: float = 0.0) -> pd.DataFrame:
     """
-    Processes a complete pandas DataFrame and appends Teff_phot, SpT_phot, logg_phot columns.
+    Processes a complete pandas DataFrame and appends Teff_phot, SpT_phot, logg_phot, logL_phot, Mbol_phot, Radius_phot columns.
     """
     res_df = df.copy()
-    teffs, spts, loggs = [], [], []
+    teffs, spts, loggs, logls, mbols, radii = [], [], [], [], [], []
     
     for _, row in res_df.iterrows():
         est = estimate_photometric_parameters(row, extinction_av)
         teffs.append(est['Teff_phot'])
         spts.append(est['SpT_phot'])
         loggs.append(est['logg_phot'])
+        logls.append(est['logL_phot'])
+        mbols.append(est['Mbol_phot'])
+        radii.append(est['Radius_phot'])
         
     res_df['Teff_phot'] = teffs
     res_df['SpT_phot'] = spts
     res_df['logg_phot'] = loggs
+    res_df['logL_phot'] = logls
+    res_df['Mbol_phot'] = mbols
+    res_df['Radius_phot'] = radii
     return res_df

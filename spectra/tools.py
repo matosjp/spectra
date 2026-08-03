@@ -1691,6 +1691,12 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
         teff_str = f"{float(teff):.1f} K" if not pd.isna(teff) else "N/A"
         logg = row.get('logg_phot', row.get('logg_ml', row.get('logg', np.nan)))
         logg_str = f"{float(logg):.2f}" if not pd.isna(logg) else "N/A"
+        
+        logl = row.get('logL_phot', row.get('logL', np.nan))
+        logl_str = f"{float(logl):.3f}" if not pd.isna(logl) else "N/A"
+        rad = row.get('Radius_phot', row.get('Radius', np.nan))
+        rad_str = f"{float(rad):.3f}" if not pd.isna(rad) else "N/A"
+        
         ttauri = str(row.get('T_Tauri_Class', 'N/A'))
 
         badge_cls = "badge-ctts" if "CTTS" in ttauri else ("badge-wtts" if "WTTS" in ttauri else "badge-field")
@@ -1701,6 +1707,8 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
             <td><span class="badge-spt">{spt}</span></td>
             <td>{teff_str}</td>
             <td>{logg_str}</td>
+            <td><code>{logl_str}</code></td>
+            <td><code>{rad_str}</code></td>
             <td><span class="{badge_cls}">{ttauri}</span></td>
         </tr>
         """
@@ -1714,6 +1722,9 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
             spt_phot = row.get('SpT_phot', 'N/A')
             teff_phot = row.get('Teff_phot', 'N/A')
             logg_phot = row.get('logg_phot', 'N/A')
+            logl_phot = row.get('logL_phot', 'N/A')
+            mbol_phot = row.get('Mbol_phot', 'N/A')
+            rad_phot = row.get('Radius_phot', 'N/A')
             av_used = row.get('Av_used', 0.0)
             
             ew_ha = row.get('EW_Halpha', 'N/A')
@@ -1730,13 +1741,16 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
                 <h3>⭐ Calculation Trace for {star_id}</h3>
                 <div class="grid-2">
                     <div>
-                        <p><strong>1. Photometric Derivation & Dereddening:</strong></p>
+                        <p><strong>1. Photometric & Luminosity Derivation (Bell et al. 2014 / stu1488.pdf):</strong></p>
                         <ul>
                             <li>Interstellar Extinction (<i>A</i><sub>V</sub>): <code>{av_used} mag</code></li>
                             <li>Observed Gaia Color (<i>BP</i> - <i>RP</i>): <code>{bp_rp_str} mag</code></li>
                             <li>Multi-Band Weighted <i>T</i><sub>eff</sub>: <code>{teff_phot} K</code></li>
                             <li>Derived Spectral Type: <span class="badge-spt">{spt_phot}</span></li>
                             <li>Surface Gravity (log <i>g</i>): <code>{logg_phot} dex</code></li>
+                            <li>Bolometric Absolute Magnitude (<i>M</i><sub>bol</sub>): <code>{mbol_phot} mag</code></li>
+                            <li>Bolometric Luminosity log<sub>10</sub>(<i>L</i>/<i>L</i><sub>☉</sub>): <code>{logl_phot}</code></li>
+                            <li>Stellar Radius (<i>R</i>/<i>R</i><sub>☉</sub>): <code>{rad_phot}</code></li>
                         </ul>
                     </div>
                     <div>
@@ -1755,7 +1769,7 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
         verbose_html = f"""
         <div class="card">
             <h2>🔍 Verbose Step-by-Step Per-Star Calculation Trace</h2>
-            <p>Detailed breakdown of intermediate photometric color dereddening, feature extraction, and classification rationale for each star.</p>
+            <p>Detailed breakdown of intermediate photometric color dereddening, bolometric corrections, luminosity derivation (Bell et al. 2014), feature extraction, and classification rationale for each star.</p>
             {verbose_cards}
         </div>
         """
@@ -1790,7 +1804,7 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
 <body>
     <div class="card">
         <h1>⭐ SPECTRA - Primary Stellar Parameters Report</h1>
-        <p>Derived Effective Temperatures (<i>T</i><sub>eff</sub>), Spectral Types, Surface Gravities (log <i>g</i>), and T Tauri Activity Classifications.</p>
+        <p>Derived Effective Temperatures (<i>T</i><sub>eff</sub>), Spectral Types, Surface Gravities (log <i>g</i>), Bolometric Luminosities (log <i>L</i>/<i>L</i><sub>☉</sub>), and T Tauri Activity Classifications.</p>
     </div>
 
     <!-- Plots Section -->
@@ -1826,6 +1840,8 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
                     <th>Spectral Type</th>
                     <th><i>T</i><sub>eff</sub> (K)</th>
                     <th>log <i>g</i> (dex)</th>
+                    <th>log(<i>L</i>/<i>L</i><sub>☉</sub>)</th>
+                    <th>Radius (<i>R</i><sub>☉</sub>)</th>
                     <th>T Tauri Classification</th>
                 </tr>
             </thead>
