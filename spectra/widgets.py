@@ -11,8 +11,19 @@ import shutil
 from tkinter import filedialog, messagebox
 import sys
 
-from . import __version__
-from .paths import PROJECT_ROOT
+try:
+    from . import __version__
+    from .paths import PROJECT_ROOT
+except (ImportError, ValueError):
+    try:
+        from spectra import __version__
+        from spectra.paths import PROJECT_ROOT
+    except (ImportError, ModuleNotFoundError):
+        __version__ = "1.1.0"
+        try:
+            from paths import PROJECT_ROOT
+        except ImportError:
+            PROJECT_ROOT = os.getcwd()
 
 class SessionManager:
     @staticmethod

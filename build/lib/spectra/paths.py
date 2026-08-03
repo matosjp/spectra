@@ -19,10 +19,6 @@ OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs')
 TABLES_DIR = os.path.join(OUTPUTS_DIR, 'tables')
 PLOTS_DIR = os.path.join(OUTPUTS_DIR, 'plots')
 ISOCFIT_DIR = os.path.join(OUTPUTS_DIR, 'isocfit_outputs')
-RML_DIR = os.path.join(OUTPUTS_DIR, 'rml_outputs')
-STATS_DIR = os.path.join(OUTPUTS_DIR, 'stats_outputs')
-SAMPLES_DIR = os.path.join(PROJECT_ROOT, 'samples')
-CACHE_DIR = os.path.join(PROJECT_ROOT, '.cache')
 
 # --- external data / config -------------------------------------------
 EXTERNAL_DIR = os.path.join(PROJECT_ROOT, 'external')
@@ -32,14 +28,10 @@ ISOCHRONE_MODELS_DIR = os.path.join(PROJECT_ROOT, 'isochrone_models')
 
 # --- first-run switch ---------------------------------------------------
 MODELS_FLAG_FILE = os.path.join(PROJECT_ROOT, '.stelar_models_downloaded')
-REQUIRED_MODELS = ["bhac15_p0.00"]
+REQUIRED_MODELS = ['bhac15', 'parsec', 'mist']
 ISOCHRONE_MODELS_URL = 'https://drive.google.com/drive/folders/1KE3X647EJJtYFjv3pknPge02R2Rf92MR?usp=sharing'
 
-def ensure_directories_exist() -> None:
-    """Ensures that all necessary application output directories exist on disk."""
-    for _dir in (OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR):
-        os.makedirs(_dir, exist_ok=True)
-
-# Make sure every output directory exists up front upon import
-ensure_directories_exist()
-ensure_directories = ensure_directories_exist
+# Make sure every output directory exists up front, regardless of which
+# module/feature runs first.
+for _dir in (OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR):
+    os.makedirs(_dir, exist_ok=True)
