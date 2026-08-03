@@ -1487,14 +1487,14 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
 <body>
     <div class="card">
         <h1>⭐ SPECTRA - Primary Stellar Parameters Report</h1>
-        <p>Derived Effective Temperatures ($T_{{\\text{{eff}}}}$), Spectral Types, Surface Gravities ($\\log g$), and T Tauri Activity Classifications.</p>
+        <p>Derived Effective Temperatures (<i>T</i><sub>eff</sub>), Spectral Types, Surface Gravities (log <i>g</i>), and T Tauri Activity Classifications.</p>
         <table>
             <thead>
                 <tr>
                     <th>Star ID</th>
                     <th>Spectral Type</th>
-                    <th>Teff (K)</th>
-                    <th>log g (dex)</th>
+                    <th><i>T</i><sub>eff</sub> (K)</th>
+                    <th>log <i>g</i> (dex)</th>
                     <th>T Tauri Classification</th>
                 </tr>
             </thead>
