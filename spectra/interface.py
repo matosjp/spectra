@@ -162,9 +162,11 @@ class App(ttk.Window):
         )
 
     def load_custom_theme(self, theme_name):
-        # 1. Use the existing global application style instance (self.style)
-        #    instead of instantiating a fresh local 'ttk.Style()'
-        self.style.load_user_themes(themes_path)
+        if os.path.exists(THEMES_PATH):
+            try:
+                self.style.load_user_themes(THEMES_PATH)
+            except Exception as e:
+                print(f"Warning: Could not load custom theme file {THEMES_PATH}: {e}")
 
         if theme_name in self.style.theme_names():
             self.style.theme_use(theme_name)

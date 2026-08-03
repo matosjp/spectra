@@ -12,7 +12,12 @@ happened to be at that moment.
 """
 import os
 
-PROJECT_ROOT = os.getcwd()
+# Derive absolute project root from file location regardless of current working directory
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if os.path.basename(_CURRENT_DIR).lower() == 'spectra':
+    PROJECT_ROOT = os.path.dirname(_CURRENT_DIR)
+else:
+    PROJECT_ROOT = _CURRENT_DIR
 
 # --- outputs/ ---------------------------------------------------------
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs')
