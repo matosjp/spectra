@@ -153,7 +153,35 @@ Constructs mass–magnitude relationships from MADYS evolutionary grids using ma
 
 ---
 
-## 8. Mathematical Modeling Tab
+153: 
+154: ---
+155: 
+156: ## 8. Primary Stellar Parameters Module (`⭐ Primary Parameters` Tab)
+157: 
+158: Derives fundamental physical parameters for stars across multi-band photometry and spectroscopic indices.
+159: 
+160: ### Physical Derivations & Methodology:
+161: 1. **Multi-Band Photometry & Extinction ($A_V$)**:
+   - Dereddens multi-color magnitudes (Gaia $G, BP, RP$, 2MASS $J, H, K$, Johnson $V, B$) using Cardelli extinction laws ($A_V$).
+   - Derives effective temperature ($T_{\text{eff}}$), spectral type ($\text{SpT}$), and surface gravity ($\log g$) using empirical dwarf calibrations (Pecaut & Mamajek 2013).
+2. **Bolometric Luminosity ($\log_{10}(L/L_\odot)$) & Stellar Radius ($R_*/R_\odot$)** (Bell et al. 2014 / `stu1488.pdf`):
+   - Computes distance modulus $\text{DM} = 5 \log_{10}(d_{\text{pc}}) - 5$ (or from paralax $\varpi_{\text{mas}}$).
+   - Derives absolute bolometric magnitude $M_{\text{bol}} = M_{\lambda} + \text{BC}_{\lambda}(T_{\text{eff}})$.
+   - Calculates bolometric luminosity $\log_{10}(L_*/L_\odot) = 0.4 [M_{\text{bol},\odot} - M_{\text{bol}}]$ (where $M_{\text{bol},\odot} = 4.755\text{ mag}$).
+   - Computes stellar radius $R_*/R_\odot$ via Stefan-Boltzmann relation $\log_{10}(R_*/R_\odot) = 0.5 \log_{10}(L_*/L_\odot) - 2 \log_{10}(T_{\text{eff}}/5770\text{ K})$.
+3. **Spectroscopic Features & T Tauri Activity Classification**:
+   - Analyzes Equivalent Widths (EW) of $H\alpha$ ($6563\text{ Å}$), $Li\,\text{I}$ ($6708\text{ Å}$), and $TiO$ bandhead index.
+   - Classifies stars into **Classical T Tauri Stars (CTTS)** (strong accretion emission $H\alpha \ge 10\text{ Å}$), **Weak-lined T Tauri Stars (WTTS)** (chromospheric emission $2 \le H\alpha < 10\text{ Å}$ and young $Li\,\text{I} \ge 0.1\text{ Å}$), or **Field Stars**.
+4. **Machine Learning Parameter Regressors**:
+   - Trains multi-output regressors (*RandomForest*, *GradientBoosting*, *SVR*, *KNN*) to predict parameters directly from color indices.
+5. **Goodness-of-Fit Statistical Suite**:
+   - Computes $R^2$, Adjusted $R^2$, RMSE, MAE, $\chi^2$, and Reduced $\chi^2$ metrics saved to `outputs/primary_parameters/tables/primary_params_gof_stats.csv`.
+6. **Interactive Web HTML Report (`🌐 HTML Report`)**:
+   - Generates standalone, dark-themed HTML reports (`outputs/primary_parameters/reports/primary_params_report.html`) containing base64 distribution plots, Color-Magnitude Diagrams (CMD), Goodness-of-Fit cards, and an optional per-star step-by-step trace card (`round-toggle` switch).
+
+---
+
+## 9. Mathematical Modeling Tab
 
 Provides general-purpose statistical analysis, missing data imputation, PCA reduction, and multi-feature regression modeling.
 
@@ -167,7 +195,7 @@ Provides general-purpose statistical analysis, missing data imputation, PCA redu
 
 ---
 
-## 9. File & Help Menus
+## 10. File & Help Menus
 
 * **File -> Open table:** Opens a CSV file into shared memory (`DataManager`).
 * **File -> Save session:** Exports application state to binary `.pkl` file.
@@ -176,7 +204,7 @@ Provides general-purpose statistical analysis, missing data imputation, PCA redu
 
 ---
 
-## 10. Updating the Application ("Atualizar Programa")
+## 11. Updating the Application ("Atualizar Programa")
 
 S.P.E.C.T.R.A. includes an integrated update manager:
 
@@ -186,24 +214,34 @@ S.P.E.C.T.R.A. includes an integrated update manager:
 
 ---
 
-## 11. Output Directory & File Locations
+## 12. Output Directory & File Locations
 
-All output files are saved under `outputs/`:
+All output files are organized into dedicated subfolders under `outputs/`:
 
 | Folder Path | Description of Generated Content |
 | --- | --- |
-| `outputs/tables/` | Exported CSV tables (`_final_result_table.csv`, `Regression_model_report.csv`). |
-| `outputs/plots/` | Visual plots (`_hrd_complete.png`, `_results_display.png`, `_visual_report.png`). |
-| `outputs/isocfit_outputs/` | Individual PDF star location charts (when Verbose mode is enabled). |
+| `outputs/isochrone_fitting/` | Bayesian 2D fit tables (`_final_result_table.csv`) and PDF star localization plots. |
+| `outputs/mass_modeling/` | Mass-Magnitude regression reports (`Regression_model_report.csv`) and 4-panel diagnostic dashboards. |
+| `outputs/primary_parameters/plots/` | $T_{\text{eff}}$ distribution histograms, Gaia Color-Magnitude Diagrams (CMD), and T Tauri activity charts. |
+| `outputs/primary_parameters/tables/` | Derived primary parameters catalog (`primary_params_catalog.csv`) and Goodness-of-Fit metrics (`primary_params_gof_stats.csv`). |
+| `outputs/primary_parameters/reports/` | Standalone interactive HTML reports (`primary_params_report.html`). |
+| `outputs/math_models/` | General statistical regression tables and PCA component matrices. |
 
 ---
 
-## 12. Output Interpretation Guide (Tables & Plots)
+## 13. Output Interpretation Guide (Tables & Plots)
 
-### Primary CSV Columns (`_final_result_table.csv`)
+### Primary CSV Columns (`primary_params_catalog.csv` & `_final_result_table.csv`)
 
 | Column Name | Physical Meaning & Statistical Interpretation |
 | :--- | :--- |
+| **`Teff_phot`** | **Photometric Effective Temperature ($K$):** Multi-band color weighted effective temperature. |
+| **`SpT_phot`** | **Derived Spectral Type:** Empirical spectral classification (e.g., `G2V`, `M1.5V`, `A0V`). |
+| **`logg_phot`** | **Surface Gravity ($\log g$):** Derived stellar surface gravity in $\text{dex} (\text{cm/s}^2)$. |
+| **`logL_phot`** | **Bolometric Luminosity ($\log_{10}(L/L_\odot)$):** Luminosity derived via Bell et al. (2014; `stu1488.pdf`) Section 3.2. |
+| **`Mbol_phot`** | **Absolute Bolometric Magnitude ($M_{\text{bol}}$):** Bolometric magnitude derived from dereddened magnitude and distance modulus. |
+| **`Radius_phot`** | **Stellar Radius ($R_*/R_\odot$):** Stellar radius calculated via Stefan-Boltzmann relation. |
+| **`T_Tauri_Class`** | **Activity Classification:** Spectroscopic PMS activity class (`CTTS`, `WTTS`, or `Field`). |
 | **`Mass_calc`** | **Estimated Stellar Mass ($M_\odot$):** Expected mass value ($\hat{M}$) derived from 2D Bayesian posterior distribution or machine learning regression. |
 | **`Mass_e`** | **Mass Uncertainty ($M_\odot$):** $1\text{-}\sigma$ Bayesian posterior standard deviation ($\sigma_M$) or model RMSE. |
 | **`Age_calc (Myr)`** | **Derived Stellar Age (Myr):** Expected age ($\hat{t}$) in millions of years derived from 2D Bayesian posterior distribution. |
@@ -211,11 +249,13 @@ All output files are saved under `outputs/`:
 
 ---
 
-## 13. Troubleshooting & Frequently Asked Questions
+## 14. Troubleshooting & Frequently Asked Questions
 
 * **Q: Why did my age result show in decimals?**
   * **A:** All ages in S.P.E.C.T.R.A. are expressed in **Myr (Millions of Years)**. An age of `3.0` corresponds to $3\text{ Myr}$ ($3.000.000\text{ years}$).
 * **Q: How does the software handle linear vs. logarithmic luminosity?**
   * **A:** S.P.E.C.T.R.A. automatically converts linear luminosity columns (`L`, `lum`, `L/Ls`) into $\log_{10}(L/L_\odot)$ upon loading.
+* **Q: How do I calculate bolometric luminosity if I only have distance/parallax?**
+  * **A:** Provide `d_pc` (distance in pc) or `parallax` (in mas) alongside `Gmag` or `Vmag` in your CSV. The Primary Parameters module automatically computes $\log_{10}(L/L_\odot)$, $M_{\text{bol}}$, and $R_*/R_\odot$ following Bell et al. (2014).
 * **Q: How do I revert to a previous working version?**
   * **A:** Use Git tags: `git checkout v1.0.0-stable` returns to the baseline version, while `git checkout v1.1.0-refactored` selects the current refactored release.

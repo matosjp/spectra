@@ -9,14 +9,19 @@ S.P.E.C.T.R.A. is a modern desktop application for deriving stellar parameters �
 
 ## Key Features
 
+## Key Features
+
 - **2D Bayesian Isochrone Parameter Estimator** — derives stellar mass ($M_\odot$), age (Myr), and $1\text{-}\sigma$ uncertainties using a full 2D likelihood grid evaluation over the HR diagram combined with a Salpeter/Kroupa IMF prior ($P(M) \propto M^{-1.35}$ for $M \le 0.5$, $M^{-2.35}$ for $M > 0.5$). Supported models: Siess 2000 and BHAC15.
+- **⭐ Primary Stellar Parameters Module** — derives multi-band photometric effective temperatures ($T_{\text{eff}}$), spectral types ($\text{SpT}$), surface gravities ($\log g$), bolometric magnitudes ($M_{\text{bol}}$), bolometric luminosities ($\log_{10}(L/L_\odot)$), and stellar radii ($R_*/R_\odot$) following **Bell et al. (2014, MNRAS 444, 1157; `stu1488.pdf`)** Section 3.2. Includes spectroscopic Equivalent Width (EW) analysis ($H\alpha$, $Li\,\text{I}$, $TiO$) for Pre-Main-Sequence (PMS) youth diagnostics and T Tauri activity classification (**CTTS**, **WTTS**, **Field**), alongside machine learning parameter regressors (*RandomForest*, *GradientBoosting*, *SVR*, *KNN*).
+- **Goodness-of-Fit Statistical Suite** — computes comprehensive goodness-of-fit metrics ($R^2$, Adjusted $R^2$, RMSE, MAE, $\chi^2$, Reduced $\chi^2$) exported directly to module table outputs and embedded in interactive reports.
 - **Automatic Luminosity Conversion** — automatically detects linear luminosity columns (`L`, `lum`, `L/Ls`, `Lsun`) and converts them to logarithmic scale $\log_{10}(L/L_\odot)$.
 - **MADYS Models Repository Manager (`📦 Models Manager`)** — dedicated interactive dialog to inspect all 18+ MADYS evolutionary models, view installation status (🟢 Installed / ⚪ Not Installed), mass/age bounds, and download missing grids directly in the background.
 - **Dynamic MADYS Model & Filter Engine** — dynamically updates valid mass boundaries, age slider ranges, and supported photometric filter lists (up to 127+ filters per model) upon selecting any model.
-- **Interactive Web HTML Reports (`🌐 HTML Report`)** — generates standalone, interactive web reports with responsive Chart.js performance charts ($R^2$ scores, RMSE errors), metadata summaries, and full regression model metrics tables that automatically open in the user's default browser.
+- **Interactive Web HTML Reports (`🌐 HTML Report`)** — generates standalone, interactive web reports with dark-themed layouts, embedded base64 distribution plots, Color-Magnitude Diagrams (CMD), Goodness-of-Fit cards, and per-star verbose calculation traces controlled by a `round-toggle` switch.
 - **Mass–Magnitude Regression Modeling** — builds and compares multi-model regression pipelines (Linear, Ridge, Lasso, ElasticNet, Bayesian Ridge, SVR, Decision Trees, Random Forest, Gradient Boosting, AdaBoost, KNN) using `MADYS` isochrone grids, generating comprehensive performance reports and 4-panel diagnostic dashboards with flexible magnitude column matching (`Gmag`, `G`, `Jmag`, `J`, etc.).
 - **Mathematical Modeling & Exploratory Analysis** — feature selection, missing data imputation (KNN, Iterative), correlation matrices, and Principal Component Analysis (PCA) for dataset exploration.
-- **Dedicated Output Plots** — interactive viewports and high-resolution export for **`📈 Mass Plot`**, **`⏳ Age Plot`**, and **`🌌 HR Diagram Plot`**.
+- **Modular Output Organization** — automatically structures generated files into dedicated subdirectories under `outputs/` (`isochrone_fitting/`, `mass_modeling/`, `primary_parameters/plots/`, `primary_parameters/tables/`, `primary_parameters/reports/`, `math_models/`).
+- **Standardized GUI Component Architecture** — unified visual presentation across all 5 main tabs with standardized header cards, aligned action controls, and `round-toggle` verbose switches.
 - **Thread-Safe Data & State Management** — centralized `DataManager` preventing race conditions and keeping dataset states consistent across GUI tabs.
 - **Integrated Program Updates** — built-in **"Atualizar Programa"** dialog allowing one-click background updates directly from GitHub.
 - **Cosmic Light & Dark Themes** — high-contrast cosmic color palettes tailored for research presentation ("Spectra Stellar Light" and "Spectra Deep Space Dark").
@@ -63,8 +68,8 @@ On first launch (or if model tables are missing), S.P.E.C.T.R.A. automatically d
 
 For step-by-step operational instructions, please consult the official [User Manual](Manual.md). It covers:
 * Input CSV formatting requirements.
-* Complete workflows for Isochrone Fitting, Mass-Magnitude Modeling, and Mathematical Modeling.
-* Interpretation of 2D Bayesian posterior probabilities, $1\text{-}\sigma$ uncertainties, and diagnostic plots.
+* Complete workflows for Isochrone Fitting, ⭐ Primary Parameters, Mass-Magnitude Modeling, and Mathematical Modeling.
+* Interpretation of 2D Bayesian posterior probabilities, $1\text{-}\sigma$ uncertainties, Goodness-of-Fit stats, and diagnostic plots.
 
 ---
 
@@ -78,19 +83,35 @@ spectra-root/
 ├── spectra.yml             # Conda environment definition file
 ├── Manual.md               # Detailed User Manual
 ├── README.md               # Project overview
+├── generate_test_dataset.py# Synthetic test dataset generator script
+├── example_primary_params_dataset.csv # Example test dataset
 ├── spectra/                # Core Python package
 │   ├── __init__.py         # Package metadata and version definition (v1.1.0)
-│   ├── state.py            # [NEW] DataManager: Thread-safe dataset state management
-│   ├── bayesian.py         # [NEW] 2D Bayesian Isochrone Parameter Estimator
+│   ├── state.py            # DataManager: Thread-safe dataset state management
+│   ├── bayesian.py         # 2D Bayesian Isochrone Parameter Estimator
 │   ├── StarLocalization.py # Isochrone table loader with caching & HRD plotting
-│   ├── tools.py            # Regression report, ML models, and result visualization
+│   ├── tools.py            # Regression report, ML engines, Goodness-of-Fit stats & HTML reports
 │   ├── widgets.py          # Custom UI dialogs (UpdateWindow, AboutWindow, BusyWindow)
-│   ├── interface.py        # Main GUI window (App, Sidebar, TopMenu, Tab Views)
-│   └── paths.py            # Centralized path definitions and directory creation
+│   ├── interface.py        # Main GUI window (App, Sidebar, TopMenu, Standardized Tab Views)
+│   ├── paths.py            # Centralized path definitions and modular outputs management
+│   └── primary_parameters/ # Primary Parameters Engine Package
+│       ├── __init__.py
+│       ├── calibrations.py # Empirical Dwarf Color-Teff-SpT-BC Calibrations (Pecaut & Mamajek 2013)
+│       ├── spt_encoder.py  # Spectral Type Numerical Encoder / Decoder
+│       ├── photometric_engine.py # Photometric Teff, SpT, log g & Bell et al. (2014) logL/Radius derivation
+│       ├── spectroscopic_engine.py # EW Halpha, Li I, TiO index & T Tauri Activity Classifier
+│       └── ml_engine.py    # Machine Learning Multi-Parameter Regressors
 ├── external/
 │   └── themes.json         # Custom Light and Dark theme definitions
 ├── isochrone_models/       # Evolutionary-track data tables
-└── outputs/                # Exported CSV tables and diagnostic plot figures
+└── outputs/                # Structured output directory by module
+    ├── isochrone_fitting/  # Isochrone fitting tables and PDF star plots
+    ├── mass_modeling/      # Mass-Magnitude ML tables & diagnostic dashboards
+    ├── primary_parameters/ # Primary Parameters outputs
+    │   ├── plots/          # Distribution plots & Gaia CMD figures
+    │   ├── tables/         # Derived catalog CSV & Goodness-of-Fit statistics
+    │   └── reports/        # Standalone interactive HTML reports
+    └── math_models/        # General mathematical & PCA outputs
 ```
 
 ---
