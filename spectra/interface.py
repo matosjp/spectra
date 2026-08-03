@@ -572,8 +572,16 @@ class Sidebar(ttk.Frame):
         image_label.image = image_tk
 
     def setup_modeling_ui(self, frame):
-        container = ttk.Frame(frame, padding=15)
+        container = ttk.Frame(frame, padding=20)
         container.pack(expand=True, fill=BOTH)
+
+        # Module Header Card (Standardized Layout)
+        header_frame = ttk.Frame(container)
+        header_frame.pack(fill=X, pady=(0, 15))
+        lbl_title = ttk.Label(header_frame, text="🧮 Mathematical Modeling & Machine Learning Module", font=("Segoe UI", 14, "bold"), bootstyle="primary")
+        lbl_title.pack(anchor="w")
+        lbl_sub = ttk.Label(header_frame, text="Custom Multivariate Regression, PCA & Feature Selection for Custom Target Derivation", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
+        lbl_sub.pack(anchor="w")
 
         # Card 1: Feature Selection & Imputation
         card1 = ttk.Labelframe(container, text=" 1. Feature Selection & Data Imputation ", padding=15)
@@ -586,12 +594,12 @@ class Sidebar(ttk.Frame):
         f_params = ttk.Frame(card1)
         f_params.pack(fill=X)
 
-        ttk.Label(f_params, text="Missing Imputation:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=(0, 10), pady=6, sticky="w")
+        ttk.Label(f_params, text="Missing Imputation:", font=('Segoe UI', 10, 'bold')).grid(row=0, column=0, padx=(0, 10), pady=6, sticky="w")
         data_completition_combobox = ttk.Combobox(f_params, textvariable=self.comp_method, values=['None', 'KNN', 'Iterative', 'MICE'], width=12, state="readonly")
         data_completition_combobox.current(0)
         data_completition_combobox.grid(row=0, column=1, padx=(0, 25), pady=6, sticky="w")
 
-        ttk.Label(f_params, text="Select Target:", font=('Helvetica', 10, 'bold')).grid(row=0, column=2, padx=(0, 10), pady=6, sticky="w")
+        ttk.Label(f_params, text="Select Target:", font=('Segoe UI', 10, 'bold')).grid(row=0, column=2, padx=(0, 10), pady=6, sticky="w")
         self.target_combobox = ttk.Combobox(f_params, textvariable=self.target, width=15, state="readonly")
         self.target_combobox.grid(row=0, column=3, padx=0, pady=6, sticky="w")
 
@@ -771,31 +779,39 @@ class Sidebar(ttk.Frame):
         pass  # Add statistical tools for analysis tab UI elements here
 
     def setup_isocfit_ui(self, frame):
-        container = ttk.Frame(frame, padding=15)
+        container = ttk.Frame(frame, padding=20)
         container.pack(expand=True, fill=BOTH)
+
+        # Module Header Card (Standardized Layout)
+        header_frame = ttk.Frame(container)
+        header_frame.pack(fill=X, pady=(0, 15))
+        lbl_title = ttk.Label(header_frame, text="🌌 Isochrone Fitting & HRD Localization Module", font=("Segoe UI", 14, "bold"), bootstyle="primary")
+        lbl_title.pack(anchor="w")
+        lbl_sub = ttk.Label(header_frame, text="Stellar Age & Mass Estimation via Theoretical Isochrones (Siess 2000, BHAC15)", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
+        lbl_sub.pack(anchor="w")
 
         # Card 1: Configuration
         card1 = ttk.Labelframe(container, text=" 1. Model & Input Parameters ", padding=15)
         card1.pack(fill=X, pady=(0, 15))
         card1.grid_columnconfigure(1, weight=1)
 
-        ttk.Label(card1, text="Isochrone Model:", font=('Helvetica', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
+        ttk.Label(card1, text="Isochrone Model:", font=('Segoe UI', 10, 'bold')).grid(row=0, column=0, padx=10, pady=8, sticky="w")
         models = ('Siess 2000', 'BHAC15')
         iso_model_combobox = ttk.Combobox(card1, textvariable=self.iso_selected_model, values=models, width=15, state="readonly")
         iso_model_combobox.current(0)
         iso_model_combobox.grid(row=0, column=1, padx=10, pady=8, sticky="w")
 
-        ttk.Label(card1, text="Effective Temp (Teff):", font=('Helvetica', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
+        ttk.Label(card1, text="Effective Temp (Teff):", font=('Segoe UI', 10, 'bold')).grid(row=1, column=0, padx=10, pady=8, sticky="w")
         f_teff = ttk.Frame(card1)
         f_teff.grid(row=1, column=1, padx=10, pady=8, sticky="w")
         ttk.Entry(f_teff, textvariable=self.teff, width=12).pack(side=LEFT, padx=(0, 5))
-        ttk.Label(f_teff, text="K", font=('Helvetica', 9)).pack(side=LEFT)
+        ttk.Label(f_teff, text="K", font=('Segoe UI', 9)).pack(side=LEFT)
 
-        ttk.Label(card1, text="Luminosity (log L):", font=('Helvetica', 10, 'bold')).grid(row=2, column=0, padx=10, pady=8, sticky="w")
+        ttk.Label(card1, text="Luminosity (log L):", font=('Segoe UI', 10, 'bold')).grid(row=2, column=0, padx=10, pady=8, sticky="w")
         f_logl = ttk.Frame(card1)
         f_logl.grid(row=2, column=1, padx=10, pady=8, sticky="w")
         ttk.Entry(f_logl, textvariable=self.logl, width=12).pack(side=LEFT, padx=(0, 5))
-        ttk.Label(f_logl, text="log L/L_sun", font=('Helvetica', 9)).pack(side=LEFT)
+        ttk.Label(f_logl, text="log L/L_sun", font=('Segoe UI', 9)).pack(side=LEFT)
 
         # Card 2: Processing & Action
         card2 = ttk.Labelframe(container, text=" 2. Processing & Star Localization ", padding=15)
@@ -882,8 +898,16 @@ class Sidebar(ttk.Frame):
                     self.selected_filter.set('g')
 
     def setup_rml_ui(self, frame):
-        container = ttk.Frame(frame, padding=15)
+        container = ttk.Frame(frame, padding=20)
         container.pack(expand=True, fill=BOTH)
+
+        # Module Header Card (Standardized Layout)
+        header_frame = ttk.Frame(container)
+        header_frame.pack(fill=X, pady=(0, 15))
+        lbl_title = ttk.Label(header_frame, text="⚖️ Mass-Magnitude Relationship (MMR) Module", font=("Segoe UI", 14, "bold"), bootstyle="primary")
+        lbl_title.pack(anchor="w")
+        lbl_sub = ttk.Label(header_frame, text="Empirical & Theoretical Photometric Mass Calibration with Distance Corrections", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
+        lbl_sub.pack(anchor="w")
 
         # Card 1: Model & Mass Range
         card1 = ttk.Labelframe(container, text=" 1. Model Configuration & Mass Range ", padding=15)
