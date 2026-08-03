@@ -56,12 +56,21 @@ except (ImportError, ValueError):
     except (ImportError, ModuleNotFoundError):
         from StarLocalization import readiso
 try:
-    from .paths import TABLES_DIR, PLOTS_DIR
+    from .paths import (
+        TABLES_DIR, PLOTS_DIR, PRIMARY_PARAMS_OUTPUTS_DIR,
+        PRIMARY_PARAMS_PLOTS_DIR, PRIMARY_PARAMS_TABLES_DIR, PRIMARY_PARAMS_REPORTS_DIR
+    )
 except (ImportError, ValueError):
     try:
-        from spectra.paths import TABLES_DIR, PLOTS_DIR
+        from spectra.paths import (
+            TABLES_DIR, PLOTS_DIR, PRIMARY_PARAMS_OUTPUTS_DIR,
+            PRIMARY_PARAMS_PLOTS_DIR, PRIMARY_PARAMS_TABLES_DIR, PRIMARY_PARAMS_REPORTS_DIR
+        )
     except (ImportError, ModuleNotFoundError):
-        from paths import TABLES_DIR, PLOTS_DIR
+        from paths import (
+            TABLES_DIR, PLOTS_DIR, PRIMARY_PARAMS_OUTPUTS_DIR,
+            PRIMARY_PARAMS_PLOTS_DIR, PRIMARY_PARAMS_TABLES_DIR, PRIMARY_PARAMS_REPORTS_DIR
+        )
 
 
 class FilterValues:
@@ -1441,11 +1450,48 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
 import base64
 import io
 
+def compute_goodness_of_fit(y_true, y_pred, n_params=1) -> dict:
+    """
+    Computes Goodness-of-Fit statistical metrics (R2, Adj R2, RMSE, MAE, Chi-squared, Reduced Chi-squared).
+    """
+    y_true = np.array(y_true, dtype=float)
+    y_pred = np.array(y_pred, dtype=float)
+    mask = ~np.isnan(y_true) & ~np.isnan(y_pred)
+    y_t, y_p = y_true[mask], y_pred[mask]
+    n = len(y_t)
+    if n <= n_params:
+        return {'N': n, 'R2': np.nan, 'Adj_R2': np.nan, 'RMSE': np.nan, 'MAE': np.nan, 'Chi2': np.nan, 'Red_Chi2': np.nan}
+    
+    residuals = y_t - y_p
+    ss_res = np.sum(residuals**2)
+    ss_tot = np.sum((y_t - np.mean(y_t))**2)
+    
+    r2 = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 1.0
+    adj_r2 = 1.0 - ((1.0 - r2) * (n - 1) / (n - n_params - 1)) if (n - n_params - 1) > 0 else r2
+    rmse = np.sqrt(mean_squared_error(y_t, y_p))
+    mae = mean_absolute_error(y_t, y_p)
+    
+    sigma = np.maximum(np.abs(y_t) * 0.05, 1.0)
+    chi2 = np.sum((residuals / sigma)**2)
+    red_chi2 = chi2 / (n - n_params) if (n - n_params) > 0 else chi2
+
+    return {
+        'N': int(n),
+        'R2': float(r2),
+        'Adj_R2': float(adj_r2),
+        'RMSE': float(rmse),
+        'MAE': float(mae),
+        'Chi2': float(chi2),
+        'Red_Chi2': float(red_chi2)
+    }
+
+
 def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
     """
     Generates analysis outputs for primary parameters:
-    - Outputs summary statistics table to outputs/tables/primary_params_summary_stats.csv
-    - Creates 3 dark-themed plots in outputs/plots/ (Teff distribution, CMD, T Tauri distribution)
+    - Outputs summary statistics table to outputs/primary_parameters/tables/primary_params_summary_stats.csv
+    - Outputs Goodness-of-Fit table to outputs/primary_parameters/tables/primary_params_gof_stats.csv
+    - Creates 3 dark-themed plots in outputs/primary_parameters/plots/ (Teff distribution, CMD, T Tauri distribution)
     - Returns a dict containing paths and base64 strings of the generated plots.
     """
     plots_b64 = {}
@@ -1454,11 +1500,23 @@ def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
     num_cols = [c for c in ['Teff_phot', 'Teff_ml', 'logg_phot', 'logg_ml', 'EW_Halpha', 'EW_Li', 'Av_used'] if c in df.columns]
     if num_cols:
         stats_df = df[num_cols].describe().T
-        stats_path = os.path.abspath(os.path.join(PLOTS_DIR, "..", "tables", "primary_params_summary_stats.csv"))
+        stats_path = os.path.abspath(os.path.join(PRIMARY_PARAMS_TABLES_DIR, "primary_params_summary_stats.csv"))
         os.makedirs(os.path.dirname(stats_path), exist_ok=True)
         stats_df.to_csv(stats_path)
     else:
         stats_df = pd.DataFrame()
+
+    # 2. Goodness-of-Fit Metrics (Comparing Photometric vs ML or Color estimations)
+    gof_res = {}
+    if 'Teff_phot' in df.columns and 'Teff_ml' in df.columns:
+        gof_res['Teff (Phot vs ML)'] = compute_goodness_of_fit(df['Teff_phot'], df['Teff_ml'])
+    if 'logg_phot' in df.columns and 'logg_ml' in df.columns:
+        gof_res['log g (Phot vs ML)'] = compute_goodness_of_fit(df['logg_phot'], df['logg_ml'])
+
+    gof_df = pd.DataFrame(gof_res).T if gof_res else pd.DataFrame()
+    if not gof_df.empty:
+        gof_path = os.path.abspath(os.path.join(PRIMARY_PARAMS_TABLES_DIR, "primary_params_gof_stats.csv"))
+        gof_df.to_csv(gof_path)
 
     # Dark Theme styling for matplotlib
     plt.style.use('dark_background')
@@ -1473,6 +1531,9 @@ def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
         ax1.set_xlabel(r'$T_{\mathrm{eff}}$ (K)', color='#94a3b8')
         ax1.set_ylabel('Star Count', color='#94a3b8')
         ax1.grid(True, color='#334155', linestyle='--', alpha=0.5)
+    
+    p1_path = os.path.join(PRIMARY_PARAMS_PLOTS_DIR, "teff_distribution.png")
+    fig1.savefig(p1_path, dpi=150, bbox_inches='tight', facecolor='#1e293b')
     plots_b64['teff_dist'] = _fig_to_base64(fig1)
 
     # Plot 2: Color-Magnitude Diagram (CMD) / Color vs Teff
@@ -1496,6 +1557,9 @@ def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
         ax2.grid(True, color='#334155', linestyle='--', alpha=0.5)
     else:
         ax2.text(0.5, 0.5, 'Gaia Photometry (BP/RP/G) Not Provided', color='#94a3b8', ha='center', va='center')
+    
+    p2_path = os.path.join(PRIMARY_PARAMS_PLOTS_DIR, "cmd_diagram.png")
+    fig2.savefig(p2_path, dpi=150, bbox_inches='tight', facecolor='#1e293b')
     plots_b64['cmd_plot'] = _fig_to_base64(fig2)
 
     # Plot 3: T Tauri Activity Distribution
@@ -1512,9 +1576,12 @@ def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
         ax3.grid(True, axis='y', color='#334155', linestyle='--', alpha=0.5)
     else:
         ax3.text(0.5, 0.5, 'T Tauri Classification Not Run Yet', color='#94a3b8', ha='center', va='center')
+    
+    p3_path = os.path.join(PRIMARY_PARAMS_PLOTS_DIR, "ttauri_classification.png")
+    fig3.savefig(p3_path, dpi=150, bbox_inches='tight', facecolor='#1e293b')
     plots_b64['ttauri_dist'] = _fig_to_base64(fig3)
 
-    return {'plots_b64': plots_b64, 'stats_df': stats_df}
+    return {'plots_b64': plots_b64, 'stats_df': stats_df, 'gof_df': gof_df}
 
 
 def _fig_to_base64(fig) -> str:
@@ -1532,12 +1599,51 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
     (Teff, Spectral Type, log g, Av, T Tauri classification) with analysis plots and optional verbose step-by-step breakdown.
     """
     if output_filepath is None:
-        output_filepath = os.path.abspath(os.path.join(os.getcwd(), "outputs", "spectra_primary_params_report.html"))
+        output_filepath = os.path.abspath(os.path.join(PRIMARY_PARAMS_REPORTS_DIR, "primary_params_report.html"))
 
     # Generate analysis plots & summary stats
     analysis_res = generate_primary_params_analysis(df)
     plots = analysis_res['plots_b64']
     stats_df = analysis_res['stats_df']
+    gof_df = analysis_res.get('gof_df', pd.DataFrame())
+
+    # Goodness-of-Fit HTML Section
+    gof_html = ""
+    if not gof_df.empty:
+        gof_rows = ""
+        for param, r in gof_df.iterrows():
+            gof_rows += f"""
+            <tr>
+                <td><strong>{param}</strong></td>
+                <td>{r['N']:.0f}</td>
+                <td><span class="badge-spt">{r['R2']:.4f}</span></td>
+                <td>{r['Adj_R2']:.4f}</td>
+                <td>{r['RMSE']:.2f}</td>
+                <td>{r['MAE']:.2f}</td>
+                <td>{r['Red_Chi2']:.3f}</td>
+            </tr>
+            """
+        gof_html = f"""
+        <div class="card">
+            <h2>🎯 Goodness-of-Fit & Model Quality Statistics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Comparison Model</th>
+                        <th>Sample N</th>
+                        <th>R² (Coeff. Determination)</th>
+                        <th>Adjusted R²</th>
+                        <th>RMSE</th>
+                        <th>MAE</th>
+                        <th>Reduced χ²</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {gof_rows}
+                </tbody>
+            </table>
+        </div>
+        """
 
     # Summary Statistics HTML Table
     stats_html = ""
@@ -1702,6 +1808,9 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
             </div>
         </div>
     </div>
+
+    <!-- Goodness-of-Fit Section -->
+    {gof_html}
 
     <!-- Statistical Summary -->
     {stats_html}

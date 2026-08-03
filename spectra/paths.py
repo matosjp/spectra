@@ -19,13 +19,26 @@ if os.path.basename(_CURRENT_DIR).lower() == 'spectra':
 else:
     PROJECT_ROOT = _CURRENT_DIR
 
-# --- outputs/ ---------------------------------------------------------
+# --- outputs/ organized by module --------------------------------------
 OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs')
+
+# Module-specific output roots
+ISOCHRONE_OUTPUTS_DIR = os.path.join(OUTPUTS_DIR, 'isochrone_fitting')
+MASS_MODELING_OUTPUTS_DIR = os.path.join(OUTPUTS_DIR, 'mass_modeling')
+PRIMARY_PARAMS_OUTPUTS_DIR = os.path.join(OUTPUTS_DIR, 'primary_parameters')
+MATH_MODELS_OUTPUTS_DIR = os.path.join(OUTPUTS_DIR, 'math_models')
+
+# Primary Parameters Subfolders
+PRIMARY_PARAMS_PLOTS_DIR = os.path.join(PRIMARY_PARAMS_OUTPUTS_DIR, 'plots')
+PRIMARY_PARAMS_TABLES_DIR = os.path.join(PRIMARY_PARAMS_OUTPUTS_DIR, 'tables')
+PRIMARY_PARAMS_REPORTS_DIR = os.path.join(PRIMARY_PARAMS_OUTPUTS_DIR, 'reports')
+
+# Legacy / Global paths
 TABLES_DIR = os.path.join(OUTPUTS_DIR, 'tables')
 PLOTS_DIR = os.path.join(OUTPUTS_DIR, 'plots')
-ISOCFIT_DIR = os.path.join(OUTPUTS_DIR, 'isocfit_outputs')
-RML_DIR = os.path.join(OUTPUTS_DIR, 'rml_outputs')
-STATS_DIR = os.path.join(OUTPUTS_DIR, 'stats_outputs')
+ISOCFIT_DIR = ISOCHRONE_OUTPUTS_DIR
+RML_DIR = MASS_MODELING_OUTPUTS_DIR
+STATS_DIR = MATH_MODELS_OUTPUTS_DIR
 SAMPLES_DIR = os.path.join(PROJECT_ROOT, 'samples')
 CACHE_DIR = os.path.join(PROJECT_ROOT, '.cache')
 
@@ -42,7 +55,12 @@ ISOCHRONE_MODELS_URL = 'https://drive.google.com/drive/folders/1KE3X647EJJtYFjv3
 
 def ensure_directories_exist() -> None:
     """Ensures that all necessary application output directories exist on disk."""
-    for _dir in (OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR):
+    for _dir in (
+        OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
+        ISOCHRONE_OUTPUTS_DIR, MASS_MODELING_OUTPUTS_DIR,
+        PRIMARY_PARAMS_OUTPUTS_DIR, MATH_MODELS_OUTPUTS_DIR,
+        PRIMARY_PARAMS_PLOTS_DIR, PRIMARY_PARAMS_TABLES_DIR, PRIMARY_PARAMS_REPORTS_DIR
+    ):
         os.makedirs(_dir, exist_ok=True)
 
 # Make sure every output directory exists up front upon import

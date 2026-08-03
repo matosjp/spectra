@@ -1216,11 +1216,16 @@ class Sidebar(ttk.Frame):
         container = ttk.Frame(parent_frame, padding=20)
         container.pack(fill=BOTH, expand=True)
 
-        lbl_title = ttk.Label(container, text="⭐ Primary Stellar Parameters Determination (Teff, SpT, log g)", font=("Segoe UI", 12, "bold"))
-        lbl_title.pack(anchor="w", pady=(0, 15))
+        # Module Header Card (Standardized Layout)
+        header_frame = ttk.Frame(container)
+        header_frame.pack(fill=X, pady=(0, 15))
+        lbl_title = ttk.Label(header_frame, text="⭐ Primary Stellar Parameters Module", font=("Segoe UI", 14, "bold"), bootstyle="primary")
+        lbl_title.pack(anchor="w")
+        lbl_sub = ttk.Label(header_frame, text="Multi-band Photometric Derivation, Spectroscopic EW Classification & ML Goodness-of-Fit Modeling", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
+        lbl_sub.pack(anchor="w")
 
         # Card 1: Photometric Estimation
-        card1 = ttk.Labelframe(container, text=" 1. Photometric Estimation (Multi-Band Photometry) ", padding=15)
+        card1 = ttk.Labelframe(container, text=" 1. Photometric Parameter Estimation (Multi-Band Photometry) ", padding=15)
         card1.pack(fill=X, pady=(0, 15))
 
         f_av = ttk.Frame(card1)
@@ -1239,7 +1244,7 @@ class Sidebar(ttk.Frame):
                 av = float(self.av_entry.get())
                 res_df = estimate_photometric_dataset(df, extinction_av=av)
                 DataManager.set_dataset(res_df)
-                ToastNotification("Primary Parameters", "Photometric Teff & SpT calculated successfully!", duration=4000, bootstyle="success").show_toast()
+                ToastNotification("Primary Parameters", "Photometric Teff, SpT & log g calculated successfully!", duration=4000, bootstyle="success").show_toast()
             except Exception as e:
                 messagebox.showerror("Photometric Estimation Error", str(e))
 
@@ -1257,7 +1262,7 @@ class Sidebar(ttk.Frame):
             try:
                 res_df = estimate_spectroscopic_dataset(df)
                 DataManager.set_dataset(res_df)
-                ToastNotification("Primary Parameters", "Spectroscopic Teff & T Tauri classification completed!", duration=4000, bootstyle="success").show_toast()
+                ToastNotification("Primary Parameters", "Spectroscopic Teff & T Tauri classification completed!", duration=4000, bootstyle="info").show_toast()
             except Exception as e:
                 messagebox.showerror("Spectroscopic Estimation Error", str(e))
 
@@ -1298,13 +1303,13 @@ class Sidebar(ttk.Frame):
                 out_df['SpT_ml'] = spt_ml
                 out_df['logg_ml'] = logg_ml
                 DataManager.set_dataset(out_df)
-                ToastNotification("Primary Parameters", f"ML ({self.ml_algo_var.get()}) prediction completed!", duration=4000, bootstyle="success").show_toast()
+                ToastNotification("Primary Parameters", f"ML ({self.ml_algo_var.get()}) prediction completed!", duration=4000, bootstyle="secondary").show_toast()
             except Exception as e:
                 messagebox.showerror("ML Prediction Error", str(e))
 
         ttk.Button(card3, text="🤖 Predict Parameters with ML", bootstyle="secondary", command=_calc_ml).pack(anchor="w")
 
-        # Card 4: Export & Report
+        # Card 4: Analysis Outputs & Reports
         card4 = ttk.Labelframe(container, text=" 4. Analysis Outputs & Interactive HTML Report ", padding=15)
         card4.pack(fill=X, pady=(0, 15))
 
@@ -1317,7 +1322,7 @@ class Sidebar(ttk.Frame):
                 return
             try:
                 res = generate_primary_params_analysis(df)
-                ToastNotification("Analysis Generated", "Analysis plots & summary CSV generated in outputs/!", duration=4000, bootstyle="info").show_toast()
+                ToastNotification("Analysis Generated", "Analysis plots & summary CSV generated in outputs/primary_parameters/!", duration=4000, bootstyle="info").show_toast()
             except Exception as e:
                 messagebox.showerror("Analysis Error", str(e))
 
@@ -1334,7 +1339,7 @@ class Sidebar(ttk.Frame):
             except Exception as e:
                 messagebox.showerror("Report Error", str(e))
 
-        ttk.Button(card4, text="📊 Analysis Plots & Stats", bootstyle="info", command=_gen_analysis).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(card4, text="📊 Generate Plots & Stats", bootstyle="info", command=_gen_analysis).pack(side=LEFT, padx=(0, 10))
         ttk.Button(card4, text="🌐 HTML Report", bootstyle="warning", command=_gen_report).pack(side=LEFT, padx=(0, 10))
         ttk.Checkbutton(card4, text="🔍 Verbose Mode (Detailed Calculation Trace per Star)", variable=self.verbose_var, bootstyle="round-toggle").pack(side=LEFT, padx=15)
 
