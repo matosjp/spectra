@@ -38,6 +38,7 @@ from sklearn.neighbors import KNeighborsRegressor
 
 import matplotlib.pyplot as plt
 import os
+import webbrowser
 import missingno as msno
 from ttkbootstrap.widgets import ToastNotification   
 from statsmodels.graphics.tsaplots import plot_acf
