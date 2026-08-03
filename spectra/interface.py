@@ -820,21 +820,7 @@ class Sidebar(ttk.Frame):
         f_btns = ttk.Frame(card2)
         f_btns.pack(fill=X)
 
-        ttk.Button(f_btns, text="📁 Input Table", bootstyle="info-outline", command=open_table).pack(side=LEFT, padx=(0, 10))
-
-        def verbose_on():
-            self.save_var.set(1)
-            btn_verb.configure(text="Verbose ON", bootstyle="secondary")
-            btn_verb.configure(command=verbose_off)
-
-        def verbose_off():
-            self.save_var.set(0)
-            btn_verb.configure(text="Verbose OFF", bootstyle="secondary-outline")
-            btn_verb.configure(command=verbose_on)
-
-        btn_verb = ttk.Button(f_btns, text="Verbose OFF", bootstyle="secondary-outline", command=verbose_on)
-        btn_verb.pack(side=LEFT, padx=(0, 10))
-
+        ttk.Checkbutton(f_btns, text="🔍 Verbose Mode", variable=self.save_var, onvalue=1, offvalue=0, bootstyle="round-toggle").pack(side=LEFT, padx=(0, 15))
         ttk.Button(f_btns, text="⭐ Locate Stars", bootstyle="primary", command=self.locate_stars).pack(side=LEFT, padx=(0, 10))
 
         # Card 3: Results
@@ -1248,16 +1234,22 @@ class Sidebar(ttk.Frame):
         lbl_sub = ttk.Label(header_frame, text="Multi-band Photometric Derivation, Spectroscopic EW Classification & ML Goodness-of-Fit Modeling", font=("Segoe UI", 9, "italic"), bootstyle="secondary")
         lbl_sub.pack(anchor="w")
 
-        # Card 1: Photometric Estimation
-        card1 = ttk.Labelframe(container, text=" 1. Photometric Parameter Estimation (Multi-Band Photometry) ", padding=15)
+        # Card 1: Feature Analysis & Configuration
+        card1 = ttk.Labelframe(container, text=" 1. Feature Analysis & Data Configuration ", padding=15)
         card1.pack(fill=X, pady=(0, 15))
 
         f_av = ttk.Frame(card1)
-        f_av.pack(fill=X, pady=(0, 10))
-        ttk.Label(f_av, text="Interstellar Extinction (Av mag):").pack(side=LEFT, padx=(0, 10))
+        f_av.pack(fill=X, pady=(0, 12))
+        ttk.Label(f_av, text="Interstellar Extinction (Av mag):", font=("Segoe UI", 10, "bold")).pack(side=LEFT, padx=(0, 10))
         self.av_entry = ttk.Entry(f_av, width=10)
         self.av_entry.insert(0, "0.0")
-        self.av_entry.pack(side=LEFT)
+        self.av_entry.pack(side=LEFT, padx=(0, 20))
+
+        ttk.Label(f_av, text="Target Parameters:", font=("Segoe UI", 10, "bold")).pack(side=LEFT, padx=(0, 8))
+        ttk.Label(f_av, text="Teff (K) | SpT | log g | T Tauri Class", font=("Segoe UI", 9, "italic"), bootstyle="secondary").pack(side=LEFT)
+
+        f_c1_btns = ttk.Frame(card1)
+        f_c1_btns.pack(fill=X)
 
         def _calc_phot():
             df = DataManager.get_dataset()
@@ -1272,12 +1264,6 @@ class Sidebar(ttk.Frame):
             except Exception as e:
                 messagebox.showerror("Photometric Estimation Error", str(e))
 
-        ttk.Button(card1, text="⚡ Calculate Photometric Parameters", bootstyle="primary", command=_calc_phot).pack(anchor="w")
-
-        # Card 2: Spectroscopic Feature & T Tauri Classification
-        card2 = ttk.Labelframe(container, text=" 2. Spectroscopic Feature & T Tauri Classification ", padding=15)
-        card2.pack(fill=X, pady=(0, 15))
-
         def _calc_spec():
             df = DataManager.get_dataset()
             if df is None:
@@ -1286,19 +1272,20 @@ class Sidebar(ttk.Frame):
             try:
                 res_df = estimate_spectroscopic_dataset(df)
                 DataManager.set_dataset(res_df)
-                ToastNotification("Primary Parameters", "Spectroscopic Teff & T Tauri classification completed!", duration=4000, bootstyle="info").show_toast()
+                ToastNotification("Primary Parameters", "Spectroscopic EWs & T Tauri classification completed!", duration=4000, bootstyle="info").show_toast()
             except Exception as e:
                 messagebox.showerror("Spectroscopic Estimation Error", str(e))
 
-        ttk.Button(card2, text="🔬 Process EWs & Classify T Tauri Stars", bootstyle="info", command=_calc_spec).pack(anchor="w")
+        ttk.Button(f_c1_btns, text="⚡ Calculate Photometric Parameters", bootstyle="primary", command=_calc_phot).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_c1_btns, text="🔬 Process EWs & Classify T Tauri Stars", bootstyle="info-outline", command=_calc_spec).pack(side=LEFT)
 
-        # Card 3: Machine Learning Model
-        card3 = ttk.Labelframe(container, text=" 3. Machine Learning Parameter Prediction ", padding=15)
-        card3.pack(fill=X, pady=(0, 15))
+        # Card 2: Model Training & Evaluation
+        card2 = ttk.Labelframe(container, text=" 2. Machine Learning Model Training & Evaluation ", padding=15)
+        card2.pack(fill=X, pady=(0, 15))
 
-        f_algo = ttk.Frame(card3)
-        f_algo.pack(fill=X, pady=(0, 10))
-        ttk.Label(f_algo, text="ML Algorithm:").pack(side=LEFT, padx=(0, 10))
+        f_algo = ttk.Frame(card2)
+        f_algo.pack(fill=X, pady=(0, 12))
+        ttk.Label(f_algo, text="ML Regressor Algorithm:", font=("Segoe UI", 10, "bold")).pack(side=LEFT, padx=(0, 10))
         self.ml_algo_var = tk.StringVar(value="RandomForest")
         combo_algo = ttk.Combobox(f_algo, textvariable=self.ml_algo_var, values=["RandomForest", "GradientBoosting", "SVR", "KNN"], width=18, state="readonly")
         combo_algo.pack(side=LEFT)
@@ -1331,11 +1318,14 @@ class Sidebar(ttk.Frame):
             except Exception as e:
                 messagebox.showerror("ML Prediction Error", str(e))
 
-        ttk.Button(card3, text="🤖 Predict Parameters with ML", bootstyle="secondary", command=_calc_ml).pack(anchor="w")
+        f_c2_btns = ttk.Frame(card2)
+        f_c2_btns.pack(fill=X)
+        ttk.Button(f_c2_btns, text="🔨 Build ML Model", bootstyle="primary", command=_calc_ml).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_c2_btns, text="📋 Model Report", bootstyle="info-outline", command=self.master.show_report).pack(side=LEFT)
 
-        # Card 4: Analysis Outputs & Reports
-        card4 = ttk.Labelframe(container, text=" 4. Analysis Outputs & Interactive HTML Report ", padding=15)
-        card4.pack(fill=X, pady=(0, 15))
+        # Card 3: Calculation & Outputs
+        card3 = ttk.Labelframe(container, text=" 3. Calculation & Outputs ", padding=15)
+        card3.pack(fill=X, pady=(0, 15))
 
         self.verbose_var = tk.BooleanVar(value=True)
 
@@ -1363,9 +1353,14 @@ class Sidebar(ttk.Frame):
             except Exception as e:
                 messagebox.showerror("Report Error", str(e))
 
-        ttk.Button(card4, text="📊 Generate Plots & Stats", bootstyle="info", command=_gen_analysis).pack(side=LEFT, padx=(0, 10))
-        ttk.Button(card4, text="🌐 HTML Report", bootstyle="warning", command=_gen_report).pack(side=LEFT, padx=(0, 10))
-        ttk.Checkbutton(card4, text="🔍 Verbose Mode (Detailed Calculation Trace per Star)", variable=self.verbose_var, bootstyle="round-toggle").pack(side=LEFT, padx=15)
+        f_c3_btns = ttk.Frame(card3)
+        f_c3_btns.pack(fill=X, pady=(0, 10))
+        ttk.Button(f_c3_btns, text="⚡ Derive All Parameters", bootstyle="primary", command=_calc_ml).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_c3_btns, text="📊 Show Table", bootstyle="info-outline", command=self.master.show_table).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_c3_btns, text="📊 Generate Plots & Stats", bootstyle="info", command=_gen_analysis).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(f_c3_btns, text="🌐 HTML Report", bootstyle="warning", command=_gen_report).pack(side=LEFT, padx=(0, 10))
+
+        ttk.Checkbutton(card3, text="🔍 Verbose Mode (Detailed Calculation Trace per Star)", variable=self.verbose_var, bootstyle="round-toggle").pack(anchor="w")
 
 
 class TopMenu(ttk.Frame):
