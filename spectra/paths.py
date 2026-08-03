@@ -19,6 +19,10 @@ OUTPUTS_DIR = os.path.join(PROJECT_ROOT, 'outputs')
 TABLES_DIR = os.path.join(OUTPUTS_DIR, 'tables')
 PLOTS_DIR = os.path.join(OUTPUTS_DIR, 'plots')
 ISOCFIT_DIR = os.path.join(OUTPUTS_DIR, 'isocfit_outputs')
+RML_DIR = os.path.join(OUTPUTS_DIR, 'rml_outputs')
+STATS_DIR = os.path.join(OUTPUTS_DIR, 'stats_outputs')
+SAMPLES_DIR = os.path.join(PROJECT_ROOT, 'samples')
+CACHE_DIR = os.path.join(PROJECT_ROOT, '.cache')
 
 # --- external data / config -------------------------------------------
 EXTERNAL_DIR = os.path.join(PROJECT_ROOT, 'external')

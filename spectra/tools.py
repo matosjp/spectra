@@ -47,8 +47,20 @@ import numpy as np
 import pandas as pd
 import madys
 
-from .StarLocalization import readiso
-from .paths import TABLES_DIR, PLOTS_DIR
+try:
+    from .StarLocalization import readiso
+except (ImportError, ValueError):
+    try:
+        from spectra.StarLocalization import readiso
+    except (ImportError, ModuleNotFoundError):
+        from StarLocalization import readiso
+try:
+    from .paths import TABLES_DIR, PLOTS_DIR
+except (ImportError, ValueError):
+    try:
+        from spectra.paths import TABLES_DIR, PLOTS_DIR
+    except (ImportError, ModuleNotFoundError):
+        from paths import TABLES_DIR, PLOTS_DIR
 
 
 class FilterValues:
@@ -1423,3 +1435,80 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
 
     webbrowser.open(f"file:///{output_filepath}")
     return output_filepath
+
+
+def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str = None) -> str:
+    """
+    Generates a standalone, dark-themed interactive HTML report for Primary Stellar Parameters
+    (Teff, Spectral Type, log g, Av, T Tauri classification) and opens it in the browser.
+    """
+    if output_filepath is None:
+        output_filepath = os.path.abspath(os.path.join(os.getcwd(), "outputs", "spectra_primary_params_report.html"))
+
+    rows_html = ""
+    for idx, row in df.iterrows():
+        spt = str(row.get('SpT_phot', row.get('SpT_ml', row.get('SpT', 'N/A'))))
+        teff = row.get('Teff_phot', row.get('Teff_ml', row.get('Teff', np.nan)))
+        teff_str = f"{float(teff):.1f} K" if not pd.isna(teff) else "N/A"
+        logg = row.get('logg_phot', row.get('logg_ml', row.get('logg', np.nan)))
+        logg_str = f"{float(logg):.2f}" if not pd.isna(logg) else "N/A"
+        ttauri = str(row.get('T_Tauri_Class', 'N/A'))
+
+        badge_cls = "badge-ctts" if "CTTS" in ttauri else ("badge-wtts" if "WTTS" in ttauri else "badge-field")
+        rows_html += f"""
+        <tr>
+            <td><strong>#{idx+1}</strong></td>
+            <td><span class="badge-spt">{spt}</span></td>
+            <td>{teff_str}</td>
+            <td>{logg_str}</td>
+            <td><span class="{badge_cls}">{ttauri}</span></td>
+        </tr>
+        """
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SPECTRA - Primary Stellar Parameters Report</title>
+    <style>
+        body {{ font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 30px; }}
+        .card {{ background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+        h1 {{ color: #38bdf8; margin-top: 0; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+        th, td {{ padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }}
+        th {{ background: #0f172a; color: #94a3b8; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }}
+        .badge-spt {{ background: #0284c7; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; }}
+        .badge-ctts {{ background: #e11d48; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; }}
+        .badge-wtts {{ background: #d97706; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; }}
+        .badge-field {{ background: #475569; color: white; padding: 4px 8px; border-radius: 6px; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⭐ SPECTRA - Primary Stellar Parameters Report</h1>
+        <p>Derived Effective Temperatures ($T_{{\\text{{eff}}}}$), Spectral Types, Surface Gravities ($\\log g$), and T Tauri Activity Classifications.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Star ID</th>
+                    <th>Spectral Type</th>
+                    <th>Teff (K)</th>
+                    <th>log g (dex)</th>
+                    <th>T Tauri Classification</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+"""
+
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+    with open(output_filepath, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    webbrowser.open(f"file:///{output_filepath}")
+    return output_filepath

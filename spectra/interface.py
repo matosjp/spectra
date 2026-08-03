@@ -44,23 +44,58 @@ import webbrowser
 import subprocess
 import madys
 
-from .state import DataManager
-from . import __version__
-from .tools import (
-    RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
-    get_available_madys_models, get_madys_model_metadata, find_mag_column,
-    generate_spectra_html_report
-)
+try:
+    from .state import DataManager
+    from . import __version__
+    from .tools import (
+        RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
+        get_available_madys_models, get_madys_model_metadata, find_mag_column,
+        generate_spectra_html_report, generate_primary_params_html_report
+    )
+    from .primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
+    from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
+    from .paths import (
+        PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
+        RML_DIR, STATS_DIR, SAMPLES_DIR, CACHE_DIR,
+        ensure_directories, THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
+        REQUIRED_MODELS, ISOCHRONE_MODELS_URL
+    )
+except (ImportError, ValueError):
+    try:
+        from spectra.state import DataManager
+        from spectra import __version__
+        from spectra.tools import (
+            RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
+            get_available_madys_models, get_madys_model_metadata, find_mag_column,
+            generate_spectra_html_report, generate_primary_params_html_report
+        )
+        from spectra.primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
+        from spectra.widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
+        from spectra.paths import (
+            PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
+            RML_DIR, STATS_DIR, SAMPLES_DIR, CACHE_DIR,
+            ensure_directories, THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
+            REQUIRED_MODELS, ISOCHRONE_MODELS_URL
+        )
+    except (ImportError, ModuleNotFoundError):
+        from state import DataManager
+        from tools import (
+            RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
+            get_available_madys_models, get_madys_model_metadata, find_mag_column,
+            generate_spectra_html_report, generate_primary_params_html_report
+        )
+        from primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
+        from widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
+        from paths import (
+            PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
+            RML_DIR, STATS_DIR, SAMPLES_DIR, CACHE_DIR,
+            ensure_directories, THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
+            REQUIRED_MODELS, ISOCHRONE_MODELS_URL
+        )
 
 # Global backward-compatibility wrapper for table_data
 def _get_table_data():
     return DataManager.get_dataset()
-from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
-from .paths import (
-    PROJECT_ROOT, OUTPUTS_DIR, TABLES_DIR, PLOTS_DIR, ISOCFIT_DIR,
-    THEMES_PATH, ICON_PATH, ISOCHRONE_MODELS_DIR, MODELS_FLAG_FILE,
-    REQUIRED_MODELS, ISOCHRONE_MODELS_URL,
-)
 
 # Kept for backwards compatibility with any code/notes referring to the old
 # names; all now point at the single source of truth in paths.py.
