@@ -506,15 +506,15 @@ class Sidebar(ttk.Frame):
         self.notebook.add(self.page0, text='Home', sticky="nsew")
         self.notebook.add(self.page1, text='Isochrone Fitting', sticky="nsew")
         self.notebook.add(self.page2, text='Mass-Magnitude Modeling', sticky="nsew")
-        # self.notebook.add(self.page3, text='Spectroscopic Parameters', sticky="nsew")
+        self.notebook.add(self.page3, text='⭐ Primary Parameters', sticky="nsew")
         self.notebook.add(self.page4, text='Mathematical Modeling', sticky="nsew")
-        #self.notebook.add(self.page5, text='Probability & Statistics', sticky="nsew")
 
         self.apply_styles()
 
         self.setup_home_ui(self.page0)
         self.setup_isocfit_ui(self.page1)
         self.setup_rml_ui(self.page2)
+        self.setup_primary_params_ui(self.page3)
         self.setup_modeling_ui(self.page4)
 
        #  self.setup_spectro_ui(self.page2)
@@ -1211,6 +1211,115 @@ class Sidebar(ttk.Frame):
             _task,
             _on_done,
         )
+
+    def setup_primary_params_ui(self, parent_frame):
+        container = ttk.Frame(parent_frame, padding=20)
+        container.pack(fill=BOTH, expand=True)
+
+        lbl_title = ttk.Label(container, text="⭐ Primary Stellar Parameters Determination (Teff, SpT, log g)", font=("Segoe UI", 12, "bold"))
+        lbl_title.pack(anchor="w", pady=(0, 15))
+
+        # Card 1: Photometric Estimation
+        card1 = ttk.Labelframe(container, text=" 1. Photometric Estimation (Multi-Band Photometry) ", padding=15)
+        card1.pack(fill=X, pady=(0, 15))
+
+        f_av = ttk.Frame(card1)
+        f_av.pack(fill=X, pady=(0, 10))
+        ttk.Label(f_av, text="Interstellar Extinction (Av mag):").pack(side=LEFT, padx=(0, 10))
+        self.av_entry = ttk.Entry(f_av, width=10)
+        self.av_entry.insert(0, "0.0")
+        self.av_entry.pack(side=LEFT)
+
+        def _calc_phot():
+            df = DataManager.get_dataset()
+            if df is None:
+                messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
+                return
+            try:
+                av = float(self.av_entry.get())
+                res_df = estimate_photometric_dataset(df, extinction_av=av)
+                DataManager.set_dataset(res_df)
+                ToastNotification("Primary Parameters", "Photometric Teff & SpT calculated successfully!", duration=4000, bootstyle="success").show_toast()
+            except Exception as e:
+                messagebox.showerror("Photometric Estimation Error", str(e))
+
+        ttk.Button(card1, text="⚡ Calculate Photometric Parameters", bootstyle="primary", command=_calc_phot).pack(anchor="w")
+
+        # Card 2: Spectroscopic Feature & T Tauri Classification
+        card2 = ttk.Labelframe(container, text=" 2. Spectroscopic Feature & T Tauri Classification ", padding=15)
+        card2.pack(fill=X, pady=(0, 15))
+
+        def _calc_spec():
+            df = DataManager.get_dataset()
+            if df is None:
+                messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
+                return
+            try:
+                res_df = estimate_spectroscopic_dataset(df)
+                DataManager.set_dataset(res_df)
+                ToastNotification("Primary Parameters", "Spectroscopic Teff & T Tauri classification completed!", duration=4000, bootstyle="success").show_toast()
+            except Exception as e:
+                messagebox.showerror("Spectroscopic Estimation Error", str(e))
+
+        ttk.Button(card2, text="🔬 Process EWs & Classify T Tauri Stars", bootstyle="info", command=_calc_spec).pack(anchor="w")
+
+        # Card 3: Machine Learning Model
+        card3 = ttk.Labelframe(container, text=" 3. Machine Learning Parameter Prediction ", padding=15)
+        card3.pack(fill=X, pady=(0, 15))
+
+        f_algo = ttk.Frame(card3)
+        f_algo.pack(fill=X, pady=(0, 10))
+        ttk.Label(f_algo, text="ML Algorithm:").pack(side=LEFT, padx=(0, 10))
+        self.ml_algo_var = tk.StringVar(value="RandomForest")
+        combo_algo = ttk.Combobox(f_algo, textvariable=self.ml_algo_var, values=["RandomForest", "GradientBoosting", "SVR", "KNN"], width=18, state="readonly")
+        combo_algo.pack(side=LEFT)
+
+        def _calc_ml():
+            df = DataManager.get_dataset()
+            if df is None:
+                messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
+                return
+            try:
+                engine = PrimaryParameterMLEngine(algorithm=self.ml_algo_var.get())
+                engine.train_on_calibrations()
+                out_df = df.copy()
+                teff_ml, spt_ml, logg_ml = [], [], []
+                for _, r in df.iterrows():
+                    colors = {}
+                    if 'BPmag' in df.columns and 'RPmag' in df.columns:
+                        colors['BP-RP'] = r['BPmag'] - r['RPmag']
+                    elif 'BP' in df.columns and 'RP' in df.columns:
+                        colors['BP-RP'] = r['BP'] - r['RP']
+                    pred = engine.predict_star(colors)
+                    teff_ml.append(pred['Teff_ml'])
+                    spt_ml.append(pred['SpT_ml'])
+                    logg_ml.append(pred['logg_ml'])
+                out_df['Teff_ml'] = teff_ml
+                out_df['SpT_ml'] = spt_ml
+                out_df['logg_ml'] = logg_ml
+                DataManager.set_dataset(out_df)
+                ToastNotification("Primary Parameters", f"ML ({self.ml_algo_var.get()}) prediction completed!", duration=4000, bootstyle="success").show_toast()
+            except Exception as e:
+                messagebox.showerror("ML Prediction Error", str(e))
+
+        ttk.Button(card3, text="🤖 Predict Parameters with ML", bootstyle="secondary", command=_calc_ml).pack(anchor="w")
+
+        # Card 4: Export & Report
+        card4 = ttk.Labelframe(container, text=" 4. Export & Interactive HTML Report ", padding=15)
+        card4.pack(fill=X, pady=(0, 15))
+
+        def _gen_report():
+            df = DataManager.get_dataset()
+            if df is None:
+                messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
+                return
+            try:
+                out_path = generate_primary_params_html_report(df)
+                ToastNotification("Primary Parameters Report", f"HTML Report generated: {os.path.basename(out_path)}", duration=4000, bootstyle="success").show_toast()
+            except Exception as e:
+                messagebox.showerror("Report Error", str(e))
+
+        ttk.Button(card4, text="🌐 HTML Report", bootstyle="warning-outline", command=_gen_report).pack(side=LEFT, padx=(0, 10))
 
 
 class TopMenu(ttk.Frame):
