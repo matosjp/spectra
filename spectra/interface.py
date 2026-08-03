@@ -1305,8 +1305,21 @@ class Sidebar(ttk.Frame):
         ttk.Button(card3, text="🤖 Predict Parameters with ML", bootstyle="secondary", command=_calc_ml).pack(anchor="w")
 
         # Card 4: Export & Report
-        card4 = ttk.Labelframe(container, text=" 4. Export & Interactive HTML Report ", padding=15)
+        card4 = ttk.Labelframe(container, text=" 4. Analysis Outputs & Interactive HTML Report ", padding=15)
         card4.pack(fill=X, pady=(0, 15))
+
+        self.verbose_var = tk.BooleanVar(value=True)
+
+        def _gen_analysis():
+            df = DataManager.get_dataset()
+            if df is None:
+                messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
+                return
+            try:
+                res = generate_primary_params_analysis(df)
+                ToastNotification("Analysis Generated", "Analysis plots & summary CSV generated in outputs/!", duration=4000, bootstyle="info").show_toast()
+            except Exception as e:
+                messagebox.showerror("Analysis Error", str(e))
 
         def _gen_report():
             df = DataManager.get_dataset()
@@ -1314,12 +1327,16 @@ class Sidebar(ttk.Frame):
                 messagebox.showwarning("Primary Parameters", "Please load a dataset first!")
                 return
             try:
-                out_path = generate_primary_params_html_report(df)
-                ToastNotification("Primary Parameters Report", f"HTML Report generated: {os.path.basename(out_path)}", duration=4000, bootstyle="success").show_toast()
+                is_verbose = self.verbose_var.get()
+                out_path = generate_primary_params_html_report(df, verbose=is_verbose)
+                mode_str = "Verbose Detailed" if is_verbose else "Summary"
+                ToastNotification("Primary Parameters Report", f"HTML ({mode_str}) Report generated: {os.path.basename(out_path)}", duration=4000, bootstyle="success").show_toast()
             except Exception as e:
                 messagebox.showerror("Report Error", str(e))
 
-        ttk.Button(card4, text="🌐 HTML Report", bootstyle="warning-outline", command=_gen_report).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(card4, text="📊 Analysis Plots & Stats", bootstyle="info", command=_gen_analysis).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(card4, text="🌐 HTML Report", bootstyle="warning", command=_gen_report).pack(side=LEFT, padx=(0, 10))
+        ttk.Checkbutton(card4, text="🔍 Verbose Mode (Detailed Calculation Trace per Star)", variable=self.verbose_var, bootstyle="round-toggle").pack(side=LEFT, padx=15)
 
 
 class TopMenu(ttk.Frame):

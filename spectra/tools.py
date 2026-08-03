@@ -1438,14 +1438,146 @@ def generate_spectra_html_report(report_df, model_name, filter_name, age_myr, ma
     return output_filepath
 
 
-def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str = None) -> str:
+import base64
+import io
+
+def generate_primary_params_analysis(df: pd.DataFrame) -> dict:
+    """
+    Generates analysis outputs for primary parameters:
+    - Outputs summary statistics table to outputs/tables/primary_params_summary_stats.csv
+    - Creates 3 dark-themed plots in outputs/plots/ (Teff distribution, CMD, T Tauri distribution)
+    - Returns a dict containing paths and base64 strings of the generated plots.
+    """
+    plots_b64 = {}
+    
+    # 1. Summary Statistics Table
+    num_cols = [c for c in ['Teff_phot', 'Teff_ml', 'logg_phot', 'logg_ml', 'EW_Halpha', 'EW_Li', 'Av_used'] if c in df.columns]
+    if num_cols:
+        stats_df = df[num_cols].describe().T
+        stats_path = os.path.abspath(os.path.join(PLOTS_DIR, "..", "tables", "primary_params_summary_stats.csv"))
+        os.makedirs(os.path.dirname(stats_path), exist_ok=True)
+        stats_df.to_csv(stats_path)
+    else:
+        stats_df = pd.DataFrame()
+
+    # Dark Theme styling for matplotlib
+    plt.style.use('dark_background')
+    
+    # Plot 1: Teff Distribution
+    fig1, ax1 = plt.subplots(figsize=(7, 4.5), facecolor='#1e293b')
+    ax1.set_facecolor('#0f172a')
+    teff_vals = df['Teff_phot'].dropna() if 'Teff_phot' in df.columns else (df['Teff_ml'].dropna() if 'Teff_ml' in df.columns else pd.Series())
+    if not teff_vals.empty:
+        sns.histplot(teff_vals, kde=True, ax=ax1, color='#38bdf8', bins=12, edgecolor='#0284c7')
+        ax1.set_title(r'Effective Temperature ($T_{\mathrm{eff}}$) Distribution', color='#f8fafc', fontsize=12, fontweight='bold', pad=12)
+        ax1.set_xlabel(r'$T_{\mathrm{eff}}$ (K)', color='#94a3b8')
+        ax1.set_ylabel('Star Count', color='#94a3b8')
+        ax1.grid(True, color='#334155', linestyle='--', alpha=0.5)
+    plots_b64['teff_dist'] = _fig_to_base64(fig1)
+
+    # Plot 2: Color-Magnitude Diagram (CMD) / Color vs Teff
+    fig2, ax2 = plt.subplots(figsize=(7, 4.5), facecolor='#1e293b')
+    ax2.set_facecolor('#0f172a')
+    
+    bp_rp = None
+    if 'BPmag' in df.columns and 'RPmag' in df.columns:
+        bp_rp = df['BPmag'] - df['RPmag']
+    elif 'BP' in df.columns and 'RP' in df.columns:
+        bp_rp = df['BP'] - df['RP']
+
+    g_mag = df['Gmag'] if 'Gmag' in df.columns else (df['G'] if 'G' in df.columns else None)
+
+    if bp_rp is not None and g_mag is not None:
+        ax2.scatter(bp_rp, g_mag, c=teff_vals if not teff_vals.empty else '#38bdf8', cmap='coolwarm_r', s=70, edgecolors='#f8fafc', linewidth=0.8)
+        ax2.set_title('Gaia Color-Magnitude Diagram (BP-RP vs G)', color='#f8fafc', fontsize=12, fontweight='bold', pad=12)
+        ax2.set_xlabel('BP - RP (mag)', color='#94a3b8')
+        ax2.set_ylabel('G (mag)', color='#94a3b8')
+        ax2.invert_yaxis()
+        ax2.grid(True, color='#334155', linestyle='--', alpha=0.5)
+    else:
+        ax2.text(0.5, 0.5, 'Gaia Photometry (BP/RP/G) Not Provided', color='#94a3b8', ha='center', va='center')
+    plots_b64['cmd_plot'] = _fig_to_base64(fig2)
+
+    # Plot 3: T Tauri Activity Distribution
+    fig3, ax3 = plt.subplots(figsize=(6, 4.5), facecolor='#1e293b')
+    ax3.set_facecolor('#0f172a')
+    if 'T_Tauri_Class' in df.columns:
+        counts = df['T_Tauri_Class'].value_counts()
+        colors_map = {'CTTS (Classical T Tauri)': '#e11d48', 'WTTS (Weak-lined T Tauri)': '#d97706', 'Field Star / Non-Accreting': '#475569'}
+        bar_colors = [colors_map.get(k, '#0284c7') for k in counts.index]
+        ax3.bar(counts.index, counts.values, color=bar_colors, edgecolor='#f8fafc', width=0.5)
+        ax3.set_title('T Tauri Star Activity Classification', color='#f8fafc', fontsize=12, fontweight='bold', pad=12)
+        ax3.set_ylabel('Number of Stars', color='#94a3b8')
+        ax3.tick_params(axis='x', rotation=15, colors='#f8fafc')
+        ax3.grid(True, axis='y', color='#334155', linestyle='--', alpha=0.5)
+    else:
+        ax3.text(0.5, 0.5, 'T Tauri Classification Not Run Yet', color='#94a3b8', ha='center', va='center')
+    plots_b64['ttauri_dist'] = _fig_to_base64(fig3)
+
+    return {'plots_b64': plots_b64, 'stats_df': stats_df}
+
+
+def _fig_to_base64(fig) -> str:
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=140, bbox_inches='tight', facecolor='#1e293b')
+    buf.seek(0)
+    img_b64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close(fig)
+    return f"data:image/png;base64,{img_b64}"
+
+
+def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, output_filepath: str = None) -> str:
     """
     Generates a standalone, dark-themed interactive HTML report for Primary Stellar Parameters
-    (Teff, Spectral Type, log g, Av, T Tauri classification) and opens it in the browser.
+    (Teff, Spectral Type, log g, Av, T Tauri classification) with analysis plots and optional verbose step-by-step breakdown.
     """
     if output_filepath is None:
         output_filepath = os.path.abspath(os.path.join(os.getcwd(), "outputs", "spectra_primary_params_report.html"))
 
+    # Generate analysis plots & summary stats
+    analysis_res = generate_primary_params_analysis(df)
+    plots = analysis_res['plots_b64']
+    stats_df = analysis_res['stats_df']
+
+    # Summary Statistics HTML Table
+    stats_html = ""
+    if not stats_df.empty:
+        stats_rows = ""
+        for col, r in stats_df.iterrows():
+            stats_rows += f"""
+            <tr>
+                <td><strong>{col}</strong></td>
+                <td>{r['count']:.0f}</td>
+                <td>{r['mean']:.2f}</td>
+                <td>{r['std']:.2f}</td>
+                <td>{r['min']:.2f}</td>
+                <td>{r['50%']:.2f}</td>
+                <td>{r['max']:.2f}</td>
+            </tr>
+            """
+        stats_html = f"""
+        <div class="card">
+            <h2>📊 Statistical Summary Across Catalog</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Count</th>
+                        <th>Mean</th>
+                        <th>Std Dev</th>
+                        <th>Min</th>
+                        <th>Median (50%)</th>
+                        <th>Max</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {stats_rows}
+                </tbody>
+            </table>
+        </div>
+        """
+
+    # Catalog Table Rows
     rows_html = ""
     for idx, row in df.iterrows():
         spt = str(row.get('SpT_phot', row.get('SpT_ml', row.get('SpT', 'N/A'))))
@@ -1459,11 +1591,67 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
         rows_html += f"""
         <tr>
             <td><strong>#{idx+1}</strong></td>
+            <td><strong>{row.get('Star_ID', f'Star_{idx+1}')}</strong></td>
             <td><span class="badge-spt">{spt}</span></td>
             <td>{teff_str}</td>
             <td>{logg_str}</td>
             <td><span class="{badge_cls}">{ttauri}</span></td>
         </tr>
+        """
+
+    # Per-Star Verbose Breakdown (If Verbose Mode is ON)
+    verbose_html = ""
+    if verbose:
+        verbose_cards = ""
+        for idx, row in df.iterrows():
+            star_id = row.get('Star_ID', f'Star #{idx+1}')
+            spt_phot = row.get('SpT_phot', 'N/A')
+            teff_phot = row.get('Teff_phot', 'N/A')
+            logg_phot = row.get('logg_phot', 'N/A')
+            av_used = row.get('Av_used', 0.0)
+            
+            ew_ha = row.get('EW_Halpha', 'N/A')
+            ew_li = row.get('EW_Li', 'N/A')
+            ttauri = row.get('T_Tauri_Class', 'N/A')
+            pms_ind = row.get('PMS_Youth_Indicator', 'N/A')
+
+            # Extract color breakdown
+            bp_rp_val = (row['BPmag'] - row['RPmag']) if ('BPmag' in row and 'RPmag' in row) else 'N/A'
+            bp_rp_str = f"{float(bp_rp_val):.3f}" if isinstance(bp_rp_val, (int, float)) else 'N/A'
+            
+            verbose_cards += f"""
+            <div class="card verbose-card">
+                <h3>⭐ Calculation Trace for {star_id}</h3>
+                <div class="grid-2">
+                    <div>
+                        <p><strong>1. Photometric Derivation & Dereddening:</strong></p>
+                        <ul>
+                            <li>Interstellar Extinction ($A_V$): <code>{av_used} mag</code></li>
+                            <li>Observed Gaia Color ($BP - RP$): <code>{bp_rp_str} mag</code></li>
+                            <li>Multi-Band Weighted $T_{{\\text{{eff}}}}$: <code>{teff_phot} K</code></li>
+                            <li>Derived Spectral Type: <span class="badge-spt">{spt_phot}</span></li>
+                            <li>Surface Gravity ($\log g$): <code>{logg_phot} dex</code></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>2. Spectroscopic Feature Rationale:</strong></p>
+                        <ul>
+                            <li>Equivalent Width $H\\alpha$: <code>{ew_ha} Å</code></li>
+                            <li>Equivalent Width $Li\,\\text{{I}}$: <code>{ew_li} Å</code></li>
+                            <li>PMS Youth Indicator: <code>{pms_ind}</code></li>
+                            <li>Activity Classification: <strong>{ttauri}</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            """
+
+        verbose_html = f"""
+        <div class="card">
+            <h2>🔍 Verbose Step-by-Step Per-Star Calculation Trace</h2>
+            <p>Detailed breakdown of intermediate photometric color dereddening, feature extraction, and classification rationale for each star.</p>
+            {verbose_cards}
+        </div>
         """
 
     html = f"""<!DOCTYPE html>
@@ -1475,6 +1663,9 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
         body {{ font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 30px; }}
         .card {{ background: #1e293b; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
         h1 {{ color: #38bdf8; margin-top: 0; }}
+        h2 {{ color: #a855f7; margin-top: 0; }}
+        h3 {{ color: #f43f5e; margin-top: 0; }}
+        p {{ color: #cbd5e1; line-height: 1.6; }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
         th, td {{ padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }}
         th {{ background: #0f172a; color: #94a3b8; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }}
@@ -1482,15 +1673,46 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
         .badge-ctts {{ background: #e11d48; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; }}
         .badge-wtts {{ background: #d97706; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; }}
         .badge-field {{ background: #475569; color: white; padding: 4px 8px; border-radius: 6px; }}
+        .grid-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+        .grid-3 {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }}
+        .img-card {{ text-align: center; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; }}
+        .img-card img {{ width: 100%; border-radius: 6px; }}
+        code {{ background: #0f172a; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; }}
+        .verbose-card {{ border-left: 4px solid #a855f7; margin-top: 16px; }}
     </style>
 </head>
 <body>
     <div class="card">
         <h1>⭐ SPECTRA - Primary Stellar Parameters Report</h1>
         <p>Derived Effective Temperatures (<i>T</i><sub>eff</sub>), Spectral Types, Surface Gravities (log <i>g</i>), and T Tauri Activity Classifications.</p>
+    </div>
+
+    <!-- Plots Section -->
+    <div class="card">
+        <h2>📈 Catalog Analysis Plots</h2>
+        <div class="grid-3">
+            <div class="img-card">
+                <img src="{plots.get('teff_dist', '')}" alt="Teff Distribution">
+            </div>
+            <div class="img-card">
+                <img src="{plots.get('cmd_plot', '')}" alt="Color-Magnitude Diagram">
+            </div>
+            <div class="img-card">
+                <img src="{plots.get('ttauri_dist', '')}" alt="T Tauri Activity">
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistical Summary -->
+    {stats_html}
+
+    <!-- Main Catalog Table -->
+    <div class="card">
+        <h2>⭐ Star Catalog Results</h2>
         <table>
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Star ID</th>
                     <th>Spectral Type</th>
                     <th><i>T</i><sub>eff</sub> (K)</th>
@@ -1503,6 +1725,9 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
             </tbody>
         </table>
     </div>
+
+    <!-- Verbose Trace Section (If Enabled) -->
+    {verbose_html}
 </body>
 </html>
 """
@@ -1512,4 +1737,5 @@ def generate_primary_params_html_report(df: pd.DataFrame, output_filepath: str =
         f.write(html)
 
     webbrowser.open(f"file:///{output_filepath}")
-    return output_filepath
+    return output_filepath
+
