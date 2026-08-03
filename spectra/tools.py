@@ -1626,18 +1626,18 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
                     <div>
                         <p><strong>1. Photometric Derivation & Dereddening:</strong></p>
                         <ul>
-                            <li>Interstellar Extinction ($A_V$): <code>{av_used} mag</code></li>
-                            <li>Observed Gaia Color ($BP - RP$): <code>{bp_rp_str} mag</code></li>
-                            <li>Multi-Band Weighted $T_{{\\text{{eff}}}}$: <code>{teff_phot} K</code></li>
+                            <li>Interstellar Extinction (<i>A</i><sub>V</sub>): <code>{av_used} mag</code></li>
+                            <li>Observed Gaia Color (<i>BP</i> - <i>RP</i>): <code>{bp_rp_str} mag</code></li>
+                            <li>Multi-Band Weighted <i>T</i><sub>eff</sub>: <code>{teff_phot} K</code></li>
                             <li>Derived Spectral Type: <span class="badge-spt">{spt_phot}</span></li>
-                            <li>Surface Gravity ($\log g$): <code>{logg_phot} dex</code></li>
+                            <li>Surface Gravity (log <i>g</i>): <code>{logg_phot} dex</code></li>
                         </ul>
                     </div>
                     <div>
                         <p><strong>2. Spectroscopic Feature Rationale:</strong></p>
                         <ul>
-                            <li>Equivalent Width $H\\alpha$: <code>{ew_ha} Å</code></li>
-                            <li>Equivalent Width $Li\,\\text{{I}}$: <code>{ew_li} Å</code></li>
+                            <li>Equivalent Width Hα: <code>{ew_ha} Å</code></li>
+                            <li>Equivalent Width Li I: <code>{ew_li} Å</code></li>
                             <li>PMS Youth Indicator: <code>{pms_ind}</code></li>
                             <li>Activity Classification: <strong>{ttauri}</strong></li>
                         </ul>
