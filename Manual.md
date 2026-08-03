@@ -1,4 +1,4 @@
-# User Manual — S.P.E.C.T.R.A. (v1.1.0)
+# User Manual — S.P.E.C.T.R.A. (v1.2.0)
 
 This manual provides detailed instructions for using the **S.P.E.C.T.R.A.** graphical user interface for stellar parameter estimation, 2D Bayesian Isochrone Fitting, machine learning mass–magnitude modeling, and exploratory data analysis.
 
@@ -101,7 +101,7 @@ The interface consists of three primary regions:
 
 ## 5. Home Tab
 
-Displays software description, version status (**v1.1.0**), author credits, and quick links to documentation and program updates.
+Displays software description, version status (**v1.2.0**), author credits, and quick links to documentation and program updates.
 
 ---
 

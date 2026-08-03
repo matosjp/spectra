@@ -86,7 +86,7 @@ spectra-root/
 ├── generate_test_dataset.py# Synthetic test dataset generator script
 ├── example_primary_params_dataset.csv # Example test dataset
 ├── spectra/                # Core Python package
-│   ├── __init__.py         # Package metadata and version definition (v1.1.0)
+│   ├── __init__.py         # Package metadata and version definition (v1.2.0)
 │   ├── state.py            # DataManager: Thread-safe dataset state management
 │   ├── bayesian.py         # 2D Bayesian Isochrone Parameter Estimator
 │   ├── StarLocalization.py # Isochrone table loader with caching & HRD plotting

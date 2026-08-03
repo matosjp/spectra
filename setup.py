@@ -27,7 +27,7 @@ with open('README.md', 'r', encoding='utf-8') as fp:
 
 setup(
     name='S.P.E.C.T.R.A.',
-    version='1.1.0',
+    version='1.2.0',
     description='Tools for derive stellar parameters, focused on stellar mass.',
     long_description=long_description,
     long_description_content_type='text/markdown',

@@ -6,5 +6,5 @@ Copyright (C) 2026 João Paulo Matos Dias Gomes, Maria Jaqueline Vasconcelos, Ad
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module=".*madys.*")
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __author__ = "João Paulo Matos Dias Gomes"
