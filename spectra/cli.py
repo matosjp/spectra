@@ -351,8 +351,43 @@ def main_cli():
         run_primary_cli(args)
     elif args.subcommand == "batch":
         run_batch_cli(args)
-    else:
-        parser.print_help()
+def interactive_cli_shell():
+    """
+    Launches an interactive REPL command-line shell (spectra -e).
+    """
+    print_flush("================================================================================")
+    print_flush("S.P.E.C.T.R.A. - Interactive Command Shell (v1.2.0)")
+    print_flush("Type 'help' for command syntax or 'exit' / 'quit' to exit shell mode.")
+    print_flush("================================================================================")
+
+    import shlex
+    while True:
+        try:
+            user_input = input("SPECTRA > ").strip()
+            if not user_input:
+                continue
+            if user_input.lower() in ["exit", "quit", "q"]:
+                print_flush("Exiting SPECTRA CLI shell. Goodbye!")
+                break
+            if user_input.lower() in ["gui", "app"]:
+                print_flush("Launching SPECTRA Graphical Interface...")
+                from .interface import App
+                app = App()
+                app.mainloop()
+                continue
+
+            args_list = shlex.split(user_input)
+            old_argv = sys.argv
+            try:
+                sys.argv = ["spectra"] + args_list
+                main_cli()
+            except SystemExit:
+                pass
+            finally:
+                sys.argv = old_argv
+        except (KeyboardInterrupt, EOFError):
+            print_flush("\nExiting SPECTRA CLI shell. Goodbye!")
+            break
 
 
 if __name__ == "__main__":

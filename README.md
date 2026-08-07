@@ -49,36 +49,36 @@ conda activate spectra
 
 ## Running the Application
 
-### Graphical User Interface (GUI Mode)
-Ensure your Conda environment is active before launching:
+### 1. Graphical User Interface (GUI Mode)
+Simply type `spectra` in your terminal (or run `python main.py`):
 
 ```bash
 conda activate spectra
-python main.py
+spectra  # Launches the graphical interface
 ```
 
-### Command-Line Interface (Text Mode & Batch Pipeline)
-S.P.E.C.T.R.A. can be executed headlessly from the terminal for automated batch processing across multiple open clusters:
+### 2. Interactive CLI Shell Mode (`spectra -e`)
+Similar to tools like VMD, typing `spectra -e` opens an interactive command shell:
 
-1. **2D Isochrone Fitting (`isocfit`)**:
 ```bash
-python main.py isocfit --input cluster_data.csv --model "BHAC15" --html
+spectra -e  # Opens the interactive SPECTRA > shell prompt
 ```
 
-2. **Mass-Magnitude Machine Learning (`rmm`)**:
-```bash
-python main.py rmm --input cluster_data.csv --model "bhac15" --filter "G" --age 100 --distance 136.2 --html
-```
+### 3. Headless CLI Subcommands & Batch Pipeline
+Execute automated cluster calculations directly from terminal scripts:
 
-3. **⭐ Primary Parameters Derivation (`primary`)**:
 ```bash
-python main.py primary --input cluster_data.csv --av 0.3 --distance 412 --html
-```
+# 2D Isochrone Fitting
+spectra isocfit --input cluster_data.csv --model "BHAC15" --html
 
-4. **Automated Batch Multi-Cluster Pipeline (`batch`)**:
-```bash
-# Process a folder of cluster CSV files
-python main.py batch --dir path/to/clusters/ --module isocfit --model "Siess 2000"
+# Mass-Magnitude Machine Learning
+spectra rmm --input cluster_data.csv --model "bhac15" --filter "G" --age 100 --distance 136.2 --html
+
+# Primary Parameters Derivation
+spectra primary --input cluster_data.csv --av 0.3 --distance 412 --html
+
+# Automated Multi-Cluster Batch Pipeline
+spectra batch --dir path/to/clusters/ --module isocfit --model "Siess 2000"
 
 # Or execute a multi-job JSON pipeline configuration
 python main.py batch --config batch_clusters_config.json

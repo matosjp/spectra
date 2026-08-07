@@ -50,10 +50,15 @@ setup(
         'madys',
         'gdown',
     ],
+    entry_points={
+        'console_scripts': [
+            'spectra = main:main_entry',
+        ],
+    },
     classifiers=[
         'Development Status :: 1 - Beta',
         'Topic :: Astronomy/Astrophysics',
-        'License :: [WHEN I GOT]',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3'
     ]
 )

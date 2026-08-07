@@ -24,13 +24,31 @@ import sys
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module=".*madys.*")
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        # Command-Line Text Mode (Headless / Batch Pipeline)
-        from spectra.cli import main_cli
-        main_cli()
-    else:
-        # Graphical User Interface (GUI) Mode
+
+def main_entry():
+    """
+    Main entry point for executable command 'spectra'.
+    Behavior:
+    - Calling `spectra` (or `spectra -g`) opens the Graphical User Interface (GUI).
+    - Calling `spectra -e` (or `spectra --cli`) launches the interactive CLI shell.
+    - Calling `spectra isocfit ...` runs direct headless CLI subcommands.
+    """
+    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] in ["-g", "--gui"]):
+        # Launch Graphical User Interface (GUI) Mode
         from spectra.interface import App
         app = App()
         app.mainloop()
+    elif len(sys.argv) == 2 and sys.argv[1] in ["-e", "--cli"]:
+        # Launch Interactive Command Shell (REPL Mode)
+        from spectra.cli import interactive_cli_shell
+        interactive_cli_shell()
+    else:
+        # Strip leading -e / --cli if user typed e.g. spectra -e isocfit ...
+        if sys.argv[1] in ["-e", "--cli"]:
+            sys.argv.pop(1)
+        from spectra.cli import main_cli
+        main_cli()
+
+
+if __name__ == "__main__":
+    main_entry()
