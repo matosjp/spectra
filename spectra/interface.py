@@ -47,6 +47,7 @@ import madys
 try:
     from .state import DataManager
     from . import __version__
+    from .StarLocalization import intpol, interp
     from .tools import (
         RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
         get_available_madys_models, get_madys_model_metadata, find_mag_column,
@@ -64,6 +65,7 @@ except (ImportError, ValueError):
     try:
         from spectra.state import DataManager
         from spectra import __version__
+        from spectra.StarLocalization import intpol, interp
         from spectra.tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
@@ -79,6 +81,7 @@ except (ImportError, ValueError):
         )
     except (ImportError, ModuleNotFoundError):
         from state import DataManager
+        from StarLocalization import intpol, interp
         from tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
@@ -1136,13 +1139,18 @@ class Sidebar(ttk.Frame):
 
         # Determina a origem das variáveis de entrada
         if has_manual_input:
-            Tinput = teff_input
-            Linput = logl_input
+            Tinput = float(teff_input)
+            Linput = float(logl_input)
             Nobjects = 1
             is_single_star = True
         elif isinstance(table_data, pd.DataFrame):
-            Tinput = table_data['Teff'].values
-            Linput = table_data['logL'].values
+            teff_col = next((col for col in ['Teff', 'teff', 'T_eff', 'TEFF', 't_eff'] if col in table_data.columns), None)
+            logl_col = next((col for col in ['logL', 'logl', 'log_L', 'LOGL', 'logL/L_sun'] if col in table_data.columns), None)
+            if not teff_col or not logl_col:
+                messagebox.showerror("Missing Columns", "Loaded dataset must contain 'Teff' and 'logL' columns.")
+                return
+            Tinput = table_data[teff_col].values
+            Linput = table_data[logl_col].values
             Nobjects = len(Tinput)
             is_single_star = False
         else:
@@ -1160,7 +1168,7 @@ class Sidebar(ttk.Frame):
                     if cancel_event.is_set():
                         raise InterruptedError("Process cancelled by the user.")
 
-                    if np.isfinite(Linput[i]) is not None:
+                    if np.isfinite(Linput[i]) and np.isfinite(Tinput[i]):
                         res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, save_var)
                         ff.append(i)
                         primarydataset.append(res)
@@ -1204,9 +1212,12 @@ class Sidebar(ttk.Frame):
                         duration=4000,
                         bootstyle='warning'
                     ).show_toast()
+                else:
+                    messagebox.showerror("Localization Error", f"An error occurred during star localization:\n{error}")
                 return
 
             table_data = result
+            DataManager.set_dataset(result)
 
             ToastNotification(
                 title='Star Localization',
