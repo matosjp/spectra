@@ -938,6 +938,9 @@ class Sidebar(ttk.Frame):
         card3 = ttk.Labelframe(container, text=" 3. Results & Visualization ", padding=15)
         card3.pack(fill=X, pady=(0, 15))
 
+        self.lbl_iso_age_summary = ttk.Label(card3, text="🌌 Estimated Cluster Mean Age: -- Myr | Median Age: -- Myr", font=("Segoe UI", 10, "bold"), bootstyle="info")
+        self.lbl_iso_age_summary.pack(anchor="w", pady=(0, 10))
+
         f_res = ttk.Frame(card3)
         f_res.pack(fill=X)
 
@@ -1330,10 +1333,28 @@ class Sidebar(ttk.Frame):
             table_data = result
             DataManager.set_dataset(result)
 
+            # Compute and update Cluster Mean Age output
+            mean_age_str = ""
+            if 'Age_calc (Myr)' in result.columns:
+                valid_ages = result['Age_calc (Myr)'].dropna()
+                valid_ages = valid_ages[np.isfinite(valid_ages)]
+                if len(valid_ages) > 0:
+                    mean_age = np.mean(valid_ages)
+                    std_age = np.std(valid_ages)
+                    median_age = np.median(valid_ages)
+                    sem_age = std_age / np.sqrt(len(valid_ages)) if len(valid_ages) > 1 else 0.0
+
+                    summary_text = (f"🌌 Estimated Cluster Mean Age: {mean_age:.2f} ± {sem_age:.2f} Myr "
+                                    f"(std = {std_age:.2f} Myr) | Median Age: {median_age:.2f} Myr ({len(valid_ages)} stars)")
+                    if hasattr(self, 'lbl_iso_age_summary'):
+                        self.lbl_iso_age_summary.config(text=summary_text, bootstyle="success")
+
+                    mean_age_str = f" Mean Cluster Age: {mean_age:.2f} ± {sem_age:.2f} Myr."
+
             ToastNotification(
                 title='Star Localization',
-                message="Stars completely localized on HR-Diagram.",
-                duration=5000,
+                message=f"Stars completely localized on HR-Diagram.{mean_age_str}",
+                duration=6000,
                 bootstyle='dark'
             ).show_toast()
 
