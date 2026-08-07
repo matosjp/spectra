@@ -22,12 +22,25 @@ isocs = ISOCHRONE_MODELS_DIR + os.sep
 
 _ISO_CACHE = {}
 
+def normalize_model_name(model):
+    if not model:
+        return "Siess 2000"
+    m_str = str(model).lower()
+    if "siess" in m_str:
+        return "Siess 2000"
+    elif "bhac" in m_str or "bahc" in m_str:
+        return "BHAC15"
+    return str(model)
+
+
 def readiso(model):
     """
     Reads and parses isochrone grid tables for a specified model ('Siess 2000' or 'BHAC15').
     Utilizes in-memory caching to optimize performance on repeated calls.
     """
     global Ntabage, Nlinesa, Ncoluma, ageiso, tablenames, sptype, it, il, ia, im, at, al, am, evoltracks, isoctables
+
+    model = normalize_model_name(model)
 
     if model in _ISO_CACHE:
         return _ISO_CACHE[model].copy()
@@ -102,6 +115,7 @@ def readiso(model):
 
 
 def tablestr(model):
+    model = normalize_model_name(model)
     if model == "Siess 2000":
         Ntables = 15
     else:
@@ -317,6 +331,7 @@ def interp(t1, l1, var, Nlines, alldataiso, save):
 
 def readtables(imass, model):
     global colunas, Ncolumn, itot
+    model = normalize_model_name(model)
     Nlines = 0
     if model == "Siess 2000":
         Ncolumn = 11  # Number of columns of each table
@@ -363,9 +378,8 @@ def readtables(imass, model):
 def intpol(model):
     global nearage, nearmasst, nAge, nMass, y, mass, imass
 
-    Ntables = 14
-
-    mass, imass = tablestr(Ntables)
+    model = normalize_model_name(model)
+    mass, imass = tablestr(model)
 
     # Read isochrones data
     alldataiso = readiso(model)
@@ -377,6 +391,7 @@ def intpol(model):
 
 
 def plot_HRD(result, model):
+    model = normalize_model_name(model)
     var, Nlines, alldataiso = intpol(model)
 
     colors = [cm.Purples(i) for i in np.linspace(0.5, 1, len(imass))]
