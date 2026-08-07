@@ -1863,4 +1863,146 @@ def generate_primary_params_html_report(df: pd.DataFrame, verbose: bool = True, 
 
     webbrowser.open(f"file:///{output_filepath}")
     return output_filepath
+
+
+def generate_interactive_html_table(df, title="Final Results Table", output_dir=None):
+    """
+    Generates a responsive interactive HTML data table using DataTables with real-time search,
+    column sorting, pagination, and multi-format export capabilities.
+    """
+    if output_dir is None:
+        output_dir = TABLES_DIR
+
+    os.makedirs(output_dir, exist_ok=True)
+    output_filepath = os.path.join(output_dir, "interactive_data_table.html")
+
+    df_clean = df.copy()
+    for col in df_clean.select_dtypes(include=[np.number]).columns:
+        df_clean[col] = df_clean[col].apply(lambda x: round(x, 4) if pd.notnull(x) else "")
+
+    table_html = df_clean.to_html(table_id="spectra_table", index=False, classes="display compact stripe hover")
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>S.P.E.C.T.R.A. - {title}</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <style>
+        body {{
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 25px;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }}
+        .header-card {{
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }}
+        h2 {{ color: #38bdf8; margin: 0 0 8px 0; font-size: 1.8rem; font-weight: 700; }}
+        .subtitle {{ color: #94a3b8; font-size: 0.95rem; margin: 0; }}
+        .table-card {{
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }}
+        table.dataTable {{
+            width: 100% !important;
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-collapse: collapse !important;
+            font-size: 0.9rem;
+        }}
+        table.dataTable thead th {{
+            background-color: #334155 !important;
+            color: #38bdf8 !important;
+            font-weight: 600;
+            padding: 12px 10px !important;
+            border-bottom: 2px solid #475569 !important;
+        }}
+        table.dataTable tbody tr {{
+            background-color: #1e293b !important;
+            color: #cbd5e1 !important;
+        }}
+        table.dataTable tbody tr.odd {{ background-color: #182234 !important; }}
+        table.dataTable tbody tr:hover {{
+            background-color: #334155 !important;
+            color: #ffffff !important;
+        }}
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {{
+            color: #94a3b8 !important;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }}
+        .dataTables_wrapper .dataTables_filter input {{
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin-left: 8px;
+        }}
+        .dataTables_wrapper .dataTables_length select {{
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }}
+        .dataTables_wrapper .dataTables_paginate .paginate_button {{
+            color: #f8fafc !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+        }}
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {{
+            background: #0284c7 !important;
+            color: #ffffff !important;
+            border: 1px solid #38bdf8 !important;
+        }}
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {{
+            background: #334155 !important;
+            color: #ffffff !important;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header-card">
+        <h2>📊 S.P.E.C.T.R.A. - {title}</h2>
+        <p class="subtitle">Interactive Data Table Viewer | {len(df)} rows × {len(df.columns)} columns | Search, sort, paginate & export</p>
+    </div>
+    <div class="table-card">
+        {table_html}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {{
+            $('#spectra_table').DataTable({{
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                "order": [],
+                "scrollX": true
+            }});
+        }});
+    </script>
+</body>
+</html>
+"""
+
+    with open(output_filepath, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    webbrowser.open(f"file:///{output_filepath}")
+    return output_filepath
+
 

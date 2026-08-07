@@ -51,7 +51,8 @@ try:
     from .tools import (
         RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
         get_available_madys_models, get_madys_model_metadata, find_mag_column,
-        generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
+        generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis,
+        generate_interactive_html_table
     )
     from .primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
     from .widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
@@ -69,7 +70,8 @@ except (ImportError, ValueError):
         from spectra.tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
-            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
+            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis,
+            generate_interactive_html_table
         )
         from spectra.primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
         from spectra.widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
@@ -85,7 +87,8 @@ except (ImportError, ValueError):
         from tools import (
             RegressionReport, MathModels, ResultDisplay, FilterValues, interpolmass,
             get_available_madys_models, get_madys_model_metadata, find_mag_column,
-            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis
+            generate_spectra_html_report, generate_primary_params_html_report, generate_primary_params_analysis,
+            generate_interactive_html_table
         )
         from primary_parameters import estimate_photometric_dataset, estimate_spectroscopic_dataset, PrimaryParameterMLEngine
         from widgets import SessionManager, AboutWindow, ModelDownloadWindow, BusyWindow, UpdateWindow, MadysModelManagerWindow
@@ -334,29 +337,129 @@ class App(ttk.Window):
 
     def show_table(self):
         tab1 = table_data
+        if tab1 is None or not isinstance(tab1, pd.DataFrame) or tab1.empty:
+            messagebox.showinfo("Result Table", "No dataset table available. Please open a dataset or run a calculation first.")
+            return
 
         table_window = tk.Toplevel(self)
-        table_window.title("Final Result Table")
-        table_window.geometry('1280x720')
+        table_window.title("📊 S.P.E.C.T.R.A. - Interactive Data Table Viewer")
+        table_window.geometry('1280x750')
 
-        table_text = ttk.Treeview(table_window, columns=tab1.columns, show='headings')
+        # Top Control & Action Bar
+        top_bar = ttk.Frame(table_window, padding=12)
+        top_bar.pack(fill=X)
 
-        table_text["columns"] = list(tab1.columns)
-        table_text["show"] = "headings"
+        # Search Bar
+        ttk.Label(top_bar, text="🔍 Search:", font=('Segoe UI', 10, 'bold')).pack(side=LEFT, padx=(0, 6))
+        search_var = tk.StringVar()
+        search_entry = ttk.Entry(top_bar, textvariable=search_var, width=30)
+        search_entry.pack(side=LEFT, padx=(0, 20))
 
-        for col in table_text["columns"]:
-            table_text.heading(col, text=col)
-            table_text.column(col, anchor="center")
+        # Quick Action Buttons
+        def _open_html_view():
+            try:
+                generate_interactive_html_table(tab1, title="Final Results Table")
+            except Exception as ex:
+                messagebox.showerror("HTML Viewer Error", f"Failed to generate interactive HTML table:\n{ex}")
 
-        for index, row in tab1.iterrows():
-            table_text.insert("", "end", values=list(row))
+        def _export_table():
+            try:
+                fpath = filedialog.asksaveasfilename(
+                    defaultextension=".csv",
+                    filetypes=[("CSV Files", "*.csv"), ("Excel Files", "*.xlsx"), ("All Files", "*.*")]
+                )
+                if fpath:
+                    if fpath.endswith(".xlsx"):
+                        tab1.to_excel(fpath, index=False)
+                    else:
+                        tab1.to_csv(fpath, index=False)
+                    messagebox.showinfo("Export Successful", f"Table saved successfully to:\n{fpath}")
+            except Exception as ex:
+                messagebox.showerror("Export Error", f"Failed to save file:\n{ex}")
 
-        table_text.pack(fill=BOTH, expand=True)
+        ttk.Button(top_bar, text="🌐 Open Interactive HTML View in Browser", bootstyle="primary", command=_open_html_view).pack(side=LEFT, padx=(0, 10))
+        ttk.Button(top_bar, text="💾 Export CSV / Excel", bootstyle="info-outline", command=_export_table).pack(side=LEFT)
 
-        scrollbarh = ttk.Scrollbar(table_window, orient="horizontal", command=table_text.xview)
-        scrollbarv = ttk.Scrollbar(table_window, orient="vertical", command=table_text.yview)
-        scrollbarh.place(relx=0, rely=1, relwidth=1, anchor='sw')
-        scrollbarv.place(relx=1, rely=0, relheight=1, anchor='ne')
+        # Table Container Frame
+        tree_container = ttk.Frame(table_window, padding=(12, 0, 12, 12))
+        tree_container.pack(fill=BOTH, expand=True)
+
+        tree_container.grid_rowconfigure(0, weight=1)
+        tree_container.grid_columnconfigure(0, weight=1)
+
+        cols = list(tab1.columns)
+        table_tree = ttk.Treeview(tree_container, columns=cols, show='headings', bootstyle='primary')
+
+        # Scrollbars properly gridded
+        vsb = ttk.Scrollbar(tree_container, orient="vertical", command=table_tree.yview)
+        hsb = ttk.Scrollbar(tree_container, orient="horizontal", command=table_tree.xview)
+        table_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        table_tree.grid(row=0, column=0, sticky="nsew")
+        vsb.grid(row=0, column=1, sticky="ns")
+        hsb.grid(row=1, column=0, sticky="ew")
+
+        # Config tags for zebra striping
+        table_tree.tag_configure('even', background='#1e293b')
+        table_tree.tag_configure('odd', background='#182234')
+
+        # Sorting state tracker
+        sort_state = {col: False for col in cols}
+
+        def _sort_column(col):
+            ascending = sort_state[col]
+            sort_state[col] = not ascending
+
+            # Sort values
+            try:
+                sorted_df = tab1.sort_values(by=col, ascending=ascending)
+            except Exception:
+                sorted_df = tab1
+
+            # Update headings with sort indicator
+            for c in cols:
+                indicator = " ▲" if (c == col and ascending) else (" ▼" if (c == col and not ascending) else "")
+                table_tree.heading(c, text=f"{c}{indicator}", command=lambda _c=c: _sort_column(_c))
+
+            _populate_tree(sorted_df)
+
+        for col in cols:
+            # Set dynamic width based on column title and content
+            max_len = max(len(str(col)), max([len(str(v)) for v in tab1[col].head(50)], default=10))
+            col_width = min(max(max_len * 11, 100), 300)
+            table_tree.heading(col, text=col, command=lambda _c=col: _sort_column(_c))
+            table_tree.column(col, width=col_width, anchor="center")
+
+        def _populate_tree(df_to_show):
+            table_tree.delete(*table_tree.get_children())
+            for idx, (_, row) in enumerate(df_to_show.iterrows()):
+                tag = 'even' if idx % 2 == 0 else 'odd'
+                formatted_values = []
+                for val in row:
+                    if isinstance(val, (float, np.floating)):
+                        formatted_values.append(f"{val:.4f}" if np.isfinite(val) else "")
+                    else:
+                        formatted_values.append(str(val))
+                table_tree.insert("", "end", values=formatted_values, tags=(tag,))
+            lbl_status.config(text=f"Showing {len(df_to_show)} of {len(tab1)} rows | {len(cols)} columns")
+
+        def _on_search_changed(*args):
+            query = search_var.get().lower().strip()
+            if not query:
+                _populate_tree(tab1)
+            else:
+                filtered_mask = tab1.astype(str).apply(lambda row: row.str.lower().str.contains(query).any(), axis=1)
+                _populate_tree(tab1[filtered_mask])
+
+        search_var.trace_add("write", _on_search_changed)
+
+        # Status Bar
+        status_bar = ttk.Frame(table_window, padding=(12, 4))
+        status_bar.pack(fill=X, side=BOTTOM)
+        lbl_status = ttk.Label(status_bar, text="", font=('Segoe UI', 9, 'italic'), bootstyle="secondary")
+        lbl_status.pack(side=LEFT)
+
+        _populate_tree(tab1)
 
     def show_report(self):
         if hasattr(self.sidebar, 'report') and self.sidebar.report is not None:
@@ -593,6 +696,7 @@ class Sidebar(ttk.Frame):
         f_step1 = ttk.Frame(card1)
         f_step1.pack(fill=X, pady=(0, 12))
         ttk.Button(f_step1, text="🔍  Analyze Features & Load Dataset", bootstyle="primary", command=self.correlation_analysis, padding=(12, 6)).pack(side=LEFT)
+        ttk.Button(f_step1, text="📁 Browse Dataset (CSV / Excel)", bootstyle="info-outline", command=open_table, padding=(12, 6)).pack(side=LEFT, padx=(10, 0))
 
         f_params = ttk.Frame(card1)
         f_params.pack(fill=X)
@@ -816,6 +920,9 @@ class Sidebar(ttk.Frame):
         ttk.Entry(f_logl, textvariable=self.logl, width=12).pack(side=LEFT, padx=(0, 5))
         ttk.Label(f_logl, text="log L/L_sun", font=('Segoe UI', 9)).pack(side=LEFT)
 
+        ttk.Label(card1, text="Input Data Table:", font=('Segoe UI', 10, 'bold')).grid(row=3, column=0, padx=10, pady=8, sticky="w")
+        ttk.Button(card1, text="📁 Browse Dataset (CSV / Excel)", bootstyle="info-outline", command=open_table).grid(row=3, column=1, padx=10, pady=8, sticky="w")
+
         # Card 2: Processing & Action
         card2 = ttk.Labelframe(container, text=" 2. Processing & Star Localization ", padding=15)
         card2.pack(fill=X, pady=(0, 15))
@@ -824,6 +931,7 @@ class Sidebar(ttk.Frame):
         f_btns.pack(fill=X)
 
         ttk.Checkbutton(f_btns, text="🔍 Verbose Mode", variable=self.save_var, onvalue=1, offvalue=0, bootstyle="round-toggle").pack(side=LEFT, padx=(0, 15))
+        ttk.Button(f_btns, text="📁 Browse Dataset", bootstyle="info-outline", command=open_table).pack(side=LEFT, padx=(0, 10))
         ttk.Button(f_btns, text="⭐ Locate Stars", bootstyle="primary", command=self.locate_stars).pack(side=LEFT, padx=(0, 10))
 
         # Card 3: Results
@@ -925,6 +1033,9 @@ class Sidebar(ttk.Frame):
         ttk.Label(f_mass, text="Max:").pack(side=LEFT, padx=(0, 4))
         ttk.Entry(f_mass, textvariable=self.hig_int, width=6).pack(side=LEFT, padx=(0, 2))
         ttk.Label(f_mass, text="M_sun").pack(side=LEFT)
+
+        ttk.Label(card1, text="Input Data Table:", font=('Helvetica', 10, 'bold')).grid(row=2, column=0, padx=10, pady=8, sticky="w")
+        ttk.Button(card1, text="📁 Browse Dataset (CSV / Excel)", bootstyle="info-outline", command=open_table).grid(row=2, column=1, padx=10, pady=8, sticky="w")
 
         # Card 2: Age & Filter Selection
         card2 = ttk.Labelframe(container, text=" 2. Isochrone Age & Filter Selection ", padding=15)
