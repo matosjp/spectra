@@ -221,7 +221,7 @@ def run_primary_cli(args):
     print_flush(f"[OK] Results CSV saved: {out_csv}")
 
     if getattr(args, 'html', False):
-        html_file = generate_primary_params_html_report(res_table, av_mag=av)
+        html_file = generate_primary_params_html_report(res_table)
         print_flush(f"[OK] Interactive HTML report generated: {html_file}")
 
     return res_table
