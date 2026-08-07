@@ -20,11 +20,17 @@
 #   Adriano Hoth Cerqueira — hoth@uesc.br
 #   Universidade Estadual de Santa Cruz (UESC), Ilhéus - BA, Brasil
 
+import sys
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module=".*madys.*")
 
-from spectra.interface import App
-
 if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    if len(sys.argv) > 1:
+        # Command-Line Text Mode (Headless / Batch Pipeline)
+        from spectra.cli import main_cli
+        main_cli()
+    else:
+        # Graphical User Interface (GUI) Mode
+        from spectra.interface import App
+        app = App()
+        app.mainloop()

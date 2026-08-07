@@ -1,0 +1,23 @@
+[
+  {
+    "module": "isocfit",
+    "input": "stellar_test_dataset.csv",
+    "model": "Siess 2000",
+    "html": true
+  },
+  {
+    "module": "isocfit",
+    "input": "stellar_test_dataset.csv",
+    "model": "BHAC15",
+    "html": true
+  },
+  {
+    "module": "rmm",
+    "input": "stellar_test_dataset.csv",
+    "model": "bhac15",
+    "filter": "G",
+    "age": 100.0,
+    "distance": 136.2,
+    "html": true
+  }
+]

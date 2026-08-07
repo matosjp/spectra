@@ -49,11 +49,39 @@ conda activate spectra
 
 ## Running the Application
 
+### Graphical User Interface (GUI Mode)
 Ensure your Conda environment is active before launching:
 
 ```bash
 conda activate spectra
 python main.py
+```
+
+### Command-Line Interface (Text Mode & Batch Pipeline)
+S.P.E.C.T.R.A. can be executed headlessly from the terminal for automated batch processing across multiple open clusters:
+
+1. **2D Isochrone Fitting (`isocfit`)**:
+```bash
+python main.py isocfit --input cluster_data.csv --model "BHAC15" --html
+```
+
+2. **Mass-Magnitude Machine Learning (`rmm`)**:
+```bash
+python main.py rmm --input cluster_data.csv --model "bhac15" --filter "G" --age 100 --distance 136.2 --html
+```
+
+3. **⭐ Primary Parameters Derivation (`primary`)**:
+```bash
+python main.py primary --input cluster_data.csv --av 0.3 --distance 412 --html
+```
+
+4. **Automated Batch Multi-Cluster Pipeline (`batch`)**:
+```bash
+# Process a folder of cluster CSV files
+python main.py batch --dir path/to/clusters/ --module isocfit --model "Siess 2000"
+
+# Or execute a multi-job JSON pipeline configuration
+python main.py batch --config batch_clusters_config.json
 ```
 
 ### First-Run Data Download
