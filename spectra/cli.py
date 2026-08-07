@@ -62,6 +62,8 @@ def run_isocfit_cli(args):
         if np.isfinite(Linput[i]) and np.isfinite(Tinput[i]):
             res = interp(Tinput[i], Linput[i], var, Nlines, alldataiso, verbose_flag)
             primarydataset.append(res)
+        else:
+            primarydataset.append([np.nan, np.nan, Tinput[i], Linput[i]])
 
     df_primary = pd.DataFrame(primarydataset).rename(columns={0: 'Age', 1: 'Mass', 2: 'Teff', 3: 'logL'})
     mass, age, yerr, aerr = interpolmass(df_primary, model)
