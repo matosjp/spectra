@@ -209,7 +209,7 @@ def run_primary_cli(args):
     df = pd.read_csv(input_path) if input_path.endswith('.csv') else pd.read_excel(input_path)
 
     # Run Photometric derivation
-    res_table = estimate_photometric_dataset(df, av=av, distance_pc=distance_pc)
+    res_table = estimate_photometric_dataset(df, extinction_av=av)
 
     # Run Spectroscopic derivation if EW columns exist
     res_table = estimate_spectroscopic_dataset(res_table)
