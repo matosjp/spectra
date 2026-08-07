@@ -1,0 +1,16 @@
+# S.P.E.C.T.R.A. - Cross-Source Comparative Mass Statistics
+
+| Cluster        | Comparison                                           |    N |      R2 |   RMSE |    MAE |   Offset |   Std_res |
+|:---------------|:-----------------------------------------------------|-----:|--------:|-------:|-------:|---------:|----------:|
+| ONC            | SPECTRA RMM (KNN BHAC15) vs Hillenbrand (1997)       |  391 |  0.2275 | 0.1638 | 0.11   |   0.0809 |    0.1425 |
+| ONC            | SPECTRA RMM (KNN BHAC15) vs Davies et al. (2014)     |  340 |  0.6751 | 0.1374 | 0.0862 |   0.0103 |    0.137  |
+| Upper Scorpius | SPECTRA RMM (KNN BHAC15 G) vs TESS V8.2              |  589 | -6.9634 | 0.3131 | 0.2763 |  -0.2378 |    0.2036 |
+| Upper Scorpius | SPECTRA IsocFit vs TESS V8.2                         |  508 |  0.0845 | 0.3109 | 0.264  |  -0.1264 |    0.2841 |
+| Upper Scorpius | SPECTRA RMM (KNN BHAC15 G) vs Stauffer et al. (2019) |  166 | -2.9297 | 0.1024 | 0.0887 |  -0.0771 |    0.0674 |
+| h Persei       | SPECTRA RMM (KNN BHAC15 V) vs Moraux et al. (2013)   |  524 |  0.9225 | 0.079  | 0.0675 |  -0.0283 |    0.0738 |
+| h Persei       | SPECTRA IsocFit vs TESS V8.2                         |  140 | -2.2853 | 0.2656 | 0.2038 |   0.0845 |    0.2518 |
+| Pleiades       | SPECTRA RMM (KNN BHAC15 G) vs Lodieu et al. (2019)   | 1585 |  0.9957 | 0.0183 | 0.0174 |  -0.0174 |    0.0056 |
+| Pleiades       | SPECTRA RMM (KNN BHAC15 G) vs Delfosse et al. (2000) | 1346 |  0.8061 | 0.0734 | 0.0639 |  -0.063  |    0.0377 |
+| Pleiades       | SPECTRA IsocFit vs TESS V8.2                         | 1532 |  0.8211 | 0.1784 | 0.0955 |  -0.0573 |    0.1689 |
+| NGC 2516       | SPECTRA RMM (KNN BHAC15 V) vs Jackson et al. (2012)  |  569 |  0.7048 | 0.081  | 0.0784 |  -0.0784 |    0.0206 |
+| NGC 2516       | SPECTRA IsocFit vs TESS V8.2                         |  367 |  0.4598 | 0.1242 | 0.0898 |  -0.0346 |    0.1193 |
