@@ -7,7 +7,32 @@ S.P.E.C.T.R.A. is a modern desktop application for deriving stellar parameters �
 
 ---
 
-## Key Features
+## 🌟 What's New
+
+### Version 1.2.0 (Latest Release)
+- **💻 Executable CLI & Interactive REPL Shell (`spectra -e`)**:
+  - Run `spectra` without flags to launch the full GUI application.
+  - Type `spectra -e` to open an interactive command REPL shell with `SPECTRA >` prompt.
+  - Run headless terminal subcommands (`spectra isocfit ...`, `spectra rmm ...`, `spectra primary ...`) for automated batch scripting.
+- **🔄 Multi-Cluster Batch Pipeline (`spectra batch`)**:
+  - Process an entire folder of cluster CSV files automatically (`--dir path/to/clusters/`).
+  - Execute multi-job YAML/JSON workflow configurations (`--config batch_job.json`).
+- **🌌 Cluster Mean Age Calculation & Display**:
+  - Added real-time calculation and display of **Mean Cluster Age** ($\langle t \rangle \pm \text{sem}$) and median age in the `IsocFit` results card and progress toast notifications.
+- **📁 Dataset Browse Buttons Across All Modules**:
+  - Standardized `📁 Browse Dataset (CSV / Excel)` buttons added to Card 1 and Processing frames in all 4 core UI tabs.
+- **📊 Interactive Data Table Viewer & Web HTML View**:
+  - Upgraded `Show Table` window with real-time `🔍 Search:` filter bar, dynamic column auto-resizing, click-to-sort headers (`▲`/`▼`), and an instant **`🌐 Open Interactive HTML View in Browser`** button powered by DataTables.
+- **⭐ Luminosity Calculation & Linear-to-Log Conversion**:
+  - Integrated full bolometric luminosity calculation ($\log_{10}(L/L_\odot)$) based on Bell et al. (2014, MNRAS 444, 1157; `stu1488.pdf`).
+  - Automatic detection and conversion of linear luminosity columns (`L`, `lum`, `L/Ls`, `Lsun`).
+- **📦 MADYS Repository Manager & Dynamic Model Engine**:
+  - Interactive manager dialog to inspect, status-check (🟢 Installed / ⚪ Not Installed), and download MADYS isochrone grids in the background.
+  - Dynamic mass bounds, age slider ranges, and filter band dropdowns (up to 127+ filters).
+- **📝 Publication Package**:
+  - Complete MNRAS manuscript (`publishing/mnras_paper/paper.tex`), bib references, high-res figures, and cross-source cluster evaluation script (`publishing/cluster_comparison_analysis.py`).
+
+---
 
 ## Key Features
 
