@@ -20,6 +20,12 @@ from .primary_parameters import estimate_photometric_dataset, estimate_spectrosc
 from .paths import OUTPUTS_DIR, ISOCFIT_DIR, RML_DIR, TABLES_DIR, PLOTS_DIR, STATS_DIR
 
 
+def print_flush(*args, **kwargs):
+    """Prints with immediate stdout buffer flushing for real-time terminal output."""
+    kwargs.setdefault('flush', True)
+    print(*args, **kwargs)
+
+
 def run_isocfit_cli(args):
     """
     Executes the IsocFit module from the command line.
@@ -28,12 +34,12 @@ def run_isocfit_cli(args):
     model = args.model
     output_dir = args.output_dir if args.output_dir else ISOCFIT_DIR
 
-    print(f"\n[SPECTRA CLI] Executing 2D Isochrone Fitting (IsocFit)")
-    print(f"   Input Dataset: {input_path}")
-    print(f"   Isochrone Model: {model}")
+    print_flush(f"\n[SPECTRA CLI] Executing 2D Isochrone Fitting (IsocFit)")
+    print_flush(f"   Input Dataset: {input_path}")
+    print_flush(f"   Isochrone Model: {model}")
 
     if not os.path.exists(input_path):
-        print(f"[ERROR] Input file not found: {input_path}")
+        print_flush(f"[ERROR] Input file not found: {input_path}")
         sys.exit(1)
 
     df = pd.read_csv(input_path) if input_path.endswith('.csv') else pd.read_excel(input_path)
@@ -41,7 +47,7 @@ def run_isocfit_cli(args):
     logl_col = next((col for col in ['logL', 'logl', 'log_L', 'LOGL', 'logL/L_sun'] if col in df.columns), None)
 
     if not teff_col or not logl_col:
-        print("[ERROR] Dataset must contain 'Teff' and 'logL' columns.")
+        print_flush("[ERROR] Dataset must contain 'Teff' and 'logL' columns.")
         sys.exit(1)
 
     Tinput = df[teff_col].values
@@ -50,7 +56,7 @@ def run_isocfit_cli(args):
 
     var, Nlines, alldataiso = intpol(model)
     primarydataset = []
-    verbose_flag = 1 if args.verbose else 0
+    verbose_flag = 1 if getattr(args, 'verbose', False) else 0
 
     for i in range(Nobjects):
         if np.isfinite(Linput[i]) and np.isfinite(Tinput[i]):
@@ -72,17 +78,17 @@ def run_isocfit_cli(args):
     std_age = np.std(valid_ages) if len(valid_ages) > 0 else np.nan
     sem_age = std_age / np.sqrt(len(valid_ages)) if len(valid_ages) > 1 else 0.0
 
-    print(f"[RESULTS] Estimated Cluster Mean Age: {mean_age:.2f} +/- {sem_age:.2f} Myr (std = {std_age:.2f} Myr, N = {len(valid_ages)})")
+    print_flush(f"[RESULTS] Estimated Cluster Mean Age: {mean_age:.2f} +/- {sem_age:.2f} Myr (std = {std_age:.2f} Myr, N = {len(valid_ages)})")
 
     os.makedirs(output_dir, exist_ok=True)
     base_name = os.path.splitext(os.path.basename(input_path))[0]
     out_csv = os.path.join(output_dir, f"{base_name}_isocfit_results.csv")
     res_table.to_csv(out_csv, index=False)
-    print(f"[OK] Results CSV saved: {out_csv}")
+    print_flush(f"[OK] Results CSV saved: {out_csv}")
 
-    if args.html:
+    if getattr(args, 'html', False):
         html_file = generate_interactive_html_table(res_table, title=f"IsocFit Results ({model}) - {base_name}", output_dir=output_dir)
-        print(f"[OK] Interactive HTML table generated: {html_file}")
+        print_flush(f"[OK] Interactive HTML table generated: {html_file}")
 
     return res_table
 
@@ -100,35 +106,37 @@ def run_rmm_cli(args):
     distance_pc = args.distance
     output_dir = args.output_dir if args.output_dir else RML_DIR
 
-    print(f"\n[SPECTRA CLI] Executing Mass-Magnitude Relationship (RMM)")
-    print(f"   Input Dataset: {input_path}")
-    print(f"   Model: {model} | Filter: {filter_name} | Age: {age_myr} Myr")
-    print(f"   Mass Range: [{mass_min}, {mass_max}] M_sun | Distance: {distance_pc} pc")
+    print_flush(f"\n[SPECTRA CLI] Executing Mass-Magnitude Relationship (RMM)")
+    print_flush(f"   Input Dataset: {input_path}")
+    print_flush(f"   Model: {model} | Filter: {filter_name} | Age: {age_myr} Myr")
+    print_flush(f"   Mass Range: [{mass_min}, {mass_max}] M_sun | Distance: {distance_pc} pc")
 
     if not os.path.exists(input_path):
-        print(f"[ERROR] Input file not found: {input_path}")
+        print_flush(f"[ERROR] Input file not found: {input_path}")
         sys.exit(1)
 
     df = pd.read_csv(input_path) if input_path.endswith('.csv') else pd.read_excel(input_path)
     mag_col = find_mag_column(df, filter_name)
 
     if not mag_col:
-        print(f"[ERROR] Could not find magnitude column matching filter '{filter_name}' in dataset.")
+        print_flush(f"[ERROR] Could not find magnitude column matching filter '{filter_name}' in dataset.")
         sys.exit(1)
 
     import madys
     old_stdin = sys.stdin
+    devnull_f = open(os.devnull, 'r')
     try:
-        sys.stdin = open(os.devnull)
+        sys.stdin = devnull_f
         th_model = madys.IsochroneGrid(
             model, 
             filter_name, 
             mass_range=[mass_min, mass_max],
             age_range=[age_myr, age_myr], 
-            n_steps=[1000, 1000]
+            n_steps=[250, 250]
         )
     finally:
         sys.stdin = old_stdin
+        devnull_f.close()
 
     if hasattr(th_model.masses, 'ndim') and th_model.masses.ndim == 1 and hasattr(th_model, 'ages') and hasattr(th_model.ages, 'ndim') and th_model.ages.ndim == 1:
         M_mesh, A_mesh = np.meshgrid(th_model.masses, th_model.ages, indexing='ij')
@@ -142,7 +150,7 @@ def run_rmm_cli(args):
     y_full = y_raw[valid_mask]
 
     n = len(X_full)
-    max_samples = 3000
+    max_samples = 2000
     if n > max_samples:
         rng = np.random.default_rng(42)
         idx = rng.choice(n, size=max_samples, replace=False)
@@ -170,13 +178,13 @@ def run_rmm_cli(args):
     base_name = os.path.splitext(os.path.basename(input_path))[0]
     out_csv = os.path.join(output_dir, f"{base_name}_rmm_results.csv")
     res_table.to_csv(out_csv, index=False)
-    print(f"[OK] Results CSV saved: {out_csv}")
+    print_flush(f"[OK] Results CSV saved: {out_csv}")
 
-    if args.html:
+    if getattr(args, 'html', False):
         html_file = generate_spectra_html_report(
             report_df, model, filter_name, age_myr, (mass_min, mass_max), dataset_df=res_table
         )
-        print(f"[OK] Interactive HTML report generated: {html_file}")
+        print_flush(f"[OK] Interactive HTML report generated: {html_file}")
 
     return res_table
 
@@ -190,12 +198,12 @@ def run_primary_cli(args):
     distance_pc = args.distance
     output_dir = args.output_dir if args.output_dir else OUTPUTS_DIR
 
-    print(f"\n[SPECTRA CLI] Executing Primary Stellar Parameters Derivation")
-    print(f"   Input Dataset: {input_path}")
-    print(f"   Extinction Av: {av} mag | Distance: {distance_pc} pc")
+    print_flush(f"\n[SPECTRA CLI] Executing Primary Stellar Parameters Derivation")
+    print_flush(f"   Input Dataset: {input_path}")
+    print_flush(f"   Extinction Av: {av} mag | Distance: {distance_pc} pc")
 
     if not os.path.exists(input_path):
-        print(f"[ERROR] Input file not found: {input_path}")
+        print_flush(f"[ERROR] Input file not found: {input_path}")
         sys.exit(1)
 
     df = pd.read_csv(input_path) if input_path.endswith('.csv') else pd.read_excel(input_path)
@@ -210,11 +218,11 @@ def run_primary_cli(args):
     base_name = os.path.splitext(os.path.basename(input_path))[0]
     out_csv = os.path.join(output_dir, f"{base_name}_primary_params_results.csv")
     res_table.to_csv(out_csv, index=False)
-    print(f"[OK] Results CSV saved: {out_csv}")
+    print_flush(f"[OK] Results CSV saved: {out_csv}")
 
-    if args.html:
+    if getattr(args, 'html', False):
         html_file = generate_primary_params_html_report(res_table, av_mag=av)
-        print(f"[OK] Interactive HTML report generated: {html_file}")
+        print_flush(f"[OK] Interactive HTML report generated: {html_file}")
 
     return res_table
 
@@ -223,35 +231,35 @@ def run_batch_cli(args):
     """
     Executes a batch processing pipeline across multiple cluster datasets.
     """
-    print(f"\n[SPECTRA CLI] Executing Batch Multi-Cluster Pipeline")
+    print_flush(f"\n[SPECTRA CLI] Executing Batch Multi-Cluster Pipeline")
 
     jobs = []
-    if args.config:
+    if getattr(args, 'config', None):
         if not os.path.exists(args.config):
-            print(f"[ERROR] Config file not found: {args.config}")
+            print_flush(f"[ERROR] Config file not found: {args.config}")
             sys.exit(1)
         with open(args.config, 'r', encoding='utf-8') as f:
             jobs = json.load(f)
-    elif args.dir:
+    elif getattr(args, 'dir', None):
         if not os.path.isdir(args.dir):
-            print(f"[ERROR] Directory not found: {args.dir}")
+            print_flush(f"[ERROR] Directory not found: {args.dir}")
             sys.exit(1)
         for fname in os.listdir(args.dir):
             if fname.endswith(('.csv', '.xlsx')):
                 jobs.append({
-                    "module": args.module or "isocfit",
+                    "module": getattr(args, 'module', None) or "isocfit",
                     "input": os.path.join(args.dir, fname),
-                    "model": args.model or "Siess 2000"
+                    "model": getattr(args, 'model', None) or "Siess 2000"
                 })
 
     if not jobs:
-        print("[ERROR] No jobs found to process in batch mode.")
+        print_flush("[ERROR] No jobs found to process in batch mode.")
         sys.exit(1)
 
-    print(f"[INFO] Found {len(jobs)} jobs to process.\n")
+    print_flush(f"[INFO] Found {len(jobs)} jobs to process.\n")
     for idx, job in enumerate(jobs, 1):
-        print(f"--------------------------------------------------------------------------------")
-        print(f"[JOB {idx}/{len(jobs)}] Processing: {job.get('input', 'Unknown')}")
+        print_flush(f"--------------------------------------------------------------------------------")
+        print_flush(f"[JOB {idx}/{len(jobs)}] Processing: {job.get('input', 'Unknown')}")
         mod = job.get("module", "isocfit").lower()
 
         # Build dummy args object
@@ -278,11 +286,11 @@ def run_batch_cli(args):
                 run_rmm_cli(d_args)
             elif mod in ["primary", "primary-params"]:
                 run_primary_cli(d_args)
-            print(f"[OK] Job {idx}/{len(jobs)} completed successfully!")
+            print_flush(f"[OK] Job {idx}/{len(jobs)} completed successfully!")
         except Exception as e:
-            print(f"[ERROR] Job {idx} failed: {e}")
+            print_flush(f"[ERROR] Job {idx} failed: {e}")
 
-    print("\n[COMPLETE] Batch processing pipeline finished!")
+    print_flush("\n[COMPLETE] Batch processing pipeline finished!")
 
 
 def main_cli():

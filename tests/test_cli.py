@@ -9,14 +9,14 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from spectra.cli import run_isocfit_cli, run_rmm_cli, run_primary_cli, run_batch_cli
-from spectra.paths import OUTPUTS_DIR, ISOCFIT_DIR, RML_DIR
 
 
 class TestSpectraCLIArchitecture(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "scratch_cli_test"))
-        os.makedirs(cls.test_dir, exist_ok=True)
+        cls.batch_input_dir = os.path.join(cls.test_dir, "batch_inputs")
+        os.makedirs(cls.batch_input_dir, exist_ok=True)
         cls.dataset_csv = os.path.join(cls.test_dir, "test_cluster_stars.csv")
 
         # Generate test dataset
@@ -29,6 +29,7 @@ class TestSpectraCLIArchitecture(unittest.TestCase):
             "Jmag": [10.5, 11.8, 13.0, 9.8, 11.1, 12.4, 10.1, 12.7, 11.4]
         })
         df.to_csv(cls.dataset_csv, index=False)
+        df.to_csv(os.path.join(cls.batch_input_dir, "batch_star_catalog_1.csv"), index=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -93,11 +94,10 @@ class TestSpectraCLIArchitecture(unittest.TestCase):
     def test_05_batch_cli_directory_mode(self):
         class Args:
             config = None
-            dir = self.test_dir
+            dir = self.batch_input_dir
             module = "isocfit"
             model = "Siess 2000"
 
-        # Run batch pipeline across test_dir
         run_batch_cli(Args())
 
 
