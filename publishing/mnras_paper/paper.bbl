@@ -1,0 +1,89 @@
+\begin{thebibliography}{}
+\makeatletter
+\relax
+\def\mn@urlcharsother{\let\do\@makeother \do\$\do\&\do\#\do\^\do\_\do\%\do\~}
+\def\mn@doi{\begingroup\mn@urlcharsother \@ifnextchar [ {\mn@doi@}
+  {\mn@doi@[]}}
+\def\mn@doi@[#1]#2{\def\@tempa{#1}\ifx\@tempa\@empty \href
+  {http://dx.doi.org/#2} {doi:#2}\else \href {http://dx.doi.org/#2} {#1}\fi
+  \endgroup}
+\def\mn@eprint#1#2{\mn@eprint@#1:#2::\@nil}
+\def\mn@eprint@arXiv#1{\href {http://arxiv.org/abs/#1} {{\tt arXiv:#1}}}
+\def\mn@eprint@dblp#1{\href {http://dblp.uni-trier.de/rec/bibtex/#1.xml}
+  {dblp:#1}}
+\def\mn@eprint@#1:#2:#3:#4\@nil{\def\@tempa {#1}\def\@tempb {#2}\def\@tempc
+  {#3}\ifx \@tempc \@empty \let \@tempc \@tempb \let \@tempb \@tempa \fi \ifx
+  \@tempb \@empty \def\@tempb {arXiv}\fi \@ifundefined
+  {mn@eprint@\@tempb}{\@tempb:\@tempc}{\expandafter \expandafter \csname
+  mn@eprint@\@tempb\endcsname \expandafter{\@tempc}}}
+
+\bibitem[\protect\citeauthoryear{Baraffe et~al.}{Baraffe
+  et~al.}{2015}]{baraffe2015new}
+Baraffe I.,  et~al., 2015, Astronomy \& Astrophysics, 577, A42
+
+\bibitem[\protect\citeauthoryear{{Bell}, {Naylor}, {Mayne}, {Jeffries}  \&
+  {Littlefair}}{{Bell} et~al.}{2014}]{bell2014pre}
+{Bell} C. P.~M.,  {Naylor} T.,  {Mayne} N.~J.,  {Jeffries} R.~D.,
+  {Littlefair} S.~P.,  2014, \mn@doi [\mnras] {10.1093/mnras/stu1488}, 444,
+  1157
+
+\bibitem[\protect\citeauthoryear{Benedict et~al.}{Benedict
+  et~al.}{2016}]{benedict2016solar}
+Benedict G.~F.,  et~al., 2016, The Astronomical Journal, 152, 141
+
+\bibitem[\protect\citeauthoryear{{Cardelli}, {Clayton}  \& {Mathis}}{{Cardelli}
+  et~al.}{1989}]{cardelli1989relationship}
+{Cardelli} J.~A.,  {Clayton} G.~C.,   {Mathis} J.~S.,  1989, \mn@doi [pj]
+  {10.1086/167900}, 345, 245
+
+\bibitem[\protect\citeauthoryear{Davies, Gregory  \& Greaves}{Davies
+  et~al.}{2014}]{davies2014accretion}
+Davies C.~L.,  Gregory S.~G.,   Greaves J.~S.,  2014, Monthly Notices of the
+  Royal Astronomical Society, 444, 1157
+
+\bibitem[\protect\citeauthoryear{Delfosse et~al.}{Delfosse
+  et~al.}{2000}]{delfosse2000accurate}
+Delfosse X.,  et~al., 2000, Astronomy and Astrophysics, 364, 217
+
+\bibitem[\protect\citeauthoryear{Hillenbrand}{Hillenbrand}{1997}]{hillenbrand1997stellar}
+Hillenbrand L.~A.,  1997, The Astronomical Journal, 113, 1733
+
+\bibitem[\protect\citeauthoryear{Jackson \& Jeffries}{Jackson \&
+  Jeffries}{2012}]{jackson2012why}
+Jackson R.~J.,  Jeffries R.~D.,  2012, Monthly Notices of the Royal
+  Astronomical Society, 423, 2966
+
+\bibitem[\protect\citeauthoryear{{Kroupa}}{{Kroupa}}{2001}]{kroupa2001variation}
+{Kroupa} P.,  2001, \mn@doi [\mnras] {10.1046/j.1365-8711.2001.04022.x}, 322,
+  231
+
+\bibitem[\protect\citeauthoryear{Lodieu et~al.}{Lodieu
+  et~al.}{2019}]{lodieu2019fiveD}
+Lodieu N.,  et~al., 2019, Astronomy \& Astrophysics, 628, A66
+
+\bibitem[\protect\citeauthoryear{Moraux et~al.}{Moraux
+  et~al.}{2013}]{moraux2013monitor}
+Moraux E.,  et~al., 2013, Astronomy \& Astrophysics, 560, A13
+
+\bibitem[\protect\citeauthoryear{Pecaut \& Mamajek}{Pecaut \&
+  Mamajek}{2013}]{pecaut2013intrinsic}
+Pecaut M.~J.,  Mamajek E.~E.,  2013, The Astrophysical Journal Supplement
+  Series, 208, 9
+
+\bibitem[\protect\citeauthoryear{{Salpeter}}{{Salpeter}}{1955}]{salpeter1955luminosity}
+{Salpeter} E.~E.,  1955, \mn@doi [pj] {10.1086/145971}, 121, 161
+
+\bibitem[\protect\citeauthoryear{Serenelli et~al.}{Serenelli
+  et~al.}{2021}]{serenelli2021weighing}
+Serenelli A.,  et~al., 2021, The Astronomy and Astrophysics Review, 29, 4
+
+\bibitem[\protect\citeauthoryear{Siess, Dufour  \& Forestini}{Siess
+  et~al.}{2000}]{siess2000internet}
+Siess L.,  Dufour E.,   Forestini M.,  2000, Astronomy \& Astrophysics
+
+\bibitem[\protect\citeauthoryear{Stauffer et~al.}{Stauffer
+  et~al.}{2019}]{stauffer2019rotational}
+Stauffer J.,  et~al., 2019, The Astronomical Journal, 156
+
+\makeatother
+\end{thebibliography}

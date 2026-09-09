@@ -1,0 +1,64 @@
+\section{\textbf{Resultados}}
+
+\subsection{Plêiades}\label{sec:ple}
+
+O aglomerado das Plêiades é um dos aglomerados abertos mais próximos e bem estudados, oferecendo uma excelente oportunidade para testar e comparar diferentes métodos de estimativa de massa estelar. O principal catálogo de referência utilizado para esse aglomerado é o de \citeonline{lodieu2019fiveD}, que fornece dados astrométricos e fotométricos detalhados. No entanto, esse catálogo não contém informações sobre o tipo espectral das estrelas, impossibilitando o cálculo direto da temperatura efetiva e da luminosidade a partir do mesmo.
+
+Para superar essa limitação, as temperaturas efetivas foram obtidas a partir do catálogo de \citeonline{gaia2022}, com a probabilidade de não-binaridade, enquanto as luminosidades foram extraídas de \citeonline{tess2019}. Esses dados permitiram a construção de um diagrama HR para as Plêiades, onde as massas estelares foram estimadas por meio do ajuste de isócronas.
+
+\subsubsection{Estimativas de Massa}
+
+Após a estimativa das massas a partir do ajuste de isócronas, utilizando as temperaturas e luminosidades das fontes mencionadas, foi gerado um DHR para o aglomerado das Plêiades. A Figura \ref{fig:ple_hrd} ilustra a relação entre a luminosidade e a temperatura efetiva das estrelas do aglomerado das Plêiades, agora com as isócronas teóricas do modelo BHAC15 de \citeonline{baraffe2015new}. Esse modelo é mais apropriado para um aglomerado mais velho, como as Plêiades, permitindo uma melhor representação das características evolutivas das estrelas nesta fase.
+
+
+\begin{figure}[!h]
+	\centering
+	\caption[Diagrama HR para o aglomerado das Plêiades]{Esse DHR ilustra a relação entre a luminosidade e a temperatura efetiva de estrelas sintéticas. As linhas sólidas são as isócronas BHAC15 de \citeonline{baraffe2015new}. As tracejadas representam trilhas evolutivas com massa constante. A posição das estrelas, pertencentes ao aglomerado das Plêiades, estão marcadas por uma estrela vermelha.}
+	\includegraphics[width=0.75\linewidth]{./04-figuras/ple_hrd_complete.png}
+	\label{fig:ple_hrd}
+\end{figure}
+
+
+Estudos anteriores indicam uma variação nas estimativas de idade das Plêiades, que vão desde \(112 \pm 5\) milhões de anos \cite{dahm2015reexamining} até \(160\) milhões de anos \cite{gossage2018age}. Neste trabalho, adotamos a idade de 112 milhões de anos, fundamentando nossa análise nas isócronas BHAC15. A partir desse modelo, foi construída a relação massa-magnitude na banda G do Gaia para estimar as massas das estrelas do aglomerado.
+
+\subsubsection{Comparações entre Métodos}
+A Figura \ref{fig:ple_results} apresenta comparações entre as massas estelares estimadas pelos métodos de ajuste de isócronas e pela relação massa-magnitude (KNN), ambos utilizando o modelo BHAC15. Os gráficos mostram as comparações para três catálogos diferentes: \citeonline{tess2019}, \citeonline{lodieu2019fiveD} e \citeonline{delfosse2000accurate}. A diagonal tracejada indica a linha de identidade, ou seja, onde as estimativas de massa seriam idênticas aos valores de referência.
+
+\begin{figure}[!h]
+	\centering
+	\caption[Gráficos comparativos para o aglomerado das Plêiades]{A imagem apresenta comparações entre massas estelares estimadas por dois métodos diferentes: ajuste de isócronas e relação massa-magnitude (KNN), ambas utilizando o modelo BHAC15. Os gráficos são divididos em três linhas, cada uma correspondendo a diferentes catálogos de dados: TESS V8.2 \cite{tess2019}, \citeonline{lodieu2019fiveD}, e \citeonline{delfosse2000accurate}. A primeira coluna refere-se ao método de ajuste de isócronas, enquanto a segunda a relação massa-magnitude. A diagonal tracejada indica a linha de identidade, ou seja, onde a estimativa e o valor de referência seriam iguais.}
+	\includegraphics[width=0.75\linewidth]{./04-figuras/ple_results_report.png}
+	\label{fig:ple_results}
+\end{figure}
+
+No método de ajuste de isócronas, ao comparar com os dados de \citeonline{tess2019} e \citeonline{lodieu2019fiveD}, observa-se uma maior dispersão para massas estelares superiores a \(0.7~ M_\odot\), indicando que nosso ajuste subestimou os valores nesse intervalo de maior massa. No entanto, para estrelas de menor massa, as estimativas seguem de perto a linha de identidade, sugerindo que o modelo de isócronas se comporta adequadamente nesse regime.
+
+Em contrapartida, a relação massa-magnitude na banda G, modelada pelo método KNN, apresenta uma consistência maior ao longo da diagonal, com menor dispersão. Isso indica que esse método é mais robusto para as Plêiades, especialmente para massas intermediárias, tornando-o uma opção preferível ao trabalhar com estrelas dessa população.
+
+Ao comparar com os resultados de \citeonline{delfosse2000accurate}, que utiliza a relação massa-magnitude baseada em estrelas binárias, observa-se uma dispersão mais significativa nas estimativas de massa, especialmente para estrelas com massas superiores a \(0.5~ M_\odot\). Para massas menores, os resultados tendem a ser mais consistentes com os dados dos outros catálogos. Vale ressaltar que o modelo de \citeonline{delfosse2000accurate} é válido para um intervalo de \(4.5\) a \(9.5\) magnitudes na banda K, limitando a análise a estrelas com massas até aproximadamente \(0.75~ M_\odot\). Essa limitação pode impactar a eficácia do modelo em estimar massas para estrelas mais massivas e, consequentemente, contribuir para a maior dispersão observada.
+
+\begin{table}[htbp]
+	\centering
+	\caption[Resultados de massas estelares para as Plêiades]{Comparação de massas estelares usando diferentes métodos de cálculo e catálogos disponíveis para o aglomerado das Plêiades.}
+	\label{tab:ple_massas}
+	\begin{tabular}{cccccc}
+		\hline
+		{i} & {M $\pm$ 0.015 (T)} & {M $\pm$ 0.015 (G)} & {M (T8.2)} & {M (L19)} & {M (D00)} \\ \hline
+		8   & 0.178 & 0.143 & 0.205 & 0.166 & 0.199 \\
+		22  & 1.148 & 1.236 & 1.228 & 1.259 & - \\
+		23  & 0.500 & 0.439 & 0.459 & 0.455 & 0.456 \\
+		24  & 0.240 & 0.190 & 0.263 & 0.206 & 0.224 \\
+		25  & 1.100 & 0.715 & 0.694 & 0.718 & 0.760 \\
+		27  & 0.366 & 0.297 & 0.384 & 0.319 & 0.338 \\
+		28  & 0.442 & 0.376 & 0.477 & 0.398 & 0.433 \\
+		33  & 0.315 & 0.408 & 0.422 & 0.425 & 0.450 \\
+		34  & 1.025 & 1.110 & 1.089 & 1.128 & - \\
+		\hline
+	\end{tabular}
+\end{table}
+
+Na Tabela (\ref{tab:ple_massas}) Podemos verificar numericamente os resultados de massa obtidos em função da temperatura efetiva (T), a partir do ajuste de isócronas, e em função da magnitude absoluta na banda G do gaia (G) acompanhados dos valores utilizados na análise comparativa, sob as siglas: T8.2 para \citeonline{tess2019}, L19 para  \citeonline{lodieu2019fiveD}, e D00 para \citeonline{delfosse2000accurate}.
+
+Para as Plêiades, o método de relação massa-magnitude (KNN) demonstrou ser mais confiável do que o ajuste de isócronas, especialmente para estrelas de massa intermediária, onde a dispersão das estimativas foi consideravelmente menor. Por outro lado, o ajuste de isócronas encontrou dificuldades em estimar as massas de estrelas mais massivas, resultando em subestimações em alguns casos.
+
+A Tabela \ref{tab:ple_massas} apresenta os valores estimados para as massas estelares utilizando ambas as metodologias, além de uma comparação com os dados dos catálogos de \citeonline{lodieu2019fiveD}, \citeonline{tess2019} e \citeonline{delfosse2000accurate}. Essa tabela permite uma análise detalhada das discrepâncias entre as diferentes abordagens e suas respectivas precisões. Os dados contidos nela são fundamentais para entender a eficácia de cada método em diferentes faixas de massa e para diferentes fontes de dados.

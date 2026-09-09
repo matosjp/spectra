@@ -43,8 +43,8 @@ def run_isocfit_cli(args):
         sys.exit(1)
 
     df = pd.read_csv(input_path) if input_path.endswith('.csv') else pd.read_excel(input_path)
-    teff_col = next((col for col in ['Teff', 'teff', 'T_eff', 'TEFF', 't_eff'] if col in df.columns), None)
-    logl_col = next((col for col in ['logL', 'logl', 'log_L', 'LOGL', 'logL/L_sun'] if col in df.columns), None)
+    teff_col = next((col for col in ['Teff', 'teff', 'T_eff', 'TEFF', 't_eff', 'Teff_x'] if col in df.columns), None)
+    logl_col = next((col for col in ['logL', 'logl', 'log_L', 'LOGL', 'logL/L_sun', 'log(L)_x', 'logL_x'] if col in df.columns), None)
 
     if not teff_col or not logl_col:
         print_flush("[ERROR] Dataset must contain 'Teff' and 'logL' columns.")

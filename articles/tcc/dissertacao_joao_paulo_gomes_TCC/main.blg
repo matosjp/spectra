@@ -1,0 +1,79 @@
+This is BibTeX, Version 0.99d (TeX Live 2022/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/folhaAprovacao.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/agradecimentos.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/resumoPt.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/resumoEn.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/listaFiguras.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/listaTabelas.aux
+A level-1 auxiliary file: ./01-elementos-pre-textuais/sumario.aux
+A level-1 auxiliary file: ./02-elementos-textuais/cap1-introducao.aux
+A level-1 auxiliary file: ./02-elementos-textuais/cap2-revisao_literatura.aux
+A level-1 auxiliary file: ./02-elementos-textuais/cap3-metodologia.aux
+A level-1 auxiliary file: ./02-elementos-textuais/cap4-resultados.aux
+A level-1 auxiliary file: ./02-elementos-textuais/cap5-conclusao.aux
+A level-1 auxiliary file: ./03-elementos-pos-textuais/glossario.aux
+A level-1 auxiliary file: ./03-elementos-pos-textuais/apendices.aux
+The style file: abntex2-alf.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
+Database file #1: abntex2-options.bib
+Database file #2: ./03-elementos-pos-textuais/refbase.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
++---------------------------------------------------------+
+| Estilo bibliográfico abntex2-alf.bst versão v-1.9.7           |
+| Em caso de dúvidas ou problemas com este estilo procure |
+| http://www.abntex.net.br/                               |
++---------------------------------------------------------+
+You've used 51 entries,
+            6714 wiz_defined-function locations,
+            1489 strings with 17388 characters,
+and the built_in function-call counts, 40011 in all, are:
+= -- 2872
+> -- 1551
+< -- 197
++ -- 699
+- -- 465
+* -- 2950
+:= -- 5227
+add.period$ -- 152
+call.type$ -- 52
+change.case$ -- 534
+chr.to.int$ -- 177
+cite$ -- 47
+duplicate$ -- 2252
+empty$ -- 2638
+format.name$ -- 2241
+if$ -- 9364
+int.to.chr$ -- 3
+int.to.str$ -- 3
+missing$ -- 911
+newline$ -- 241
+num.names$ -- 235
+pop$ -- 1146
+preamble$ -- 1
+purify$ -- 200
+quote$ -- 0
+skip$ -- 2441
+stack$ -- 1
+substring$ -- 1115
+swap$ -- 1127
+text.length$ -- 92
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 314
+width$ -- 0
+write$ -- 763

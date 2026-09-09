@@ -1,0 +1,43 @@
+\changetocdepth {4}
+\babel@toc {brazil}{}\relax 
+\setlength {\cftchapterindent }{\cftlastnumwidth } \setlength {\cftchapternumwidth }{2em}
+\setlength {\cftchapterindent }{0em} \setlength {\cftchapternumwidth }{\cftlastnumwidth }
+\contentsline {chapter}{\chapternumberline {1}\MakeUppercase []{\textbf {INTRODUÇÃO}}}{6}{chapter.1}%
+\setlength {\cftchapterindent }{0em} \setlength {\cftchapternumwidth }{\cftlastnumwidth }
+\contentsline {chapter}{\chapternumberline {2}\MakeUppercase []{\textbf {Revisão de Literatura}}}{8}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Propriedades Espectrais de uma Estrela jovem}{8}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Extinção e Avermelhamento}{11}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Massa Estelar}{12}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Aprendizagem de Máquina}{13}{section.2.4}%
+\setlength {\cftchapterindent }{0em} \setlength {\cftchapternumwidth }{\cftlastnumwidth }
+\contentsline {chapter}{\chapternumberline {3}\MakeUppercase []{\textbf {Metodologia}}}{14}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Coleta e Seleção de Dados}{14}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Parâmetros Fotométricos e Espectroscópicos}{14}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Massa Estelar}{16}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Ajuste e interpolação por isócronas}{17}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Relação massa-luminosidade (RML)}{18}{subsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.2.1}Aprendizagem de Máquina}{19}{subsubsection.3.3.2.1}%
+\contentsline {section}{\numberline {3.4}Ferramentas estatísticas e análise dos resultados}{22}{section.3.4}%
+\setlength {\cftchapterindent }{0em} \setlength {\cftchapternumwidth }{\cftlastnumwidth }
+\contentsline {chapter}{\chapternumberline {4}\MakeUppercase []{\textbf {Resultados e Discussão}}}{25}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Validação da metodologia e dos modelos de estimativa de massa estelar.}{25}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Aglomerado da Nebulosa de Órion}{27}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Estimativas de Massa}{27}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Comparações entre Métodos}{28}{subsection.4.2.2}%
+\contentsline {section}{\numberline {4.3}Upper Scorpius}{30}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Estimativas de Massa}{30}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Comparações entre Métodos}{31}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}NGC 869}{33}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Estimativas de Massa e Ajustes de Isócronas}{33}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Comparações entre Métodos}{34}{subsection.4.4.2}%
+\contentsline {section}{\numberline {4.5}Plêiades}{36}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Estimativas de Massa}{37}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Comparações entre Métodos}{37}{subsection.4.5.2}%
+\contentsline {section}{\numberline {4.6}NGC 2516}{39}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Estimativas de Massa}{40}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Comparações entre Métodos}{40}{subsection.4.6.2}%
+\setlength {\cftchapterindent }{0em} \setlength {\cftchapternumwidth }{\cftlastnumwidth }
+\contentsline {chapter}{\chapternumberline {5}\MakeUppercase []{CONCLUSÃO}}{43}{chapter.5}%
+\vspace {\cftbeforechapterskip }
+\setlength {\cftchapterindent }{\cftlastnumwidth } \setlength {\cftchapternumwidth }{2em}
+\contentsline {chapter}{\MakeUppercase []{Refer\^encias}}{44}{section*.6}%

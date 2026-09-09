@@ -218,8 +218,10 @@ def interp(t1, l1, var, Nlines, alldataiso, save):
         maxT = 1.e14
         indmass = 0
         itab = None
+        # FIX: use alldataiso shape instead of global Nlinesa to avoid bugs
+        current_nlinesa = alldataiso.shape[2]
         for i in range(Ntabage):
-            for k in range(Nlinesa):
+            for k in range(current_nlinesa):
                 aux1 = np.sqrt((alldataiso[i][al][k] - l1) ** 2)
                 aux2 = alldataiso[i][am][k]
                 if aux2 == nearmasst and aux1 < maxT:
@@ -358,6 +360,8 @@ def readtables(imass, model):
         with open(filedata[j], 'r') as f:
             for k in range(Nlines[j]):
                 line = f.readline().split()
+                if len(line) < Ncolumn:
+                    continue
                 for m in range(Ncolumn):
                     aux[m, k] = float(line[m])
 
@@ -390,7 +394,7 @@ def intpol(model):
     return var, Nlines, alldataiso
 
 
-def plot_HRD(result, model):
+def plot_HRD(result, model, output_path=None):
     model = normalize_model_name(model)
     var, Nlines, alldataiso = intpol(model)
 
@@ -450,10 +454,14 @@ def plot_HRD(result, model):
                         color=colors_[i],
                         linewidth=1.2)
 
-    ax.scatter(result['Teff'][flag],
-               result['logL'][flag],
-               marker='*',
-               facecolor='crimson',
+    teff_col = next((col for col in ['Teff', 'teff', 'T_eff', 'TEFF', 't_eff', 'Teff_x'] if col in result.columns), None)
+    logl_col = next((col for col in ['logL', 'logl', 'log_L', 'LOGL', 'logL/L_sun', 'log(L)_x', 'logL_x'] if col in result.columns), None)
+
+    if teff_col and logl_col:
+        ax.scatter(result[teff_col][flag],
+                   result[logl_col][flag],
+                   marker='*',
+                   facecolor='crimson',
                edgecolors='black',
                linewidths=0.5,
                s=90,
@@ -467,18 +475,19 @@ def plot_HRD(result, model):
     ax.set_title(f'HR Diagram ({model})', fontsize=14, weight='bold')
     ax.grid(True, linestyle='--', alpha=0.5)
 
-    # Position legend outside the plot area to the right to avoid overlapping data points
-    ax.legend(bbox_to_anchor=(1.02, 1.0),
-              loc='upper left',
+    # Position legend inside the plot area at the lower left
+    legend_cols = 4 if model == 'BHAC15' else 2
+    ax.legend(loc='lower left',
               fontsize=8.5,
               frameon=True,
               framealpha=0.9,
               edgecolor='gray',
-              borderpad=0.6,
               labelspacing=0.3,
               handlelength=1.5,
-              ncol=2)
+              ncol=legend_cols)
 
-    plt.savefig(os.path.join(PLOTS_DIR, '_hrd_complete.png'), dpi=300, bbox_inches='tight')
+    if output_path is None:
+        output_path = os.path.join(PLOTS_DIR, '_hrd_complete.png')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     plt.close()

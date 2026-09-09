@@ -1,0 +1,297 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Babusiaux et al. 2023]{gaia2022b}
+\abntrefinfo{Babusiaux et al.}{BABUSIAUX et al.}{2023}
+{BABUSIAUX, C. et al. Gaia data release 3. catalogue validation.
+\textbf{Astronomy and Astrophysics}, v.~674, p.~A32, 2023.}
+
+\bibitem[Baraffe et al. 2015]{baraffe2015new}
+\abntrefinfo{Baraffe et al.}{BARAFFE et al.}{2015}
+{BARAFFE, I. et al. New evolutionary models for pre-main sequence and main
+  sequence low-mass stars down to the hydrogen-burning limit.
+\textbf{Astronomy \& Astrophysics}, v.~577, p.~A42, April 2015.}
+
+\bibitem[Bello-García et al. 2023]{bello2023carmenes}
+\abntrefinfo{Bello-García et al.}{BELLO-GARCíA et al.}{2023}
+{BELLO-GARCíA, A. et al. The carmenes search for exoplanets around m dwarfs --
+  a deep transfer learning method to determine teff and [m/h] of target stars.
+\textbf{Astronomy \& Astrophysics}, apr 2023.}
+
+\bibitem[Benedict et al. 2016]{benedict2016solar}
+\abntrefinfo{Benedict et al.}{BENEDICT et al.}{2016}
+{BENEDICT, G.~F. et al. The solar neighborhood. xxxvii. the mass–luminosity
+  relation for main-sequence m dwarfs.
+\textbf{The Astronomical Journal}, v.~152, n.~5, p.~141, October 2016.}
+
+\bibitem[Chabrier 2005]{chabrier2005initial}
+\abntrefinfo{Chabrier}{CHABRIER}{2005}
+{CHABRIER, G. The initial mass function: From salpeter 1955 to 2005.
+v.~327, p.~41, January 2005.}
+
+\bibitem[Cieza e Baliber 2007]{cieza2007testing}
+\abntrefinfo{Cieza e Baliber}{CIEZA; BALIBER}{2007}
+{CIEZA, L.; BALIBER, N. Testing the disk regulation paradigm with spitzer
+  observations. ii. a clear signature of star-disk interaction in ngc 2264 and
+  the orion nebula cluster.
+\textbf{The Astrophysical Journal}, v.~671, p. 605--615, December 2007.}
+
+\bibitem[Dahm 2015]{dahm2015reexamining}
+\abntrefinfo{Dahm}{DAHM}{2015}
+{DAHM, S.~E. Reexamining the lithium depletion boundary in the pleiades and the
+  inferred age of the cluster.
+\textbf{The Astrophysical Journal}, v.~813, n.~2, p.~108, 2015.}
+
+\bibitem[Davies et al. 2014]{davies2014accretion}
+\abntrefinfo{Davies et al.}{DAVIES et al.}{2014}
+{DAVIES, C.~L.; GREGORY, S.~G.; GREAVES, J.~S. Accretion discs as regulators of
+  stellar angular momentum evolution in the onc and taurus–auriga.
+\textbf{Monthly Notices of the Royal Astronomical Society}, v.~444, n.~2, p.
+  1157--1176, October 2014.}
+
+\bibitem[Delfosse et al. 2000]{delfosse2000accurate}
+\abntrefinfo{Delfosse et al.}{DELFOSSE et al.}{2000}
+{DELFOSSE, X. et al. Accurate masses of very low mass stars. iv. improved
+  mass-luminosity relations.
+\textbf{Astronomy and Astrophysics}, v.~364, p. 217--224, December 2000.}
+
+\bibitem[Dias et al. 2014]{dias2014self}
+\abntrefinfo{Dias et al.}{DIAS et al.}{2014}
+{DIAS, B. et al. Self-consistent physical parameters for five intermediate-age
+  smc stellar clusters from cmd modelling.
+\textbf{Astronomy and Astrophysics}, v.~561, p.~A106, jan 2014.}
+
+\bibitem[{ESA} 1997]{ESA1997}
+\abntrefinfo{{ESA}}{{ESA}}{1997}
+{{ESA}. \textbf{The Hipparcos and Tycho Catalogues}. [S.l.: s.n.], 1997.  (ESA
+  SP-1200).}
+
+\bibitem[{Gaia Collaboration} et al. 2023]{gaia2022}
+\abntrefinfo{{Gaia Collaboration} et al.}{{Gaia Collaboration} et al.}{2023}
+{{Gaia Collaboration} et al. Gaia data release 3. summary of the content and
+  survey properties.
+\textbf{Astronomy and Astrophysics}, v.~674, p.~A1, 2023.}
+
+\bibitem[Giovinazzi e Blake 2022]{giovinazzi2022mass}
+\abntrefinfo{Giovinazzi e Blake}{GIOVINAZZI; BLAKE}{2022}
+{GIOVINAZZI, M.~R.; BLAKE, C.~H. A mass--magnitude relation for low-mass stars
+  based on dynamical measurements of thousands of binary star systems.
+\textbf{The Astronomical Journal}, v.~164, n.~4, p.~164, oct 2022.}
+
+\bibitem[Gliese 1969]{Gliese1969}
+\abntrefinfo{Gliese}{GLIESE}{1969}
+{GLIESE, W. \textbf{Catalogue of Nearby Stars. Edition 1969}. Karlsruhe: Verlag
+  G. Braun, 1969. 117~p.  (Veröffentlichungen des Astronomischen
+  Rechen-Instituts Heidelberg, 22).}
+
+\bibitem[Gossage et al. 2018]{gossage2018age}
+\abntrefinfo{Gossage et al.}{GOSSAGE et al.}{2018}
+{GOSSAGE, S. et al. Age determinations of the hyades, praesepe, and pleiades
+  via mesa models with rotation.
+\textbf{The Astrophysical Journal}, v.~863, n.~1, p.~67, 2018.}
+
+\bibitem[Gray e Corbally 2009]{gray2009stellar}
+\abntrefinfo{Gray e Corbally}{GRAY; CORBALLY}{2009}
+{GRAY, R.~O.; CORBALLY, C.~J. \textbf{Stellar Spectral Classification}.
+  Princeton, New Jersey: Princeton University Press, 2009.
+ISBN 978-0-691-12510-7.}
+
+\bibitem[Hartmann 2008]{hartmann2008accretion}
+\abntrefinfo{Hartmann}{HARTMANN}{2008}
+{HARTMANN, L. \textbf{Accretion Processes in Star Formation}. 2nd. ed.
+  Cambridge: Cambridge University Press, 2008.}
+
+\bibitem[Herczeg e Hillenbrand 2015]{Herczeg2015}
+\abntrefinfo{Herczeg e Hillenbrand}{HERCZEG; HILLENBRAND}{2015}
+{HERCZEG, G.~J.; HILLENBRAND, L.~A. Empirical isochrones for low mass stars in
+  nearby young associations.
+\textbf{The Astrophysical Journal}, v.~808, p.~23, 2015.}
+
+\bibitem[Hillenbrand 1997]{hillenbrand1997stellar}
+\abntrefinfo{Hillenbrand}{HILLENBRAND}{1997}
+{HILLENBRAND, L.~A. On the stellar population and star-forming history of the
+  orion nebula cluster.
+\textbf{The Astronomical Journal}, v.~113, p.~1733, May 1997.}
+
+\bibitem[Jackson e Jeffries 2012]{jackson2012why}
+\abntrefinfo{Jackson e Jeffries}{JACKSON; JEFFRIES}{2012}
+{JACKSON, R.~J.; JEFFRIES, R.~D. Why do some young cool stars show spot
+  modulation while others do not?: Starspots on m dwarfs in ngc 2516.
+\textbf{Monthly Notices of the Royal Astronomical Society}, v.~423, n.~3, p.
+  2966--2976, 2012.}
+
+\bibitem[Jørgensen e Lindegren 2005]{jorgensen2005stellar}
+\abntrefinfo{Jørgensen e Lindegren}{JøRGENSEN; LINDEGREN}{2005}
+{JøRGENSEN, B.~R.; LINDEGREN, L. Determination of stellar ages from
+  isochrones: Bayesian estimation versus isochrone fitting.
+\textbf{Astronomy \& Astrophysics}, v.~436, n.~1, p. 127--143, jun 2005.}
+
+\bibitem[Kaeufer et al. 2023]{kaeufer2023analysing}
+\abntrefinfo{Kaeufer et al.}{KAEUFER et al.}{2023}
+{KAEUFER, T. et al. Analysing the seds of protoplanetary disks with machine
+  learning.
+\textbf{Astronomy and Astrophysics}, v.~672, p.~A30, apr 2023.}
+
+\bibitem[Kerber e Santiago 2005]{kerber2005physical}
+\abntrefinfo{Kerber e Santiago}{KERBER; SANTIAGO}{2005}
+{KERBER, L.~O.; SANTIAGO, B.~X. Physical parameters of rich lmc clusters from
+  modeling of deep hst colour-magnitude diagrams.
+\textbf{Astronomy and Astrophysics}, v.~435, p. 77--93, may 2005.}
+
+\bibitem[Kerber et al. 2007]{kerber2007physical}
+\abntrefinfo{Kerber et al.}{KERBER et al.}{2007}
+{KERBER, L.~O.; SANTIAGO, B.~X.; BROCATO, E. Physical parameters of 15
+  intermediate-age lmc clusters from modelling of hst colour-magnitude
+  diagrams.
+\textbf{Astronomy and Astrophysics}, v.~462, p. 139--156, jan 2007.}
+
+\bibitem[Kirkpatrick et al. 1999]{Kirkpatrick1999}
+\abntrefinfo{Kirkpatrick et al.}{KIRKPATRICK et al.}{1999}
+{KIRKPATRICK, J.~D.; REID, I.~N.; LIEBERT, J.; CUTRI, R.~M.; NELSON, B.;
+  BEICHMAN, C.~A.; DAHN, C.~C.; MONET, D.~G.; GIZIS, J.~E.; SKRUTSKIE, M.~F.
+  Dwarfs cooler than ``m'': The definition of spectral type ``l'' using
+  discoveries from the 2-micron all-sky survey (2mass).
+\textbf{The Astrophysical Journal}, v.~519, n.~802, p. 802--833, July 1999.}
+
+\bibitem[Kounkel et al. 2022]{kounkel2022untangling}
+\abntrefinfo{Kounkel et al.}{KOUNKEL et al.}{2022}
+{KOUNKEL, M. et al. Untangling the galaxy. iv. empirical constraints on angular
+  momentum evolution and gyrochronology for young stars in the field.
+\textbf{The Astronomical Journal}, v.~164, n.~4, p.~137, October 2022.}
+
+\bibitem[Lodieu et al. 2019]{lodieu2019fiveD}
+\abntrefinfo{Lodieu et al.}{LODIEU et al.}{2019}
+{LODIEU, N. et al. A 5d view of the alpha per, pleiades, and praesepe clusters.
+\textbf{Astronomy \& Astrophysics}, v.~628, p.~A66, 2019.}
+
+\bibitem[Luhman e Esplin 2020]{luhman2020}
+\abntrefinfo{Luhman e Esplin}{LUHMAN; ESPLIN}{2020}
+{LUHMAN, K.~L.; ESPLIN, T.~L. Refining the census of the upper scorpius
+  association with gaia.
+\textbf{The Astronomical Journal}, v.~160, p.~44, 2020.}
+
+\bibitem[Mann et al. 2019]{mann2019constrain}
+\abntrefinfo{Mann et al.}{MANN et al.}{2019}
+{MANN, A.~W. et al. How to constrain your m dwarf. ii. the
+  mass-luminosity-metallicity relation from 0.075 to 0.70 solar masses.
+\textbf{The Astrophysical Journal}, v.~871, p.~63, jan 2019.}
+
+\bibitem[Meingast et al. 2017]{meingast2017estimating}
+\abntrefinfo{Meingast et al.}{MEINGAST et al.}{2017}
+{MEINGAST, S.; LOMBARDI, M.; ALVES, J. Estimating extinction using unsupervised
+  machine learning.
+\textbf{Astronomy \& Astrophysics}, v.~601, p.~A137, may 2017.}
+
+\bibitem[Moraux et al. 2013]{moraux2013monitor}
+\abntrefinfo{Moraux et al.}{MORAUX et al.}{2013}
+{MORAUX, E. et al. The monitor project: Stellar rotation at 13~myr: I. a
+  photometric monitoring survey of the young open cluster h~per.
+\textbf{Astronomy \& Astrophysics}, v.~560, p.~A13, December 2013.}
+
+\bibitem[Moya et al. 2018]{moya2018empirical}
+\abntrefinfo{Moya et al.}{MOYA et al.}{2018}
+{MOYA, A.; ZUCCARINO, F.; CHAPLIN, W.~J.; DAVIES, G.~R. Empirical relations for
+  the accurate estimation of stellar masses and radii.
+\textbf{The Astrophysical Journal Supplement Series}, v.~237, n.~2, p.~21,
+  2018.}
+
+\bibitem[Nidhi et al. 2023]{nidhi2023stellar}
+\abntrefinfo{Nidhi et al.}{NIDHI et al.}{2023}
+{NIDHI, S. et al. Estimation of stellar parameters and mass accretion rate of
+  classical t tauri stars from lamost dr6.
+\textbf{Journal of Astrophysics and Astronomy}, v.~44, n.~2, p.~75, jul 2023.}
+
+\bibitem[Padmanabhan 2006]{thanu_2006}
+\abntrefinfo{Padmanabhan}{PADMANABHAN}{2006}
+{PADMANABHAN, T. \textbf{An Invitation to Astrophysics}. Singapore: World
+  Scientific Publishing Co. Pte. Ltd., 2006. ISBN 981-256-687-2 (pbk).
+ISBN 981-256-638-4.}
+
+\bibitem[Paegert et al. 2021]{paegert2021tessinputcatalogversions}
+\abntrefinfo{Paegert et al.}{PAEGERT et al.}{2021}
+{PAEGERT, M.; STASSUN, K.~G.; COLLINS, K.~A.; PEPPER, J.; TORRES, G.; JENKINS,
+  J.; TWICKEN, J.~D.; LATHAM, D.~W. \textbf{TESS Input Catalog versions 8.1 and
+  8.2: Phantoms in the 8.0 Catalog and How to Handle Them}. 2021.
+Dispon{\'\i}vel em: \url{https://arxiv.org/abs/2108.04778}.}
+
+\bibitem[Pecaut e Mamajek 2013]{pecaut2013intrinsic}
+\abntrefinfo{Pecaut e Mamajek}{PECAUT; MAMAJEK}{2013}
+{PECAUT, M.~J.; MAMAJEK, E.~E. Intrinsic colors, temperatures, and bolometric
+  corrections of pre-main-sequence stars.
+\textbf{The Astrophysical Journal Supplement Series}, v.~208, n.~1, p.~9,
+  September 2013.}
+
+\bibitem[Pecaut et al. 2012]{Pecaut2012}
+\abntrefinfo{Pecaut et al.}{PECAUT et al.}{2012}
+{PECAUT, M.~J.; MAMAJEK, E.~E.; BUBAR, E.~J. A revised age for upper scorpius
+  and the star formation history among the f-type members of the
+  scorpius-centaurus ob association.
+\textbf{The Astrophysical Journal}, v.~746, p.~154, 2012.}
+
+\bibitem[Rebull et al. 2018]{rebull2018rotation}
+\abntrefinfo{Rebull et al.}{REBULL et al.}{2018}
+{REBULL, L.~M. et al. Rotation of low-mass stars in upper scorpius and \(\rho\)
+  ophiuchus with k2.
+\textbf{The Astronomical Journal}, v.~155, n.~5, p.~196, April 2018.}
+
+\bibitem[Rieke e Lebofsky 1985]{rieke1985interstellar}
+\abntrefinfo{Rieke e Lebofsky}{RIEKE; LEBOFSKY}{1985}
+{RIEKE, G.~H.; LEBOFSKY, M.~J. The interstellar extinction law from 1 to 13
+  microns.
+\textbf{The Astrophysical Journal}, v.~288, p.~618, jan 1985.}
+
+\bibitem[Sarro et al. 2018]{sarro2018estimates}
+\abntrefinfo{Sarro et al.}{SARRO et al.}{2018}
+{SARRO, L.~M. et al. Estimates of the atmospheric parameters of m-type stars: A
+  machine-learning perspective.
+\textbf{Monthly Notices of the Royal Astronomical Society}, v.~476, n.~1, p.
+  1120--1139, may 2018.}
+
+\bibitem[Serenelli et al. 2021]{serenelli2021weighing}
+\abntrefinfo{Serenelli et al.}{SERENELLI et al.}{2021}
+{SERENELLI, A. et al. Weighing stars from birth to death: mass determination
+  methods across the hrd.
+\textbf{The Astronomy and Astrophysics Review}, v.~29, n.~1, p.~4, December
+  2021.}
+
+\bibitem[Siess et al. 2000]{siess2000internet}
+\abntrefinfo{Siess et al.}{SIESS et al.}{2000}
+{SIESS, L.; DUFOUR, E.; FORESTINI, M. An internet server for update pre-main
+  sequence tracks of low- and intermediate-mass stars.
+\textbf{Astronomy \& Astrophysics}, 2000.}
+
+\bibitem[Squicciarini e Bonavita 2022]{squicciarini2022madys}
+\abntrefinfo{Squicciarini e Bonavita}{SQUICCIARINI; BONAVITA}{2022}
+{SQUICCIARINI, V.; BONAVITA, M. Madys: the manifold age determination for young
+  stars: I. isochronal age estimates and model comparison.
+\textbf{Astronomy \& Astrophysics}, v.~666, p.~A15, October 2022.}
+
+\bibitem[Stassun et al. 2019]{tess2019}
+\abntrefinfo{Stassun et al.}{STASSUN et al.}{2019}
+{STASSUN, K.~G. et al. The revised tess input catalog and candidate target
+  list.
+\textbf{The Astronomical Journal}, v.~158, p.~138, October 2019.}
+
+\bibitem[Stauffer et al. 2019]{stauffer2019rotational}
+\abntrefinfo{Stauffer et al.}{STAUFFER et al.}{2019}
+{STAUFFER, J. et al. Rotational evolution of young, binary m dwarfs.
+\textbf{The Astronomical Journal}, v.~156, 2019.}
+
+\bibitem[Taylor 2005]{Taylor2005}
+\abntrefinfo{Taylor}{TAYLOR}{2005}
+{TAYLOR, M.~B. Topcat \& stil: Starlink table/votable processing software.
+v.~347, p.~29, 2005.}
+
+\bibitem[Wadekar et al. 2022]{wadekar2022sz}
+\abntrefinfo{Wadekar et al.}{WADEKAR et al.}{2022}
+{WADEKAR, D. et al. \textbf{The SZ flux-mass ($Y$-$M$) relation at low halo
+  masses: improvements with symbolic regression and strong constraints on
+  baryonic feedback}. 2022. ArXiv.
+Accessed on 27 Mar. 2023.
+Dispon{\'\i}vel em: \url{http://arxiv.org/abs/2209.02075}.}
+
+\end{thebibliography}

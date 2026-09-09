@@ -1,0 +1,238 @@
+\chapter{\textbf{Resultados e Discussão}}\label{cap:resultados}
+    \section{Validação da metodologia e dos modelos de estimativa de massa estelar.}
+    
+	Para aferir as flutuações esperadas nos resultados obtidos com o método de ajuste de isócronas, o conjunto de controle foi construído a partir dos dados dos modelos de evolução estelar, permitindo a autodeterminação da massa estelar, de modo a verificar a consistência dos resultados e a estabelecer suas incertezas, conforme detalhado na Seção \ref{sec:validacao}. A partir deste ponto, o método de ajuste de isócronas será chamado de "IsocFit"\, mais o nome do modelo de evolução estelar utilizado. Por exemplo, "IsocFit - Siess"~ indicará o ajuste específico usando o modelo teórico de \citeonline{siess2000internet}, facilitando a identificação do método e do modelo empregados.
+    
+    \begin{figure}[h]
+    	\centering
+    	\caption[Análise comparativa do método de ajuste de isócronas.]{Análise comparativa do método de ajuste de isócronas para massas de estrelas sintéticas obtidas dos modelos de evolução estelar, de Siess et al. (2000) de Baraffe et al. (2015). A linha sólida representa a relação ideal de um para um, enquanto os pontos ilustram as previsões.}
+    	\includegraphics[width=0.45\linewidth]{04-figuras/isocfit_results_siess.png}
+ 	    	\includegraphics[width=0.45\linewidth]{04-figuras/isocfit_results_bhac15.png}
+    	\label{fig:sintec_report}
+    \end{figure}
+
+	Na Figura \ref{fig:sintec_report}, os dois painéis ilustram o desempenho do IsocFit para estimar as massas estelares. O gráfico da esquerda compara as massas estelares estimadas com o conjunto de controle das trilhas evolutivas de \citeonline{siess2000internet} e o da direita utiliza as trilhas evolutivas de \citeonline{baraffe2015new}. Os pontos plotados se alinham estreitamente com a linha tracejada, sugerindo que a estimativa se aproxima dos valores de referência. A dispersão ao longo da linha indica alguma variação, mas ela é pequena, o que implica boa precisão nas previsões de massa. A partir das diferenças entre os resultados e os valores de referência, conseguimos extrair a diferença média de 1,7\%, (valor nominal de 0,01674), para o modelo de  \citeonline{siess2000internet} e 0,8\%, valor nominal de 0,0081, que serão utilizados na equação (\ref{erro}) para a estimativa de incertezas.
+    
+    A validação da metodologia de modelagem da relação entre massa e magnitude foi realizada usando a amostra de estrelas binárias presentes em \citeonline{delfosse2000accurate}. Aqui também, queremos estimar a qualidade dos resultados alcançados para os aglomerados estudados, bem como estimar uma incerteza para a metodologia, dado que essa classe de estrelas permite a determinação direta da massa, possibilitando uma comparação eficaz entre as massas previstas pelo modelo de regressão e os valores observados, tendo uma incerteza esperada de aproximadamente \(0,05\%\) de acordo com \citeonline{serenelli2021weighing}.
+    	
+    Para o método de RMM, adotaremos a nomenclatura: RMM mais a legenda: \textbf{(sigla do algoritmo — modelo de evolução estelar — filtro de magnitude)}. Por exemplo, "KNN — BHAC15 — Vmag", indica a utilização do algoritmo KNN aplicado ao modelo teórico BHAC15 com o filtro de magnitude na banda V.
+
+\begin{figure}
+    \centering
+    \caption[Análise residual do modelo de regressão para estrelas do aglomerado das Plêiades.]{Análise residual do modelo de regressão treinando para estrelas do aglomerado das Plêiades. Essa figura apresenta os principais gráficos de diagnóstico para o modelo KNN usado para prever a massa estelar com base na magnitude absoluta. O gráfico superior esquerdo mostra os valores de massa previstos e reais, enquanto o gráfico superior direito é um histograma dos resíduos. No painel inferior esquerdo temos o gráfico dos resíduos em função dos valores obtidos com os dados de teste. Por fim, no painel inferior temos o gráfico de resíduos padronizados (Student) \textit{versus} influência (leverage)}
+    \includegraphics[width=0.5\linewidth]{04-figuras/rmm_visual_report.png}
+    \label{fig:ebd_report}
+\end{figure}
+
+
+	Os resultados obtidos para as magnitudes na banda V, corrigidas pela extinção do aglomerado das Plêiades com o valor \(A_V=0,03\) mag e pela distância \(d=125\) pc \cite{lodieu2019fiveD}, demonstraram que o modelo de RMM utilizando o algoritmo de K-Nearest Neighbors (KNN) obteve uma forte correlação entre os valores de massa previstos e os reais, com um \(R^2\) de 0,96, conforme mostrado nos gráficos de análise de regressão da Figura \ref{fig:ebd_report}. A homoscedasticidade (valor de P = 0,12) confirma que não há uma tendencia dos erros, indicando que os resíduos estão bem distribuídos e que as previsões do modelo são não-enviesadas. A não-normalidade dos resíduos (valor de P = 0,01) impede com que possamos garantir que qualquer imprecisão obtida seja de natureza totalmente aleatória. Além disso, o gráfico de influência não sugere \textit{outliers} significativos que possam estar distorcendo os resultados, validando ainda mais a robustez do modelo adotado nesse contexto.
+
+\begin{figure}
+    \centering
+    \caption[Gráfico de comparação de massa para estrelas binárias.]{Comparação entre as massas estimadas para estrelas binárias. Esse gráfico compara as massas estelares estimadas obtidas do modelo de relação massa-magnitude a partir do KNN com as massas obtidas de Delfosse et al. (2000). A linha sólida representa a relação ideal de um para um, enquanto os pontos ilustram as previsões do modelo, que se alinham estreitamente com os valores observados. As barras de erro representam os resíduos pontuais.}
+    \includegraphics[width=0.5\linewidth]{04-figuras/isocfit_results_rml.png}
+    \label{fig:ebd_result}
+\end{figure}
+
+
+A comparação entre as massas estimadas via o modelo de RMM (utilizando KNN) e as massas coletadas de \citeonline{delfosse2000accurate} (Figura \ref{fig:ebd_result}) mostra uma boa concordância, com a maioria dos valores previstos se alinhando estreitamente com os dados observados. Embora haja desvios para valores de massa mais altos, eles permanecem em margens aceitáveis, considerando que, como observado no primeiro painel da Figura \ref{fig:ebd_report}, todos os pontos estão acima do valor ideal, demonstrando uma possível tendência de subestimar o valor dessas massas. Da distribuição dos erros, podemos extrair a mediana com valor de \(3,8\%\) para obter as incertezas segundo discutido na Seção \ref{sec:validacao}. Portanto, essa abordagem concede um panorama geral da eficácia da metodologia empregada na previsão da massa estelar com base na sua relação com a magnitude absoluta.
+
+    
+\section{Aglomerado da Nebulosa de Órion}\label{sec:onc}
+O Aglomerado da Nebulosa de Órion (ONC) é um dos alvos mais estudados no contexto de formação estelar, devido à sua proximidade e à presença de um grande número de estrelas jovens. No entanto, embora \citeonline{kounkel2022untangling} tenha catalogado a maioria das estrelas de Órion, com 16.844 objetos, existem poucas informações acerca das massas dessas estrelas, especialmente quando se trata daquelas localizadas na fase de PMS. Os dados do catálogo TESS V8.2 de \citeonline{tess2019}, tem como foco exoplanetas e a maioria das estrelas registradas na missão são objetos na sequência principal, tornando inconclusivas as comparações com as estrelas de ONC. Já \citeonline{davies2014accretion} fornecem dados para 682 estrelas no aglomerado, mas restringiram sua amostra apenas àquelas com informações suficientes para prosseguir com os cálculos.
+
+
+\subsection{Estimativas de Massa}
+
+Para o cálculo das massas estelares das estrelas do ONC, foi utilizado o IsocFit com base em valores calculados de temperatura efetiva e luminosidade, sempre que o tipo espectral e a magnitude nas bandas V e Ic estavam disponíveis. A partir dessas informações, e utilizando as equações discutidas na seção \ref{sec:parametros}, bem como a equação (\ref{eq:luminosidade}), foi possível gerar um gráfico do DHR para todas as estrelas da amostra, mesmo aquelas cujas massas não puderam ser estimadas devido a limitações do modelo de isócronas empregado.
+
+O DHR (Figura \ref{fig:onc_hrd}) exibe a posição das estrelas alvo em relação às faixas de isócronas teóricas de \citeonline{siess2000internet}, representadas por linhas sólidas, e às trilhas evolutivas de massa constante, indicadas por linhas tracejadas. Nota-se que há uma grande dispersão entre as idades das estrelas. Para a determinação de massa via RMM, adotamos um só valor de idade, ugyal a 1 milhão de anos, após algumas realizações do método descrito na Seção \ref{subsec:rml}, utilizando as magnitudes absolutas na banda V, corrigidas pela extinção disponibilizada em \citeonline{hillenbrand1997stellar}.
+
+    \begin{figure}[!h]
+        \centering
+        \caption[Diagrama HR para o aglomerado da Nebulosa de Órion]{Esse diagrama HR ilustra a relação entre a luminosidade e a temperatura
+            de estrelas sintéticas. As faixas sólidas representam estrelas do modelo teórico de isócronas de \citeonline{siess2000internet}. As tracejadas representam trilhas evolutivas com massa constante. A posição das estrelas-alvo, pertencentes ao aglomerado da Nebulosa de Órion, está marcada por uma estrela vermelha.}
+        \includegraphics[width=0.5\linewidth]{04-figuras/onc_hrd_complete.png}
+        \label{fig:onc_hrd}
+    \end{figure}
+
+\subsection{Comparações entre Métodos}
+
+Os gráficos da Figura \ref{fig:onc_results} comparam as estimativas de massa estelar usando dois conjuntos de dados distintos, os de \citeonline{hillenbrand1997stellar} e os de \citeonline{davies2014accretion}, e duas metodologias: IsocFit - Siess e um modelo da RMM, cujo melhor algorítimo foi baseado no K-ésimos Vizinhos mais Próximos (KNN) utilizando o modelo BHAC15 com isócronas de 1 milhão de anos e magnitude absoluta V.
+
+    
+    \begin{figure}[!h]
+        \centering
+        \caption[Gráficos comparativos para o aglomerado da Nebulosa de Órion]{Comparação entre as estimativas de massa utilizando diferentes métodos de ajuste de isócronas e magnitudes para dois conjuntos de dados distintos: \citeonline{hillenbrand1997stellar} e \citeonline{davies2014accretion}. Cada linha de gráficos corresponde a um conjunto de dados, e cada coluna refere-se a uma metodologia de estimativa.}
+        \includegraphics[width=0.5\linewidth]{04-figuras/onc_results_report.png}
+        \label{fig:onc_results}
+    \end{figure}
+
+	Nos painéis superiores, comparamos nossas determinações de massa para a ONC com os dados de \citeonline{hillenbrand1997stellar}. O IsocFit — Siess subestimou os valores das massas, especialmente para estrelas com massas superiores a 0,5 \(M_\odot\). No entanto, ao utilizar a KNN — BHAC15 — V , as estimativas de massa se aproximam mais da linha de tendência, embora com maior dispersão para objetos de maior massa.
+	
+	Nos painéis inferiores, que comparam nossos resultados com os dados de \citeonline{davies2014accretion}, que utilizou a determinação de massa com um ajuste de isócronas utilizando o modelo de \citeonline{siess2000internet}, tanto o IsocFit quanto a KNN — BHAC15 — V mostram uma concentração maior dos dados ao longo da linha de tendência. No entanto, para estrelas de maior massa, há um espalhamento nos valores, sugerindo uma dificuldade em obter estimativas precisas para esses objetos.
+
+    \input{05-tabelas/onc_results}
+   
+    A análise dos gráficos sugere que ambos os métodos fornecem boas estimativas de massa para as estrelas do aglomerado da Nebulosa de Órion, porém, o método de IsocFit - Siess apresenta uma tendência à subestimação, especialmente para objetos de maior massa. Por outro lado, a KNN — BHAC15 — V oferece resultados mais precisos, embora apresente maior dispersão para objetos com massa superior a 0,5 \(M_\odot\).
+    
+    É importante destacar que, devido à grande dispersão de idades para as estrelas da ONC, observada na Figura \ref{fig:onc_hrd} a aplicação de isócronas fixas em 1 milhão de anos pode introduzir discrepâncias nas estimativas de massa, especialmente para objetos mais velhos. Além disso, a correção da extinção, particularmente para estrelas mais jovens, pode influenciar fortemente os resultados, não só os obtidos pela KNN — BHAC15 — V, como pelo IsocFit.
+    
+    Em resumo, o modelo de RMM construído pelo algoritmo baseado em KNN, utilizando as magnitudes na banda V, se mostrou superior em termos de abundância de resultados, enquanto o IsocFit resultou em valores piores para estrelas mais massivas nesse aglomerado. Contudo, a análise comparativa demonstra que os resultados obtidos pelo IsocFit concordam melhor com as duas referências utilizadas, embora a dispersão seja maior com os dados de \citeonline{hillenbrand1997stellar}.
+
+	\section{Upper Scorpius}\label{sec:usco}
+	
+		O aglomerado de Upper Scorpius é uma das regiões formadoras de estrelas mais próximas da Terra (140 pc, Rebull et al. 2018), pertencente à associação OB de Scorpius-Centaurus, com idade estimada em aproximadamente 5 a 11 milhões de anos \cite{Pecaut2012}. Essa região é amplamente estudada devido à sua proximidade, composição estelar relativamente jovem e à disponibilidade de grandes amostras de estrelas em diversos estágios evolutivos, o que a torna ideal para investigações acerca da formação estelar e evolução de estrelas de baixa e média massa.
+		
+			
+		Conforme \citeonline{luhman2020}, o aglomerado de Upper Scorpius contém mais de 2000 objetos estelares e subestelares, incluindo uma ampla variedade de tipos espectrais que vão desde estrelas de classe O até anãs marrons. A maioria desses objetos está localizada na PMS, como na ONC, o que implica que muitos dos métodos usados para estimar a massa estelar nesta fase evolutiva também são aplicáveis aqui.
+
+
+	\subsection{Estimativas de Massa}
+	
+	Assim como no estudo da ONC, as massas das estrelas de Upper Scorpius podem ser estimadas utilizando o IsocFit, comparando as luminosidades e temperaturas efetivas das estrelas com modelos teóricos. Para este aglomerado, o catálogo Gaia DR3 oferece os dados de temperatura efetiva e fotometria, e o catálogo TESS V8.2, a luminosidade desses objetos.
+		
+	\begin{figure}[!h]
+		\centering
+		\caption[Diagrama HR para o aglomerado de Upper Scorpius]{Mesmo que a Figura \ref{fig:onc_hrd} para o aglomerado de Upper Scorpius}
+		\includegraphics[width=0.5\linewidth]{04-figuras/usco_hrd_complete.png}
+		\label{fig:usco_hrd}
+	\end{figure}
+	
+	O diagrama HR para Upper Scorpius, apresentado na Figura \ref{fig:usco_hrd}, semelhante ao utilizado para a ONC, é essencial para observar as discrepâncias na distribuição das estrelas e ajustar isócronas adequadas para estimativas de massa. Segundo \citeonline{Herczeg2015}, as isócronas de \citeonline{siess2000internet} têm sido amplamente empregadas para a região de Upper Scorpius, pois conseguem descrever com precisão as fases evolutivas desta população jovem. Além disso, modelos como os de \citeonline{baraffe2015new} também são frequentemente aplicados para a faixa de baixa massa, especialmente para objetos subestelares como as anãs marrons.
+	
+	\subsection{Comparações entre Métodos}
+	As comparações entre diferentes métodos de estimativa de massa, como o IsocFit e a RMM, mostram resultados variados. No caso de Upper Scorpius, estudos como o de \citeonline{luhman2020} sugerem que, para objetos de baixa massa, a estimativa por isócronas é preferível, pois oferece maior precisão em comparação ao ajuste por massa-luminosidade, especialmente para estrelas ainda na fase de contração na PMS.
+	
+	Na Figura \ref{fig:usco_results} para Upper Scorpius, as estimativas de massa tendem a ser subestimadas para estrelas mais jovens e de menor massa. Este comportamento é esperado, já que a incerteza na idade das estrelas, combinada com as variações na extinção, introduzem um viés nas estimativas de massa. Estrelas de massa mais elevada e com idades mais avançadas, por outro lado, apresentam uma dispersão maior, refletindo os desafios em modelar corretamente suas propriedades físicas.
+	
+	
+	\begin{figure}[!h]
+		\centering
+		\caption[Gráficos comparativos para o aglomerado de Upper Scorpius]{Os gráficos comparam estimativas de massa para dois conjuntos de dados distintos: TESS V8.2 e \citeonline{stauffer2019rotational}, utilizando dois métodos diferentes de estimativa de massa. Nos painéis superiores, temos as comparações com o catálogo TESS V8.2, enquanto os painéis inferiores estão os resultados para o catálogo de \citeonline{stauffer2019rotational}. As linhas tracejadas indicam a linha de tendência onde a massa estimada coincide com a massa de comparação.}
+		\includegraphics[width=0.5\linewidth]{04-figuras/usco_results_report.png}
+		\label{fig:usco_results}
+	\end{figure}
+
+	Nos dois gráficos da esquerda, é utilizado o método IsocFit - Siess. Observa-se que, na comparação com os dados do catálogo TESS V8.2, os valores calculados menores do que \(0,5 \, M_\odot\) encontram-se acima da linha de tendência, indicando uma subestimação das massas estelares em relação aos valores esperados, enquanto que, para \(M > 5 \, M_\odot\), nossos valores estão acima dos valores encontrados no catálogo TESS V8.2. O catálogo de \citeonline{stauffer2019rotational} (direita), tem estimativas de massa para uma região de baixa massa (inferior a 0,32 \(M_\odot\)) e comparando nossos resultados com os desse catálogo, é possível observar uma leve tendência de subestimação.
+	
+	Nos gráficos da direita da Figura \ref{fig:usco_results}, a estimativa de massa foi realizada utilizando a RMM na banda G obtida do modelo de BHAC15 para uma trilha de isócronas de 8 milhões de anos ajustado via métodos KNN. Na comparação com TESS V8.2, as estimativas estão mais próximas da linha de tendência em comparação com o IsocFit — BHAC15, embora os valores se afastem mais acima de 0,5 \(M_\odot\). Na comparação com os dados de \citeonline{stauffer2019rotational}, o comportamento é semelhante para os dois métodos, com as massas concentradas em uma faixa estreita e baixa, com pouca dispersão.
+	
+		\input{05-tabelas/usco_results}
+	
+	Os resultados têm uma boa precisão, validada estatisticamente, embora não haja como fazer uma análise comparativa completa utilizando o catálogo de \citeonline{stauffer2019rotational}, dado o seu intervalo de massas limitado, e o de TESS V8.2, que é dedicado a objetos na sequência principal.
+	
+	
+	Essas comparações ressaltam a importância de considerar a natureza dos dados e o contexto evolutivo das estrelas ao escolher o método de estimativa de massa. No geral, o método KNN baseado na magnitude G parece ser mais adequado para a amostragem utilizada para esse aglomerado.
+	
+	\section{Aglomerado NGC 869}\label{sec:hper}
+	
+	O aglomerado NGC 869, conhecido também como h Persei, é parte do famoso sistema de aglomerados duplos h e \(\chi\) Persei. Esse aglomerado possui grande relevância para o estudo da evolução estelar, dada sua rica população de estrelas jovens e massivas. Sua proximidade relativa e composição tornam NGC 869 um excelente laboratório para investigar a distribuição de massas estelares e o progresso evolutivo de estrelas, especialmente as que se encontram na sequência principal e em fases avançadas de vida.
+	
+	\subsection{Estimativas de Massa e Ajustes de Isócronas}
+	
+	Para determinar as massas das estrelas no aglomerado NGC 869, utilizamos duas abordagens principais: o método IsocFit - Siess, com temperaturas efetivas extraídas de \citeonline{gaia2022} e luminosidades do TESS V8.2, e a RMM com base no modelo BHAC15. Para este último utilizamos uma isócrona de 13 milhões de anos e as magnitudes absolutas na banda V. Esses métodos foram aplicados sobre dois conjuntos de dados distintos, provenientes do catálogo TESS V8.2 de \citeonline{tess2019} e do estudo de \citeonline{moraux2013monitor}.
+	
+	\begin{figure}[!h]
+		\centering
+		\caption[Diagrama HR para o aglomerado de NGC 869]{DHR para o aglomerado NGC 869.}
+		\includegraphics[width=0.5\linewidth]{04-figuras/hper_hrd_complete.png}
+		\label{fig:hper_hrd}
+	\end{figure}
+	
+	\subsection{Comparações entre Métodos}
+	
+	A Figura \ref{fig:hper_results} apresenta uma comparação entre as estimativas de massa para NGC 869 obtidas pelos diferentes métodos e conjuntos de dados. No gráfico superior esquerdo, que compara os dados do TESS V8.2 com os valores obtidos com o método IsocFit - Siess, observamos uma leve superestimação de massa para estrelas com mais de \(0,75 M_\odot\), enquanto as estrelas de menor massa apresentam tendência à subestimação. Esse comportamento é refletido pela dispersão dos dados ao redor da linha de tendência, marcada pela linha tracejada.
+	
+	\begin{figure}[!h]
+		\centering
+		\caption[Gráficos comparativos para o aglomerado de NGC 869]{Comparação entre estimativas de massa utilizando diferentes métodos de ajuste de isócronas e magnitudes para dois conjuntos de dados: TESS V8.2 e \citeonline{moraux2013monitor}. Cada linha de gráficos refere-se a um conjunto de dados, e cada coluna a um método de estimativa.}
+		\includegraphics[width=0.5\linewidth]{04-figuras/hper_results_report.png}
+		\label{fig:hper_results}
+	\end{figure}
+	
+	No gráfico inferior esquerdo, percebemos que nossos valores de massa são menores do que os de \citeonline{moraux2013monitor}.
+	
+	Os gráficos da direita, apresentam um padrão distinto. No gráfico superior direito, na comparação com os dados do TESS V8.2, nossas estimativas de massa são menores do que as do catálogo. No gráfico inferior direito, na comparação com os dados de \citeonline{moraux2013monitor}, há uma melhor concordância com a linha de tendência, especialmente para estrelas entre \(0,75 M_\odot\) e \(1,25 M_\odot\), indicando que a KNN — BHAC15 — V se alinha com os resultados propostos pelos autores.
+	
+	\input{05-tabelas/hper_results}
+	
+	A análise comparativa entre o IsocFit e a KNN — BHAC15 — V sugere que, para o aglomerado NGC 869, os métodos divergem nas estimativas de massa, cada um corroborando diferentes conjuntos de dados, refletindo a falta de concordância entre as fontes. O IsocFit - Siess tende a superestimar massas de estrelas acima de \(0,75 M_\odot\), enquanto a KNN — BHAC15 — V apresenta uma concordância mais estreita com a linha de tendência, especialmente para estrelas de maior massa nos dados de \citeonline{moraux2013monitor}.
+	
+	Embora ambos os métodos sejam válidos, a precisão da KNN — BHAC15 — V parece ser maior para as estrelas de maior massa, o que pode ser significativo em estudos futuros sobre a evolução estelar em NGC 869. A aplicação de catálogos distintos mostrou que a origem dos dados pode influenciar as estimativas de massa, sugerindo a importância de ajustes cuidadosos, especialmente em catálogos com informações limitadas sobre extinção e parâmetros fundamentais das estrelas.
+
+	\section{Aglomerado das Plêiades}\label{sec:ple}
+	
+	O aglomerado das Plêiades é um dos aglomerados abertos mais próximos (120 pc, Lodieu et al. 2019) e amplamente estudados, proporcionando uma excelente oportunidade para testar e comparar diferentes métodos de estimativa de massa estelar. Para esta análise, o principal catálogo utilizado é o de \citeonline{lodieu2019fiveD}, que fornece dados astrométricos e fotométricos detalhados. Contudo, este catálogo não inclui informações sobre o tipo espectral das estrelas, o que impede a estimativa direta de temperatura efetiva e luminosidade, conforme discutido na Seção \ref{sec:parametros}.
+	
+	Para contornar essa limitação, utilizamos temperaturas efetivas do catálogo de \citeonline{gaia2022} e luminosidades do TESS V8.2. Esses dados permitiram a construção de um DHR para as Plêiades, onde as massas estelares foram determinadas com o método IsocFit.
+	
+	\subsection{Estimativas de Massa}
+	
+	Após a estimativa de massas com o IsocFit, usando as temperaturas e luminosidades das fontes mencionadas, foi criado um DHR para o aglomerado das Plêiades, seguindo o mesmo procedimento aplicado a outros aglomerados, como a ONC. A Figura \ref{fig:ple_hrd} exibe o DHR com as isócronas teóricas do modelo BHAC15.
+	
+	\begin{figure}[!h]
+		\centering
+		\caption[Diagrama HR para o aglomerado das Plêiades]{DHR das estrelas do aglomerado das Plêiades. As linhas sólidas representam as isócronas teóricas do modelo BHAC15, enquanto as linhas tracejadas representam trilhas evolutivas com massa constante. As estrelas das Plêiades estão marcadas com uma estrela vermelha.}
+		\includegraphics[width=0.5\linewidth]{04-figuras/ple_hrd_complete.png}
+		\label{fig:ple_hrd}
+	\end{figure}
+	
+	Estudos anteriores apontam uma variação significativa nas estimativas de idade para as Plêiades, variando de \(112 \pm 5~\text{Milhões de anos}\) \cite{dahm2015reexamining} até \(160~\text{Milhões de anos}\) \cite{gossage2018age}. Neste trabalho, adotamos a idade de 112 milhões de anos, com base nas isócronas BHAC15. Esse modelo foi usado para construir uma RMM na banda G do Gaia DR3, permitindo a estimativa das massas das estrelas.
+	
+	\subsection{Comparações entre Métodos}
+	
+	A Figura \ref{fig:ple_results} mostra uma comparação entre as massas estelares estimadas pelos métodos IsocFit e a RMM, ambos utilizando o modelo BHAC15. A comparação foi realizada com dados de três fontes: as massas calculadas a partir do modelo de RMM proposto por \citeonline{delfosse2000accurate} para magnitudes na banda K, os dados do catálogo TESS V8.2, e os valores de massa determinados por \citeonline{lodieu2019fiveD}. A linha diagonal tracejada indica a linha de identidade, onde as estimativas de massa coincidem com os valores de referência.
+	
+	\begin{figure}[!h]
+		\centering
+		\caption[Gráficos comparativos para o aglomerado das Plêiades]{Comparação entre estimativas de massa utilizando os métodos de ajuste de isócronas e RMM (KNN), ambos com o modelo BHAC15. Cada linha representa um conjunto de dados diferente: TESS V8.2, \citeonline{lodieu2019fiveD}, e \citeonline{delfosse2000accurate}. A primeira coluna refere-se ao método de ajuste de isócronas, enquanto a segunda representa a RMM. A linha tracejada indica a linha de identidade, onde a estimativa e o valor de referência são iguais.}
+		\includegraphics[width=0.5\linewidth]{04-figuras/ple_results_report.png}
+		\label{fig:ple_results}
+	\end{figure}
+	
+	No método IsocFit, ao comparar com os dados do TESS e \citeonline{lodieu2019fiveD}, observamos uma maior dispersão para massas superiores a \(0,7 M_\odot\), indicando uma tendência à superestimação para essas estrelas de maior massa. Para estrelas de baixa massa, no entanto, as estimativas seguem mais de perto a linha de identidade.
+	
+	Por outro lado, o KNN — BHAC15 — G mostra uma maior consistência ao longo da diagonal, com menor dispersão, sugerindo que esse método é mais robusto para as Plêiades, especialmente para massas intermediárias.
+	
+	A comparação com os resultados de \citeonline{delfosse2000accurate}, que utiliza a RMM baseada em sistemas binários, revela uma maior dispersão para estrelas com massas acima de \(0,5 M_\odot\). Para massas menores, os resultados são mais consistentes com os demais catálogos. Contudo, o modelo de \citeonline{delfosse2000accurate} é aplicável a um intervalo limitado na banda K (entre \(4,5\) e \(9,5\) \textit{mag}), o que restringe a análise a estrelas com massas até aproximadamente \(0,75 M_\odot\).
+	
+	\input{05-tabelas/pleiades_results}
+	
+	Para as Plêiades, o KNN — BHAC15 — G se mostrou mais confiável que o IsocFit, especialmente para estrelas de massa intermediária, onde a dispersão foi menor. Essa maior confiabilidade pode ser creditada também aos dados obtidos do catálogo do Gaia DR3, que disponibilizou os dados de correção individuais, paralaxe e extinção, com uma alta precisão. O IsocFit teve dificuldades em estrelas de maior massa, subestimando os valores em alguns casos. A Tabela \ref{tab:ple_massas} apresenta os valores estimados pelas duas metodologias e suas comparações com os dados utilizados.
+	
+    \section{NGC 2516}\label{sec:2516}
+    
+    NGC 2516 é um aglomerado aberto jovem localizado no plano galáctico, conhecido por conter uma ampla população de estrelas de baixa e alta massa. Esse aglomerado, com suas estrelas em estágios iniciais de evolução, oferece um ambiente ideal para estudar a formação e evolução estelar em aglomerados de baixa idade. Além disso, sua distribuição estelar bem determinada permite uma análise mais detalhada dos diferentes métodos de estimativa de massa estelar.
+    
+    \subsection{Estimativas de Massa}
+    
+    As estimativas de massa para NGC 2516 foram obtidas utilizando o modelo de isócronas BHAC15, aplicadas aos dados de luminosidade do catálogo TESS V8.2 e aos dados de temperatura efetiva do Gaia DR3. Foram utilizados dois métodos principais: o ajuste de isócronas IsocFit - BHAC15 e a KNN — BHAC15 — V, ambos com isócronas de 150 milhões de anos.
+    
+    \begin{figure}[!h]
+    	\centering
+    	\caption[Diagrama HR para o aglomerado NGC 2516.]{Diagrama HR para o aglomerado NGC 2516, similar ao gráfico da Figura \ref{fig:ple_hrd}.}
+    	\includegraphics[width=0.5\linewidth]{04-figuras/ngc2516_hrd_complete.png}
+    	\label{fig:hrd_ngc2516}
+    \end{figure}
+    
+    \subsection{Comparações entre Métodos}
+    
+    A Figura \ref{fig:ngc2516_results} apresenta gráficos comparativos das estimativas de massa em NGC 2516. No gráfico superior esquerdo, que mostra os resultados para o catálogo TESS V8.2 utilizando o IsocFit, observa-se uma tendência de divergência nas estimativas de massa para estrelas com massas superiores a \(0,6 M_\odot\). Já para objetos com massa abaixo desse valor, há uma boa concordância, com um leve espalhamento.
+    
+    \begin{figure}[!h]
+    	\centering
+    	\caption[Gráficos comparativos para o aglomerado NGC 2516]{Gráficos comparativos das estimativas de massa para NGC 2516, similar aos gráficos da Figura \ref{fig:ple_results}, mas aplicados ao aglomerado NGC 2516.}
+    	\includegraphics[width=0.5\linewidth]{04-figuras/ngc2516_results_report.png}
+    	\label{fig:ngc2516_results}
+    \end{figure}
+    
+    No gráfico inferior esquerdo, com os dados de \citeonline{jackson2012why} e as estimativas do IsocFit, observa-se uma maior concentração ao redor da linha de identidade para estrelas com massas entre \(0,25 M_\odot\) e \(0,6 M_\odot\), sugerindo uma melhor correspondência para essas faixas de massa.
+    
+    Os gráficos da direita utilizam os resultados obtidos da KNN — BHAC15 — V. No gráfico superior direito, que usa o catálogo TESS V8.2, a distribuição é mais concentrada em torno da linha de identidade para massas entre \(0,25 M_\odot\) e \(0,7 M_\odot\), com menor dispersão em relação ao método de isócronas. Entretanto, algumas estrelas mais massivas apresentam uma discrepância significativa ao serem comparadas com os dados do TESS V8.2. O gráfico inferior direito, com os dados de \citeonline{jackson2012why}, mostra uma excelente concordância com a linha de identidade, refletindo um comportamento quase linear e demonstrando coerência entre a RMM construída neste estudo e o, proposto por \citeonline{jackson2012why}.
+    
+    \input{05-tabelas/ngc2516_results}
+    
+    Para o aglomerado NGC 2516, a KNN — BHAC15 — V demonstrou uma maior concordância com os catálogos analisados. O IsocFit - BHAC15, embora útil, apresentou maior dispersão, especialmente para estrelas mais massivas. Isso era esperado, já que, para idades maiores, as isócronas tendem a convergir na sequência principal, levando a uma degenerescência em altas temperaturas e a ambiguidades nas estimativas de massa.
+    
+    As diferenças observadas entre os dois métodos sugerem que a KNN — BHAC15 — V pode fornecer uma melhor estimativa de massas em aglomerados abertos com populações estelares mais evoluídas, como NGC 2516. No entanto, é importante considerar as limitações de cada método e a faixa de massa das estrelas ao escolher a abordagem mais adequada para a estimativa de massa.

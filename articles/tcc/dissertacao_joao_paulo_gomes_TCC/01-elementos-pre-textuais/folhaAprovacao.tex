@@ -1,0 +1,69 @@
+%
+% Documento: Folha de aprovação
+%
+\makeatletter
+\begin{folhadeaprovacao}
+
+	\begin{center}
+		{\normalfont\scshape\textbf\imprimirautor}
+	\end{center}
+
+	\vspace*{12pt}
+
+	\begin{center}
+	    \ABNTEXchapterfont\scshape\textbf\imprimirtitulo
+		\abntex@ifnotempty{\imprimirsubtitulo}{
+			{\ABNTEXchapterfont\Large\scshape{\hspace*{-0.3em}: }}{\ABNTEXchapterfont\large\scshape\imprimirsubtitulo}
+		}
+	\end{center}
+
+	\vspace*{24pt}
+
+	\abntex@ifnotempty{\imprimirpreambulo}{
+		\SingleSpacing
+		\begin{tabular}{p{.37\textwidth}p{.13\textwidth}p{.44\textwidth}}
+			& \multicolumn{2}{p{.50\textwidth}}{\normalfont\hyphenpenalty=10000{\imprimirpreambulo}} \\ & & \\
+		\end{tabular}
+	}
+
+	\vspace*{12pt}
+
+		\begin{tabular}{p{.37\textwidth}p{.13\textwidth}p{.44\textwidth}}
+			& \multicolumn{2}{p{.50\textwidth}}{\normalfont\hyphenpenalty=10000{Ilhéus, \imprimirdatadefesa}} \\ & & \\
+		\end{tabular}
+		
+
+		\vspace*{12pt}
+		\begin{center}
+		BANCA EXAMINADORA
+		\end{center}
+\vspace{-2pt}
+\begin{center}
+\begin{tabular}{cc}
+	\assinatura{\imprimirorientador 		\\ \imprimirinstOrientador 			\\ Orientadora}	&\\
+    \assinatura{\imprimircoorientador 		\\ \imprimirinstCoorientador		\\ Co-orientador/Examinador} &\\ 
+    \assinatura{\imprimirbancamembrointerno \\ \imprimirbancainstmembrointerno 	\\ Examinador} 	&\\
+%	\assinatura{\imprimirbancamembroexterno \\ \imprimirbancainstmembroexterno 	\\ Examinador}	&\\
+	
+\end{tabular}
+	
+	\end{center}
+%	\begin{center}
+%		\assinatura{\textbf{\imprimirorientador} \\ Orientador} 
+%		\assinatura{\textbf{Professor} \\ Convidado 1}
+%		\assinatura{\textbf{Professor} \\ Convidado 2}
+%		%\assinatura{\textbf{Professor} \\ Convidado 3}
+%		%\assinatura{\textbf{Professor} \\ Convidado 4}
+%	\end{center}
+
+%	\vspace*{\fill}
+
+%	\begin{center}
+%		\normalfont\scshape{\imprimirinstituicao}\\
+%		\normalfont\scshape{\imprimirprograma}\\
+%		\normalfont\scshape{\imprimirlocal}\\
+%		\normalfont\scshape{\imprimirdata}
+%	\end{center}
+
+\end{folhadeaprovacao}
+%\makeatother

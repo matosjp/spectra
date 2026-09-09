@@ -1,0 +1,55 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[Baraffe et al. 2015]{baraffe2015new}
+\abntrefinfo{Baraffe et al.}{BARAFFE et al.}{2015}
+{BARAFFE, I. et al. New evolutionary models for pre-main sequence and main
+  sequence low-mass stars down to the hydrogen-burning limit.
+\textbf{Astronomy \& Astrophysics}, v.~577, p.~A42, April 2015.}
+
+\bibitem[Dahm 2015]{dahm2015reexamining}
+\abntrefinfo{Dahm}{DAHM}{2015}
+{DAHM, S.~E. Reexamining the lithium depletion boundary in the pleiades and the
+  inferred age of the cluster.
+\textbf{The Astrophysical Journal}, v.~813, n.~2, p.~108, 2015.}
+
+\bibitem[Delfosse et al. 2000]{delfosse2000accurate}
+\abntrefinfo{Delfosse et al.}{DELFOSSE et al.}{2000}
+{DELFOSSE, X. et al. Accurate masses of very low mass stars. iv. improved
+  mass-luminosity relations.
+\textbf{Astronomy and Astrophysics}, v.~364, p. 217--224, December 2000.}
+
+\bibitem[{Gaia Collaboration} et al. 2023]{gaia2022}
+\abntrefinfo{{Gaia Collaboration} et al.}{{Gaia Collaboration} et al.}{2023}
+{{Gaia Collaboration} et al. Gaia data release 3. summary of the content and
+  survey properties.
+\textbf{Astronomy and Astrophysics}, v.~674, p.~A1, 2023.}
+
+\bibitem[Gossage et al. 2018]{gossage2018age}
+\abntrefinfo{Gossage et al.}{GOSSAGE et al.}{2018}
+{GOSSAGE, S. et al. Age determinations of the hyades, praesepe, and pleiades
+  via mesa models with rotation.
+\textbf{The Astrophysical Journal}, v.~863, n.~1, p.~67, 2018.}
+
+\bibitem[Lodieu et al. 2019]{lodieu2019fiveD}
+\abntrefinfo{Lodieu et al.}{LODIEU et al.}{2019}
+{LODIEU, N. et al. A 5d view of the alpha per, pleiades, and praesepe clusters.
+\textbf{Astronomy \& Astrophysics}, v.~628, p.~A66, 2019.}
+
+\bibitem[Siess et al. 2000]{siess2000internet}
+\abntrefinfo{Siess et al.}{SIESS et al.}{2000}
+{SIESS, L.; DUFOUR, E.; FORESTINI, M. An internet server for update pre-main
+  sequence tracks of low- and intermediate-mass stars.
+\textbf{Astronomy \& Astrophysics}, 2000.}
+
+\bibitem[Stassun et al. 2019]{tess2019}
+\abntrefinfo{Stassun et al.}{STASSUN et al.}{2019}
+{STASSUN, K.~G. et al. The revised tess input catalog and candidate target
+  list.
+\textbf{The Astronomical Journal}, v.~158, p.~138, October 2019.}
+
+\end{thebibliography}

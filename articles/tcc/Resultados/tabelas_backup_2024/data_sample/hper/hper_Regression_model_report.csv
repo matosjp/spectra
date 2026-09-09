@@ -1,0 +1,10 @@
+Model,RMSE,MAE,R2,AIC,Best Params,Score
+Bayesian Regression,0.03257937308710797,0.02431625732063554,0.9895772637011778,-682.8151836510505,"{'model__alpha_1': 0.001, 'model__alpha_2': 1e-06, 'model__compute_score': True, 'model__fit_intercept': True, 'model__lambda_1': 1e-06, 'model__lambda_2': 0.001}",0.9821071176677135
+Linear Regression,0.0325792977345072,0.02431521994635802,0.9895773119144677,-682.8156462301657,"{'model__fit_intercept': True, 'model__positive': False}",0.9820945309283684
+ElasticNet Regression,0.03280749081804359,0.025429836491873293,0.9894307946544413,-681.4196822135143,"{'model__alpha': 0.01, 'model__fit_intercept': True, 'model__l1_ratio': 0.01, 'model__positive': False, 'model__precompute': False, 'model__selection': 'cyclic'}",0.9999999999999999
+Support Vector Regressor,0.008094626905416893,0.007483856982002879,0.9993565867854932,-941.3109564849301,"{'model__C': 0.1, 'model__epsilon': 0.01, 'model__kernel': 'rbf'}",0.2425151596090253
+Decision Tree Regressor,0.0017686469069560999,0.0016385540882791387,0.99996928301528,-1243.5080968182567,"{'model__max_depth': 12, 'model__min_samples_leaf': 2, 'model__min_samples_split': 2}",0.06383152586299261
+Random Forest Regressor,0.0007801441017685253,0.0006872147866516713,0.9999940235132279,-1395.2063818973934,"{'model__max_depth': 15, 'model__min_samples_leaf': 2, 'model__min_samples_split': 2, 'model__n_estimators': 100}",0.02556397197539784
+Gradient Boosting Regressor,0.0005967619773023053,0.0005162003203176209,0.999996502976165,-1442.7984444117867,"{'model__learning_rate': 0.1, 'model__loss': 'squared_error', 'model__max_depth': 15, 'model__n_estimators': 100, 'model__subsample': 0.7}",0.016348449761774454
+AdaBoost Regressor,0.00826701805772971,0.006167813035637206,0.999328889434094,-949.0962816798548,"{'model__learning_rate': 1.0, 'model__loss': 'square', 'model__n_estimators': 100}",0.23113770094375563
+KNeighbors Regressor,0.0003911610786734685,0.00037587869833176455,0.9999984975238944,-1553.278223379354,"{'model__n_neighbors': 5, 'model__weights': 'distance'}",0.0

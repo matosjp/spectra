@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+	\centering
+	\caption[Relatório estatístico de modelagem]{Exemplo de relatório das métricas obtidas para os modelos gerados para o melhor conjunto de Hiperparâmetros de cada algoritmo.}
+	\label{tab:model_performance}
+	\begin{tabular}{lccccc}
+		\hline
+		\textbf{Modelo} & \textbf{RMSE} & \textbf{MAE} & \textbf{R²} & \textbf{AIC} & \textbf{Score} \\
+		\hline
+		Bayesian & 0.077 & 0.067 & 0.942 & -511.024 & 0.997 \\
+		Linear & 0.077 & 0.067 & 0.942 & -511.026 & 0.997 \\
+		ElasticNet & 0.077 & 0.068 & 0.942 & -510.409 & 1.000 \\
+		Support Vector & 0.006 & 0.006 & 1.000 & -988.982 & 0.104 \\
+		Decision Tree & 0.002 & 0.002 & 1.000 & -1243.508 & 0.041 \\
+		Random Forest & 0.001 & 0.001 & 1.000 & -1400.027 & 0.018 \\
+		Gradient Boosting & 0.001 & 0.001 & 1.000 & -1437.803 & 0.013 \\
+		AdaBoost & 0.008 & 0.007 & 0.999 & -943.724 & 0.123 \\
+		KNeighbors & 0.000 & 0.000 & 1.000 & -1560.472 & 0.000 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
